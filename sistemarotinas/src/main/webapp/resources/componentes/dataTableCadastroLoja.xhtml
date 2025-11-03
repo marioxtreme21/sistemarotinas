@@ -1,0 +1,59 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:column headerText="Nome" sortBy="#{loja.nome}">
+        <h:outputText value="#{loja.nome}" />
+    </p:column>
+
+    <p:column headerText="CNPJ" sortBy="#{loja.cnpj}">
+        <h:outputText value="#{loja.cnpj}" />
+    </p:column>
+
+    <p:column headerText="Política Comercial" sortBy="#{loja.politicaComercial}">
+        <h:outputText value="#{loja.politicaComercial}" />
+    </p:column>
+
+    <p:column headerText="Código Empresa SITEF" sortBy="#{loja.codigoEmpresaSitef}">
+        <h:outputText value="#{loja.codigoEmpresaSitef}" />
+    </p:column>
+
+    <p:column headerText="Horário Price Update" sortBy="#{loja.horarioPriceUpdate}">
+        <h:outputText value="#{loja.horarioPriceUpdate}" />
+    </p:column>
+
+    <p:column headerText="Warehouse" sortBy="#{loja.warehouse}">
+        <h:outputText value="#{loja.warehouse}" />
+    </p:column>
+
+    <p:column headerText="Prioridade Ativa" sortBy="#{loja.prioridadeEnvioAtivo}">
+        <h:outputText value="#{loja.prioridadeEnvioAtivo ? 'Sim' : 'Não'}" />
+    </p:column>
+
+    <p:column headerText="Ranking" sortBy="#{loja.prioridadeEnvioRanking}">
+        <h:outputText value="#{loja.prioridadeEnvioRanking}" />
+    </p:column>
+
+    <p:column headerText="E-commerce Ativo" sortBy="#{loja.ecommerceAtivo}">
+        <h:outputText value="#{loja.ecommerceAtivo ? 'Sim' : 'Não'}" />
+    </p:column>
+
+    <p:column headerText="Pick and Pack Ativo" sortBy="#{loja.pickAndPackAtivo}">
+        <h:outputText value="#{loja.pickAndPackAtivo ? 'Sim' : 'Não'}" />
+    </p:column>
+
+    <p:column headerText="Ações">
+        <p:commandButton value="Editar"
+                         icon="pi pi-pencil"
+                         action="#{lojaBean.prepararEditar(loja)}"
+                         process="@this"
+                         update=":formCadastroLoja" />
+        <p:commandButton value="Excluir"
+                         action="#{lojaBean.excluir(loja.lojaId)}"
+                         update=":formTable :formCadastroLoja"
+                         onclick="if(!confirm('Confirma a exclusão da loja: #{loja.nome}?')) return false;" />
+    </p:column>
+
+</ui:composition>

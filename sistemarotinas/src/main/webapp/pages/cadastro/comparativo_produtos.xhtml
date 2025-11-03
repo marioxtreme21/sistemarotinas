@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<h:head>
+    <title>Comparativo de Produtos 144 x 50</title>
+</h:head>
+<h:body>
+
+<h:form id="form">
+    <p:panel header="Comparativo de Produtos (EAN) - 144 vs 50">
+        <p:messages showDetail="true" closable="true" />
+        <p:panelGrid columns="4" columnClasses="ui-g-12 ui-md-2,ui-g-12 ui-md-4,ui-g-12 ui-md-2,ui-g-12 ui-md-4" layout="grid">
+
+            <h:outputLabel for="nivel144" value="Nível (144):" />
+            <p:inputNumber id="nivel144" value="#{produtoComparativoBean.nivel144}" decimalPlaces="0" />
+
+            <h:outputLabel for="nivel50" value="Nível (50):" />
+            <p:inputNumber id="nivel50" value="#{produtoComparativoBean.nivel50}" decimalPlaces="0" />
+
+        </p:panelGrid>
+
+        <p:separator />
+
+        <p:commandButton value="Executar comparativo"
+                         actionListener="#{produtoComparativoBean.comparar}"
+                         update="form msgs tabela"
+                         icon="pi pi-play" />
+
+        <p:commandButton value="Baixar XLSX"
+                         ajax="false"
+                         icon="pi pi-download">
+            <p:fileDownload value="#{produtoComparativoBean.arquivoXlsx}" />
+        </p:commandButton>
+    </p:panel>
+
+    <p:messages id="msgs" showDetail="true" closable="true" />
+
+    <p:panel header="Resultado (presentes no 144 e ausentes no 50)">
+        <p:dataTable id="tabela" value="#{produtoComparativoBean.resultado}" var="r" rows="50" paginator="true">
+            <p:column headerText="EAN"><h:outputText value="#{r.codigoEan}" /></p:column>
+            <p:column headerText="Produto"><h:outputText value="#{r.codigoProduto}" /></p:column>
+            <p:column headerText="Descrição"><h:outputText value="#{r.descricao}" /></p:column>
+            <p:column headerText="Pesável"><h:outputText value="#{r.pesavel}" /></p:column>
+            <p:column headerText="Embalagem"><h:outputText value="#{r.embalagem}" /></p:column>
+            <p:column headerText="Preço"><h:outputText value="#{r.preco}" /></p:column>
+        </p:dataTable>
+    </p:panel>
+</h:form>
+
+</h:body>
+</html>

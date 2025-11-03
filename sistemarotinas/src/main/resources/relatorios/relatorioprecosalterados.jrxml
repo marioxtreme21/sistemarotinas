@@ -1,0 +1,245 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.0  -->
+<jasperReport name="relatorioprecosalterados" language="java" printOrder="Horizontal" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="30e77c2d-ff7f-45a4-bdd2-718b8d13aabb">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="RelatorioPrecosAlteradosDTO"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="0"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="1000"/>
+	<parameter name="REPORT_PARAMETERS_IMG" class="java.lang.String"/>
+	<parameter name="NUMERO_FILIAL" class="java.lang.String"/>
+	<query language="EJBQL"><![CDATA[]]></query>
+	<field name="precoNormal" class="java.lang.Double">
+		<description><![CDATA[precoNormal]]></description>
+	</field>
+	<field name="precoPromocional" class="java.lang.Double">
+		<description><![CDATA[precoPromocional]]></description>
+	</field>
+	<field name="codigo" class="java.lang.Long">
+		<description><![CDATA[codigo]]></description>
+	</field>
+	<field name="promocao" class="java.lang.String">
+		<description><![CDATA[promocao]]></description>
+	</field>
+	<field name="codCatN2" class="java.lang.Integer">
+		<description><![CDATA[codCatN2]]></description>
+	</field>
+	<field name="loja" class="java.lang.Integer">
+		<description><![CDATA[loja]]></description>
+	</field>
+	<field name="breakN1" class="java.lang.Integer">
+		<description><![CDATA[breakN1]]></description>
+	</field>
+	<field name="breakN2" class="java.lang.Integer">
+		<description><![CDATA[breakN2]]></description>
+	</field>
+	<field name="codCatN1" class="java.lang.Integer">
+		<description><![CDATA[codCatN1]]></description>
+	</field>
+	<field name="dataInicioPromocao" class="java.lang.String">
+		<description><![CDATA[dataInicioPromocao]]></description>
+	</field>
+	<field name="dataAlteracao" class="java.lang.String">
+		<description><![CDATA[dataAlteracao]]></description>
+	</field>
+	<field name="descricao" class="java.lang.String">
+		<description><![CDATA[descricao]]></description>
+	</field>
+	<field name="qtdembalagem" class="java.lang.Integer">
+		<description><![CDATA[qtdembalagem]]></description>
+	</field>
+	<field name="ean" class="java.lang.String">
+		<description><![CDATA[ean]]></description>
+	</field>
+	<field name="dataFimPromocao" class="java.lang.String">
+		<description><![CDATA[dataFimPromocao]]></description>
+	</field>
+	<field name="ordemCategoriaN2" class="java.lang.String">
+		<description><![CDATA[ordemCategoriaN2]]></description>
+	</field>
+	<field name="ordemCategoriaN1" class="java.lang.String">
+		<description><![CDATA[ordemCategoriaN1]]></description>
+	</field>
+	<field name="seqfamilia" class="java.lang.Long">
+		<description><![CDATA[seqfamilia]]></description>
+	</field>
+	<group name="GrupoCategoria">
+		<expression><![CDATA[$F{codCatN1} + ":" + ($F{codCatN2} == null ? -1 : $F{codCatN2})]]></expression>
+		<groupHeader>
+			<band height="19">
+				<element kind="textField" uuid="a3c04faa-c84a-4e61-ab1a-b619a44e06b9" x="4" y="1" width="550" height="15" fontSize="8.0" bold="true">
+					<expression><![CDATA[$F{ordemCategoriaN1} + " / " + ($F{ordemCategoriaN2} == null ? "(sem subcategoria)" : $F{ordemCategoriaN2})]]></expression>
+					<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				</element>
+			</band>
+		</groupHeader>
+	</group>
+	<background splitType="Stretch"/>
+	<title height="32" splitType="Stretch">
+		<element kind="staticText" uuid="1f3ea4e2-5578-44d1-af78-f59435d92b90" x="4" y="2" width="224" height="19" fontName="Calibri" fontSize="14.0" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[Relátorio de alteração de Preços]]></text>
+		</element>
+		<element kind="textField" uuid="b7845d4d-369d-4a1c-93a3-edcb9a485cfd" x="442" y="1" width="100" height="20" fontName="Calibri" pattern="dd/MM/yyyy" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[new SimpleDateFormat("dd-MM-yyyy").format(new Date().getTime() + 0* 24 * 60 * 60 * 1000)]]></expression>
+		</element>
+		<element kind="staticText" uuid="a7178bc6-82dd-4b40-af0b-527d3b803fc4" x="236" y="2" width="32" height="20" fontName="Calibri" fontSize="11.0" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[Filial:]]></text>
+		</element>
+		<element kind="staticText" uuid="953fe0c2-db3c-4c6d-8ddd-7c108f7354de" x="367" y="1" width="73" height="20" fontName="Calibri" fontSize="11.0" bold="true" vTextAlign="Middle">
+			<text><![CDATA[Data Geração:]]></text>
+		</element>
+		<element kind="image" uuid="5264633d-c20b-490d-9b99-ff296b4e50d6" x="690" y="0" width="111" height="31">
+			<expression><![CDATA[$P{REPORT_PARAMETERS_IMG} + "logohiperideal.png"]]></expression>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="textField" uuid="b4d7b079-35e5-4753-88e0-6b9d81c5e632" x="271" y="3" width="69" height="19" fontName="Calibri" fontSize="8.0" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[$P{NUMERO_FILIAL}]]></expression>
+		</element>
+	</title>
+	<pageHeader height="4" splitType="Stretch">
+		<element kind="line" uuid="12256990-89f2-4426-964c-364de88bf36c" x="2" y="1" width="797" height="1"/>
+	</pageHeader>
+	<columnHeader height="15" splitType="Stretch">
+		<element kind="line" uuid="f33ecbe1-0197-47e9-b916-2e87ee11f3e0" x="2" y="12" width="797" height="1"/>
+		<element kind="staticText" uuid="a43545f9-39f0-4bc6-b6a9-6e6b8867d112" x="38" y="0" width="36" height="13" fontSize="8.0" bold="true">
+			<text><![CDATA[CODIGO]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e6271919-46f5-4f30-9d78-4a28464d0f4e"/>
+		</element>
+		<element kind="staticText" uuid="f5b5c299-812f-4f05-bea0-80d71eb049b4" x="2" y="0" width="27" height="13" fontSize="8.0" bold="true">
+			<text><![CDATA[LOJA]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="27249221-f10a-40f1-aec7-8dc1a3545e78"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="24dc5e22-040b-4d72-8156-512876101fca" x="88" y="0" width="24" height="13" fontSize="7.0" bold="true">
+			<text><![CDATA[EAN]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="79efa95c-eeb6-4e6e-a62a-49cd2d4259d2"/>
+		</element>
+		<element kind="staticText" uuid="639ee597-fc8e-4e14-b132-db3e269be7ee" x="179" y="0" width="161" height="13" fontSize="7.0" bold="true">
+			<text><![CDATA[DESCRIÇÂO]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="9d72008a-5615-4789-b057-54db1f84eeca"/>
+		</element>
+		<element kind="staticText" uuid="fcfa7bd1-7bed-4622-986a-c7292b6e1dc7" x="346" y="0" width="42" height="13" fontSize="7.0" bold="true">
+			<text><![CDATA[PROMOCÂO]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="4e7f418d-087c-45c9-9b7c-6082f856b824"/>
+		</element>
+		<element kind="staticText" uuid="57439e20-387e-4c65-9dc0-0f10ef816da2" x="397" y="0" width="80" height="13" fontSize="7.0" bold="true">
+			<text><![CDATA[VIG_INICIAL]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c0b5ff86-f6c3-43ec-956f-324a8a2dd215"/>
+		</element>
+		<element kind="staticText" uuid="c95a6a24-69d0-448c-be5b-d28823b301d3" x="480" y="0" width="78" height="13" fontSize="7.0" bold="true">
+			<text><![CDATA[VIG_FINAL]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="3aaa6171-40c8-4be7-a020-deb5aad34d56"/>
+		</element>
+		<element kind="staticText" uuid="a8954903-bf04-4a12-9ada-218a7f7c52dd" x="561" y="0" width="55" height="13" fontSize="7.0" bold="true">
+			<text><![CDATA[PREÇO]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e728c515-112f-4707-85f7-7f8187570b3f"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+		</element>
+		<element kind="staticText" uuid="32bcbf62-b127-46b7-b512-936d6f8e1177" x="618" y="0" width="75" height="13" fontSize="7.0" bold="true">
+			<text><![CDATA[P. PROMOCÂO]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="086977e2-8e8e-435c-95e9-366ef6ae461e"/>
+		</element>
+		<element kind="staticText" uuid="c159e069-20d6-4e8b-b010-ebab8799a7cd" x="697" y="0" width="100" height="13" fontSize="7.0" bold="true">
+			<text><![CDATA[D. ALTERAÇÃO]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="630ab797-8657-4da5-899c-bca6831b1d5f"/>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="12" splitType="Stretch">
+			<element kind="textField" uuid="eddbb18d-ab8e-4d45-8c8e-be977d829f3c" x="38" y="1" width="50" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{codigo}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e6271919-46f5-4f30-9d78-4a28464d0f4e"/>
+			</element>
+			<element kind="textField" uuid="bf559e29-af7c-4331-8dd6-3b8a00194a25" x="2" y="1" width="35" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{loja}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="27249221-f10a-40f1-aec7-8dc1a3545e78"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="11a4b805-0a8b-405f-816a-644ce92f8e3b" x="89" y="1" width="87" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{ean}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="79efa95c-eeb6-4e6e-a62a-49cd2d4259d2"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="b66b5f41-5b39-4f88-90cb-7457d11ba11a" x="179" y="1" width="161" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{descricao}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="9d72008a-5615-4789-b057-54db1f84eeca"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			</element>
+			<element kind="textField" uuid="4e476bce-5cf2-4a53-85ae-8047e865422f" x="345" y="1" width="44" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{promocao}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="4e7f418d-087c-45c9-9b7c-6082f856b824"/>
+				<property name="com.jaspersoft.studio.unit.y" value="px"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="f64a15be-7250-4bb4-abfc-910ff9a90d46" x="397" y="1" width="80" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{dataInicioPromocao} == null || $F{dataInicioPromocao}.trim().isEmpty()
+ ? "-"
+ : new java.text.SimpleDateFormat("dd/MM/yyyy")
+       .format(
+           new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+               .parse($F{dataInicioPromocao})
+       )]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="c0b5ff86-f6c3-43ec-956f-324a8a2dd215"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="855954e9-cc53-4b51-addb-5b179acee013" x="479" y="0" width="80" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{dataFimPromocao} == null || $F{dataFimPromocao}.trim().isEmpty()
+ ? "-"
+ : new java.text.SimpleDateFormat("dd/MM/yyyy")
+       .format(
+           new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+               .parse($F{dataFimPromocao})
+       )]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="3aaa6171-40c8-4be7-a020-deb5aad34d56"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="d89f0b82-b89a-42ae-9e86-2679bc521ba4" x="562" y="0" width="55" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{precoNormal}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e728c515-112f-4707-85f7-7f8187570b3f"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			</element>
+			<element kind="textField" uuid="88a7523c-0f81-41f8-8ad9-b8030ebb95aa" x="619" y="0" width="74" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{precoPromocional}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="086977e2-8e8e-435c-95e9-366ef6ae461e"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="c32b4cd8-1965-4941-81ad-bcd72b2cbd0f" x="695" y="0" width="100" height="10" fontSize="7.0">
+				<expression><![CDATA[$F{dataAlteracao} == null || $F{dataAlteracao}.trim().isEmpty()
+ ? "-"
+ : new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+       .format(
+           new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+               .parse($F{dataAlteracao})
+       )]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="630ab797-8657-4da5-899c-bca6831b1d5f"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+		</band>
+	</detail>
+	<columnFooter height="13" splitType="Stretch"/>
+	<pageFooter height="23" splitType="Stretch">
+		<element kind="textField" uuid="228dd99b-c1bd-461b-bc0f-88b0ec918879" x="702" y="3" width="53" height="20" fontName="Calibri" hTextAlign="Right">
+			<expression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></expression>
+		</element>
+		<element kind="textField" uuid="8cc5f329-47bb-4bb5-be11-66fe6a89b104" x="760" y="3" width="40" height="20" fontName="Calibri" evaluationTime="Report">
+			<expression><![CDATA[" " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+	</pageFooter>
+	<summary height="22" splitType="Stretch">
+		<element kind="textField" uuid="cc839b7d-df1c-4933-a12f-244e3f0ab975" x="700" y="3" width="100" height="18" fontName="Calibri" evaluationTime="Report">
+			<expression><![CDATA[$V{PAGE_NUMBER}]]></expression>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="line" uuid="27f574bf-43fd-40ac-b6b1-5f73d77ec919" x="2" y="1" width="797" height="1"/>
+		<element kind="staticText" uuid="78997387-80a9-4ef0-9003-10adc81484cf" x="633" y="3" width="66" height="18" fontName="Calibri">
+			<text><![CDATA[Total Páginas:]]></text>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+	</summary>
+</jasperReport>

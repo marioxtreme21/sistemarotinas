@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="jakarta.faces.core"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<h:head>
+    <title>Tela Login</title>
+</h:head>
+<h:body>
+    <h:form>
+        <p:growl id="growl" showDetail="true" life="3000" />
+        
+        <div class="ui-g ui-fluid" style="height: 100vh; align-items: center; justify-content: center; display: flex;">
+            <div class="ui-g-12 ui-md-4">
+                <p:panel header="Login" style="margin: 0 auto; padding: 20px;" styleClass="ui-panel ui-widget">
+                    
+                    <p:messages id="messages" autoUpdate="true" closable="true" />
+                    
+                    <p:panelGrid columns="2" columnClasses="ui-grid-col-4, ui-grid-col-8" style="width: 100%;">
+                        <p:outputLabel for="username" value="Username:" />
+                        <p:inputText id="username" value="#{loginBean.username}" 
+                                     required="true" style="width: 100%;" />
+
+                        <p:outputLabel for="password" value="Password:" />
+                        <p:password id="password" value="#{loginBean.password}" 
+                                    required="true" style="width: 100%;" feedback="true" />
+                    </p:panelGrid>
+
+                    <p:separator />
+                    
+                    <p:commandButton value="Login" action="#{loginBean.login}" 
+                                     ajax="false" styleClass="ui-button ui-widget ui-state-default ui-corner-all"
+                                     style="width: 100%;" />
+                </p:panel>
+            </div>
+        </div>
+    </h:form>
+</h:body>
+</html>

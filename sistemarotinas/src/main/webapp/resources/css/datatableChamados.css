@@ -1,0 +1,10 @@
+.ui-datatable-header.ui-widget-header.ui-corner-top {
+    background-color: #0c7c2a !important;
+    color: #ffffff !important;
+    font-weight: bold;
+    font-size: 1.1rem;
+    text-align: center;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 6px 6px 0 0;
+}

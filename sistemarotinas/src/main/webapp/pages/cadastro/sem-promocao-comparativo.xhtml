@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<title>144 (Nível sem Promo) × 50</title>
+</h:head>
+<h:body>
+	<h:form id="form">
+		<p:panel header="Comparativo 144 (Nível, sem promoção) × 50">
+			<p:messages id="msgs" showDetail="true" closable="true" />
+
+			<p:panelGrid columns="6" layout="grid"
+				columnClasses="ui-g-12 ui-md-2,ui-g-12 ui-md-2,ui-g-12 ui-md-2,ui-g-12 ui-md-2,ui-g-12 ui-md-2,ui-g-12 ui-md-2">
+				<h:outputLabel for="loja144" value="Loja (144):" />
+				<p:inputNumber id="loja144"
+					value="#{comparativoSemPromocaoBean.loja144}" decimalPlaces="0" />
+
+				<h:outputLabel for="nivel50" value="Nível (50):" />
+				<p:inputNumber id="nivel50"
+					value="#{comparativoSemPromocaoBean.nivel50}" decimalPlaces="0" />
+
+				<h:outputLabel for="dataRef" value="Data de referência:" />
+				<p:datePicker id="dataRef"
+					value="#{comparativoSemPromocaoBean.dataReferencia}"
+					pattern="dd/MM/yyyy" showIcon="true" />
+
+			</p:panelGrid>
+
+			<p:separator />
+
+			<p:commandButton value="Comparar"
+				actionListener="#{comparativoSemPromocaoBean.comparar}"
+				update="form msgs tabela" icon="pi pi-search" />
+
+			<p:commandButton value="Baixar XLSX" ajax="false"
+				icon="pi pi-download">
+				<p:fileDownload value="#{comparativoSemPromocaoBean.arquivoXlsx}" />
+			</p:commandButton>
+		</p:panel>
+
+		<p:panel header="Resultado — Não Localizados e Divergentes">
+			<p:dataTable id="tabela"
+				value="#{comparativoSemPromocaoBean.resultado}" var="r" rows="50"
+				paginator="true">
+				<p:column headerText="Status">
+					<h:outputText value="#{r.status}" />
+				</p:column>
+				<p:column headerText="EAN">
+					<h:outputText value="#{r.codigoEan}" />
+				</p:column>
+				<p:column headerText="Produto">
+					<h:outputText value="#{r.codigoProduto}" />
+				</p:column>
+				<p:column headerText="Descrição">
+					<h:outputText value="#{r.descricao}" />
+				</p:column>
+				<p:column headerText="Tipo Emb.">
+					<h:outputText value="#{r.tipoEmbalagem}" />
+				</p:column>
+				<p:column headerText="Preço 144">
+					<h:outputText value="#{r.preco144}" />
+				</p:column>
+				<p:column headerText="Preço 50">
+					<h:outputText value="#{r.preco50}" />
+				</p:column>
+				<p:column headerText="Diferença">
+					<h:outputText value="#{r.diferenca}" />
+				</p:column>
+			</p:dataTable>
+		</p:panel>
+	</h:form>
+</h:body>
+</html>

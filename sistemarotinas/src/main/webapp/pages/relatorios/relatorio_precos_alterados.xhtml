@@ -1,0 +1,67 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Relatório – Preços Alterados</ui:define>
+
+    <ui:define name="content">
+        <h:form id="form">
+            <p:growl id="growl" showDetail="true" life="5000" />
+
+            <p:panel header="Parâmetros">
+                <p:panelGrid columns="2" columnClasses="label,value" styleClass="panelPesquisa">
+
+                    <!-- Lojas -->
+                    <p:outputLabel value="Lojas:" for="lojas" />
+                    <p:selectCheckboxMenu id="lojas" label="Selecione"
+                        value="#{relatorioPrecosAlteradosBean.lojasSelecionadas}"
+                        filter="true" filterMatchMode="contains"
+                        showSelectAll="true" selectAllText="Todas as lojas">
+                        <f:selectItems value="#{relatorioPrecosAlteradosBean.lojas}"
+                                       var="l"
+                                       itemLabel="#{l.nome} (#{l.codLojaRms})"
+                                       itemValue="#{l.lojaId}" />
+                    </p:selectCheckboxMenu>
+
+                    <!-- Datas -->
+                    <p:outputLabel value="Data Inicial:" for="dtIni" />
+                    <p:datePicker id="dtIni"
+                        value="#{relatorioPrecosAlteradosBean.dataInicialDate}"
+                        pattern="dd/MM/yyyy HH:mm:ss"
+                        showTime="true" hourFormat="24"
+                        showIcon="true" />
+
+                    <p:outputLabel value="Data Final:" for="dtFim" />
+                    <p:datePicker id="dtFim"
+                        value="#{relatorioPrecosAlteradosBean.dataFinalDate}"
+                        pattern="dd/MM/yyyy HH:mm:ss"
+                        showTime="true" hourFormat="24"
+                        showIcon="true" />
+                </p:panelGrid>
+
+                <!-- Ações -->
+                <p:commandButton value="Gerar &amp; Enviar"
+                    actionListener="#{relatorioPrecosAlteradosBean.gerarEEnviar}"
+                    update=":form:growl :form:resultado"
+                    icon="pi pi-send"
+                    styleClass="ui-button-primary" />
+
+                <!-- Gerar + Download: streaming direto no response (sem <p:fileDownload>) -->
+                <p:commandButton value="Gerar + Download"
+                    action="#{relatorioPrecosAlteradosBean.gerarEDownload}"
+                    ajax="false" icon="pi pi-download" style="margin-left:.5rem" />
+            </p:panel>
+
+            <!-- Lista de arquivos gerados -->
+            <p:panel id="resultado" header="Arquivos Gerados"
+                     rendered="#{not empty relatorioPrecosAlteradosBean.arquivosGerados}">
+                <ui:repeat value="#{relatorioPrecosAlteradosBean.arquivosGerados}" var="arq">
+                    <h:outputText value="#{arq}" /><br />
+                </ui:repeat>
+            </p:panel>
+        </h:form>
+    </ui:define>
+</ui:composition>

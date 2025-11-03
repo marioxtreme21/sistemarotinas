@@ -1,0 +1,122 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	template="/WEB-INF/templates/layout.xhtml">
+
+	<ui:define name="title">Configuração de E-mail</ui:define>
+
+	<ui:define name="content">
+
+		<h:form id="formPesquisa">
+			<ui:include src="/resources/componentes/pesquisaConfiguracaoEmail.xhtml" />
+		</h:form>
+
+		<h:form id="formCadastro">
+			<p:growl id="growl" showDetail="true" life="3000" />
+
+			<p:commandButton value="Novo Cadastro"
+				actionListener="#{configuracaoEmailBean.prepararNovoCadastro}"
+				update="formCadastro" process="@this" />
+
+			<p:panel id="panelCadastro"
+				header="Cadastro de Configuração de E-mail"
+				styleClass="panelPesquisa"
+				visible="#{configuracaoEmailBean.mostrarFormulario}">
+
+				<p:panelGrid columns="2" cellpadding="10" styleClass="panelPesquisa"
+					columnClasses="label, value">
+
+					<p:outputLabel value="Servidor SMTP:" />
+					<p:inputText
+						value="#{configuracaoEmailBean.configuracaoEmail.servidorSmtp}"
+						required="true" />
+
+					<p:outputLabel value="Porta SMTP:" />
+					<p:inputText
+						value="#{configuracaoEmailBean.configuracaoEmail.portaSmtp}"
+						required="true" />
+
+					<p:outputLabel value="Usar TLS SMTP:" />
+					<p:selectBooleanCheckbox
+						value="#{configuracaoEmailBean.configuracaoEmail.usarTlsSmtp}" />
+
+					<p:outputLabel value="Usar SSL SMTP:" />
+					<p:selectBooleanCheckbox
+						value="#{configuracaoEmailBean.configuracaoEmail.usarSslSmtp}" />
+
+		
+					<p:outputLabel value="Usuário (E-mail remetente):" />
+					<p:inputText
+						value="#{configuracaoEmailBean.configuracaoEmail.usuarioEmail}"
+						required="true" />
+
+					<p:outputLabel value="Senha:" />
+					<p:password
+						value="#{configuracaoEmailBean.configuracaoEmail.senhaEmail}"
+						toggleMask="true" redisplay="true" required="true" />
+
+		
+					<p:outputLabel value="Servidor Leitura (IMAP/POP):" />
+					<p:inputText
+						value="#{configuracaoEmailBean.configuracaoEmail.servidorLeitura}"
+						required="true" />
+
+					<p:outputLabel value="Porta Leitura:" />
+					<p:inputText
+						value="#{configuracaoEmailBean.configuracaoEmail.portaLeitura}"
+						required="true" />
+
+					<p:outputLabel value="Protocolo Leitura:" />
+					<p:selectOneMenu
+						value="#{configuracaoEmailBean.configuracaoEmail.protocoloLeitura}"
+						required="true">
+						<f:selectItem itemLabel="Selecione" itemValue="" />
+						<f:selectItem itemLabel="IMAP" itemValue="IMAP" />
+						<f:selectItem itemLabel="POP3" itemValue="POP3" />
+					</p:selectOneMenu>
+
+					<p:outputLabel value="Usar TLS Leitura:" />
+					<p:selectBooleanCheckbox
+						value="#{configuracaoEmailBean.configuracaoEmail.usarTlsLeitura}" />
+
+					<p:outputLabel value="Usar SSL Leitura:" />
+					<p:selectBooleanCheckbox
+						value="#{configuracaoEmailBean.configuracaoEmail.usarSslLeitura}" />
+
+					<p:outputLabel value="Ativo:" />
+					<p:selectBooleanCheckbox
+						value="#{configuracaoEmailBean.configuracaoEmail.ativo}" />
+				</p:panelGrid>
+
+				<p:commandButton value="Salvar"
+					action="#{configuracaoEmailBean.salvar}"
+					update="growl formCadastro formTable" />
+
+				<p:commandButton value="Testar Envio" icon="pi pi-send"
+					action="#{configuracaoEmailBean.testarEnvioEmail}" update="growl"
+					process="@this" style="margin-left:10px;" />
+
+				<p:commandButton value="Testar Leitura (IMAP/POP)"
+					icon="pi pi-envelope"
+					action="#{configuracaoEmailBean.testarLeitura}" update="growl"
+					process="@this" styleClass="ui-button-success"
+					style="margin-left:10px;" />
+			</p:panel>
+		</h:form>
+
+		<h:form id="formTable">
+			<p:dataTable id="tableResult"
+				value="#{configuracaoEmailBean.configuracoesLazy}" var="config"
+				emptyMessage="Não há valores para exibição." paginator="true"
+				rows="10" lazy="true" rowsPerPageTemplate="10,20,50"
+				paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+
+				<ui:include
+					src="/resources/componentes/dataTableCadastroConfiguracaoEmail.xhtml" />
+			</p:dataTable>
+		</h:form>
+
+	</ui:define>
+</ui:composition>

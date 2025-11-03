@@ -1,0 +1,44 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+	<p:column headerText="ID">
+		<h:outputText value="#{prioridade.id}" />
+	</p:column>
+
+	<p:column headerText="Nome">
+		<h:outputText value="#{prioridade.nome}" />
+	</p:column>
+
+	<p:column headerText="Descrição">
+		<h:outputText value="#{prioridade.descricao}" />
+	</p:column>
+
+	<p:column headerText="SLA (Horas)">
+		<h:outputText value="#{prioridade.slaHoras}" />
+	</p:column>
+
+	<p:column headerText="Ordem">
+		<h:outputText value="#{prioridade.ordem}" />
+	</p:column>
+
+	<p:column headerText="Cor">
+		<h:outputText value="#{prioridade.cor}" />
+	</p:column>
+
+	<p:column headerText="Ativo">
+		<h:outputText value="#{prioridade.ativo ? 'Sim' : 'Não'}" />
+	</p:column>
+
+	<p:column headerText="Ações">
+		<p:commandButton icon="pi pi-pencil" title="Editar"
+			action="#{prioridadeChamadoBean.prepararEditar(prioridade)}"
+			update=":formCadastroPrioridadeChamado" process="@this" />
+
+		<p:commandButton icon="pi pi-trash" title="Excluir" 
+			action="#{prioridadeChamadoBean.excluir(prioridade.id)}"
+			update="formTable growl" process="@this"
+			styleClass="ui-button-danger" />
+	</p:column>
+</ui:composition>

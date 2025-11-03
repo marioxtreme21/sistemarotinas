@@ -1,0 +1,147 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <h:head>
+        <h:outputStylesheet name="estiloMenu.css" library="css" />
+    </h:head>
+
+    <div class="sidebar">
+        <div class="logo-container">
+            <p:graphicImage name="/logo.png" library="images" alt="Logo" />
+        </div>
+
+        <div class="custom-menu">
+
+            <!-- Home -->
+            <div class="menu-item">
+                <h:outputLink value="#{request.contextPath}/pages/index.xhtml"
+                              style="display:flex; align-items:center; color:white;">
+                    <i class="pi pi-home"></i>
+                    <span class="text">Home</span>
+                </h:outputLink>
+            </div>
+
+            <!-- Cadastro -->
+            <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+                <div class="menu-item expandable" onclick="toggleSubMenu(this)">
+                    <i class="pi pi-briefcase"></i> <span class="text">Cadastro</span>
+                </div>
+                <div class="submenu">
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/cadastro_loja.xhtml">
+                        <i class="pi pi-building"></i><span>Cadastro de Loja</span>
+                    </h:outputLink>
+
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/comparativo_produtos.xhtml">
+                        <i class="pi pi-refresh"></i><span>Comparativo de Produtos (144 × 50)</span>
+                    </h:outputLink>
+
+                    <!-- Divergência de Preço (Promo 144 × Nível 50) -->
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/divergencia-preco.xhtml">
+                        <i class="pi pi-tags"></i><span>Divergência de Preço (144 × 50)</span>
+                    </h:outputLink>
+
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/sem-promocao-comparativo.xhtml">
+                        <i class="pi pi-list-check"></i><span>144 (Nível, sem Promo) × 50</span>
+                    </h:outputLink>
+
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/barcodes.xhtml">
+                        <i class="pi pi-barcode"></i><span>Barcodes (Rotação)</span>
+                    </h:outputLink>
+
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/produtos_ecommerce_teste.xhtml">
+                        <i class="pi pi-database"></i><span>Produtos E-commerce (Teste)</span>
+                    </h:outputLink>
+
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/produtos_socin_mercafacil.xhtml">
+                        <i class="pi pi-exchange"></i><span>Produtos SOCIN ⇄ Mercafácil</span>
+                    </h:outputLink>
+
+                    <!-- CTR_INT_VDA (tip_int = 16) -->
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/ctr_int_vda_tip16.xhtml">
+                        <i class="pi pi-database"></i><span>CTR_INT_VDA (tip_int = 16)</span>
+                    </h:outputLink>
+                </div>
+            </ui:fragment>
+
+            <!-- Chamados -->
+            <div class="menu-item expandable" onclick="toggleSubMenu(this)">
+                <i class="pi pi-envelope"></i> <span class="text">Chamados</span>
+            </div>
+            <div class="submenu"></div>
+
+            <!-- Configurações -->
+            <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+                <div class="menu-item expandable" onclick="toggleSubMenu(this)">
+                    <i class="pi pi-cog"></i> <span class="text">Configurações</span>
+                </div>
+                <div class="submenu">
+                    <h:outputLink value="#{request.contextPath}/pages/configuracao/configuracao_email.xhtml">
+                        <i class="pi pi-envelope"></i><span>Configuração de E-mail</span>
+                    </h:outputLink>
+                </div>
+            </ui:fragment>
+
+            <!-- Relatórios -->
+            <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+                <div class="menu-item expandable" onclick="toggleSubMenu(this)">
+                    <i class="pi pi-chart-line"></i> <span class="text">Relatórios</span>
+                </div>
+                <div class="submenu">
+                    <!-- ✔ Novo item: Relatório Preços Alterados -->
+                    <h:outputLink value="#{request.contextPath}/pages/relatorios/relatorio_precos_alterados.xhtml">
+                        <i class="pi pi-file-pdf"></i><span>Preços Alterados (por período)</span>
+                    </h:outputLink>
+                </div>
+            </ui:fragment>
+
+            <!-- Rotinas -->
+            <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+                <div class="menu-item expandable" onclick="toggleSubMenu(this)">
+                    <i class="pi pi-tools"></i> <span class="text">Rotinas</span>
+                </div>
+                <div class="submenu">
+                    <!-- Atualização de Preços -->
+                    <h:outputLink value="#{request.contextPath}/pages/rotinas/price_update_test.xhtml">
+                        <i class="pi pi-dollar"></i><span>Atualização de Preços (VTEX)</span>
+                    </h:outputLink>
+
+                    <!-- Atualização de Estoque -->
+                    <h:outputLink value="#{request.contextPath}/pages/rotinas/inventory_update_test.xhtml">
+                        <i class="pi pi-box"></i><span>Atualização de Estoque (VTEX)</span>
+                    </h:outputLink>
+
+                    <!-- Processamento de Frete NFC-e -->
+                    <h:outputLink value="#{request.contextPath}/pages/rotinas/frete_nfce.xhtml">
+                        <i class="pi pi-truck"></i><span>Processamento de Frete (NFC-e)</span>
+                    </h:outputLink>
+                </div>
+            </ui:fragment>
+
+            <!-- Usuários -->
+            <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+                <div class="menu-item expandable" onclick="toggleSubMenu(this)">
+                    <i class="pi pi-users"></i> <span class="text">Usuários</span>
+                </div>
+                <div class="submenu">
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/user-edit.xhtml">
+                        <i class="pi pi-user-edit"></i><span>Editar Usuário</span>
+                    </h:outputLink>
+                </div>
+            </ui:fragment>
+
+            <!-- Logout -->
+            <h:form style="margin: 0; padding: 0;">
+                <div class="menu-item">
+                    <h:commandLink action="#{loginBean.logout}"
+                                   style="color:white; text-decoration:none; border:none; background:none;">
+                        <i class="pi pi-sign-out"></i>
+                        <span class="text">Sair</span>
+                    </h:commandLink>
+                </div>
+            </h:form>
+        </div>
+    </div>
+</ui:composition>

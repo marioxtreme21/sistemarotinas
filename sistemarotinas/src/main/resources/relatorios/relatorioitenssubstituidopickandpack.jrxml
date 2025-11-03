@@ -1,0 +1,253 @@
+<!-- Created with Jaspersoft Studio version 7.0.3.final using JasperReports Library version 7.0.0  -->
+<jasperReport name="relatorioitenssubstituidopickandpack" language="java" printOrder="Horizontal" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="30e77c2d-ff7f-45a4-bdd2-718b8d13aabb">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="RelatorioItemSubstituicaoDTO"/>
+	<property name="com.jaspersoft.studio.data.sql.tables" value=""/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w1" value="0"/>
+	<property name="com.jaspersoft.studio.data.sql.SQLQueryDesigner.sash.w2" value="1000"/>
+	<parameter name="REPORT_PARAMETERS_IMG" class="java.lang.String"/>
+	<parameter name="NUMERO_FILIAL" class="java.lang.String"/>
+	<query language="JavaBean"><![CDATA[]]></query>
+	<field name="codigo" class="java.lang.String">
+		<description><![CDATA[codigo]]></description>
+	</field>
+	<field name="diferencaPercentualPreco" class="java.lang.Double">
+		<description><![CDATA[diferencaPercentualPreco]]></description>
+	</field>
+	<field name="dataPedido" class="java.lang.String">
+		<description><![CDATA[dataPedido]]></description>
+	</field>
+	<field name="dataFaturamento" class="java.lang.String">
+		<description><![CDATA[dataFaturamento]]></description>
+	</field>
+	<field name="descricao" class="java.lang.String">
+		<description><![CDATA[descricao]]></description>
+	</field>
+	<field name="lojaRms" class="java.lang.String">
+		<description><![CDATA[lojaRms]]></description>
+	</field>
+	<field name="preco" class="java.lang.Double">
+		<description><![CDATA[preco]]></description>
+	</field>
+	<field name="cliente" class="java.lang.String">
+		<description><![CDATA[cliente]]></description>
+	</field>
+	<field name="ean" class="java.lang.String">
+		<description><![CDATA[ean]]></description>
+	</field>
+	<field name="tipoItem" class="java.lang.String">
+		<description><![CDATA[tipoItem]]></description>
+	</field>
+	<field name="dataUltimaEntrada" class="java.lang.String">
+		<description><![CDATA[dataUltimaEntrada]]></description>
+	</field>
+	<field name="estRms" class="java.lang.String">
+		<description><![CDATA[estRms]]></description>
+	</field>
+	<field name="pedido" class="java.lang.String">
+		<description><![CDATA[pedido]]></description>
+	</field>
+	<field name="quantidade" class="java.lang.Integer">
+		<description><![CDATA[quantidade]]></description>
+	</field>
+	<background splitType="Stretch"/>
+	<title height="32" splitType="Stretch">
+		<element kind="staticText" uuid="1f3ea4e2-5578-44d1-af78-f59435d92b90" x="4" y="3" width="224" height="19" fontName="Calibri" fontSize="11.0" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[Relátorio Itens Substituidos Pick And Pack]]></text>
+		</element>
+		<element kind="textField" uuid="b7845d4d-369d-4a1c-93a3-edcb9a485cfd" x="446" y="1" width="100" height="20" fontName="Calibri" pattern="dd/MM/yyyy" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[new SimpleDateFormat("dd-MM-yyyy").format(new Date().getTime() + 0* 24 * 60 * 60 * 1000)]]></expression>
+		</element>
+		<element kind="staticText" uuid="a7178bc6-82dd-4b40-af0b-527d3b803fc4" x="236" y="2" width="32" height="20" fontName="Calibri" fontSize="11.0" bold="true" hTextAlign="Left" vTextAlign="Middle">
+			<text><![CDATA[Filial:]]></text>
+		</element>
+		<element kind="staticText" uuid="953fe0c2-db3c-4c6d-8ddd-7c108f7354de" x="367" y="1" width="76" height="20" fontName="Calibri" fontSize="11.0" bold="true" vTextAlign="Middle">
+			<text><![CDATA[Data Geração:]]></text>
+		</element>
+		<element kind="image" uuid="5264633d-c20b-490d-9b99-ff296b4e50d6" x="690" y="0" width="111" height="31">
+			<expression><![CDATA[$P{REPORT_PARAMETERS_IMG} + "logohiperideal.png"]]></expression>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+			<property name="com.jaspersoft.studio.unit.y" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="textField" uuid="b4d7b079-35e5-4753-88e0-6b9d81c5e632" x="271" y="2" width="90" height="19" fontName="Calibri" fontSize="8.0" hTextAlign="Left" vTextAlign="Middle">
+			<expression><![CDATA[$P{NUMERO_FILIAL}]]></expression>
+		</element>
+	</title>
+	<pageHeader height="4" splitType="Stretch">
+		<element kind="line" uuid="12256990-89f2-4426-964c-364de88bf36c" x="2" y="1" width="797" height="1"/>
+	</pageHeader>
+	<columnHeader height="13" splitType="Stretch">
+		<element kind="line" uuid="f33ecbe1-0197-47e9-b916-2e87ee11f3e0" x="2" y="11" width="797" height="1"/>
+		<element kind="staticText" uuid="eb68d11d-5272-4f33-b79f-c19e240521a5" x="3" y="0" width="17" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[Loja]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="604c0408-8aea-49de-9de9-3da9c29785e0"/>
+		</element>
+		<element kind="staticText" uuid="022aabbc-c8fe-40da-9624-d550648038ff" x="23" y="0" width="28" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[Pedido]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8687a4a5-6449-478c-8e06-0301cd2d79ef"/>
+		</element>
+		<element kind="staticText" uuid="b704b6e9-2eab-42f7-92d3-1e51df83bf45" x="58" y="0" width="38" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[Cliente]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="923f352d-102e-4a47-a8dd-6d563a7d1756"/>
+		</element>
+		<element kind="staticText" uuid="90e57879-e637-4c81-8f91-8b79f4abb99d" x="156" y="0" width="24" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[Codigo]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="2fe8984e-f532-497a-8575-c38778cd3858"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+		</element>
+		<element kind="staticText" uuid="761ef224-e298-49f9-8fc3-9184cdb4283a" x="195" y="0" width="33" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[Ean]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e31e181f-2dbb-4ae6-9434-9e14f8c1afbb"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="08a8f4e9-ca2b-4539-8985-e62687a234c5" x="257" y="0" width="64" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[Descricão]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="85ce8c0b-ac6e-4812-8798-a0ee44da6649"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="cd843c2f-1d27-44d4-8ce1-dee71f2575cd" x="424" y="0" width="21" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[Preço]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="111dddc8-9809-48af-9a68-ce0297370c81"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="d0c4fdbd-a8b3-47e6-a16f-af0e81d13812" x="459" y="0" width="20" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[Qtd.]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="30d05df8-fab7-4133-9c8b-458ee7b9a12c"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="193b5874-5b5e-4fff-943d-5050b59601f1" x="493" y="0" width="49" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[D. Pedido]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="dab92f76-96f4-46bb-a3cc-50f95d60afd7"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="6c983b19-b8f2-47f7-bfbf-2f5b22192ede" x="547" y="0" width="28" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[Est. Rms]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="0808e610-193c-4be9-9e37-2c7f765f4285"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="d9e8ce4a-51f8-49a3-8c6f-e8d9054078e2" x="587" y="0" width="58" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[D. Faturamento]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="b85bbafe-8ed8-40ea-8a43-0fe55a18ab70"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+		</element>
+		<element kind="staticText" uuid="d40ef392-06e3-432a-a9af-d7434af72e9e" x="646" y="0" width="49" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[D. Ult. Entrada]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8d32c722-b46c-4692-a3f5-331094f3212d"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+		<element kind="staticText" uuid="f5dc5644-fa56-4553-948b-eb6ed5d38639" x="696" y="0" width="51" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[T. subs. P]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1079c5c1-ee97-4179-992a-72a86ecc0728"/>
+		</element>
+		<element kind="staticText" uuid="03875434-5fc0-434c-b525-e5eab2b4fd6a" x="757" y="0" width="44" height="10" fontName="Calibri" fontSize="8.0">
+			<text><![CDATA[P. D. Preço]]></text>
+			<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="32c74251-c4a1-4fe6-b877-e5f66971e066"/>
+			<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			<property name="com.jaspersoft.studio.unit.height" value="px"/>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<element kind="textField" uuid="1c568b21-ceef-43bf-aece-a6465742840c" x="3" y="1" width="17" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{lojaRms}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="604c0408-8aea-49de-9de9-3da9c29785e0"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="316d010a-9d96-4329-b255-8fe4aad33280" x="23" y="1" width="33" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{pedido}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8687a4a5-6449-478c-8e06-0301cd2d79ef"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="e1f6a5de-71ee-411e-84ce-a4aa88a38940" x="58" y="1" width="95" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{cliente}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="923f352d-102e-4a47-a8dd-6d563a7d1756"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			</element>
+			<element kind="textField" uuid="22fb9210-6692-4cbc-a642-db66cb1f4e56" x="156" y="1" width="35" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{codigo}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="2fe8984e-f532-497a-8575-c38778cd3858"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="cc607c90-f519-4518-827e-2b1aab4eac50" x="195" y="1" width="60" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{ean}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="e31e181f-2dbb-4ae6-9434-9e14f8c1afbb"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			</element>
+			<element kind="textField" uuid="2e2b6344-f0bb-42a0-9317-94224ce92304" x="257" y="1" width="166" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{descricao}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="85ce8c0b-ac6e-4812-8798-a0ee44da6649"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			</element>
+			<element kind="textField" uuid="33d7974c-a916-4eca-82bf-f3a4e0e1d2c5" x="424" y="1" width="34" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{preco}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="111dddc8-9809-48af-9a68-ce0297370c81"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="10ca483f-3691-4ea8-ae43-ddaeb38ab134" x="459" y="1" width="33" height="14" fontName="Calibri" fontSize="8.0" pattern="#,##0.###;(#,##0.###-)">
+				<expression><![CDATA[$F{quantidade}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="30d05df8-fab7-4133-9c8b-458ee7b9a12c"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="ffae6e91-0937-49f2-bd3d-b51c6af0e11a" x="493" y="1" width="53" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{dataPedido}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="dab92f76-96f4-46bb-a3cc-50f95d60afd7"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			</element>
+			<element kind="textField" uuid="dc94b7e1-f4a2-4ce1-82ff-f47474a6972f" x="547" y="1" width="39" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{estRms}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="0808e610-193c-4be9-9e37-2c7f765f4285"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="bdf13691-730a-40b3-881e-755f15595423" x="587" y="1" width="58" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{dataFaturamento}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="b85bbafe-8ed8-40ea-8a43-0fe55a18ab70"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			</element>
+			<element kind="textField" uuid="7d68074e-191b-4828-b3fe-e5e2afd560ee" x="646" y="1" width="49" height="14" fontName="Calibri" fontSize="8.0">
+				<expression><![CDATA[$F{dataUltimaEntrada}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="8d32c722-b46c-4692-a3f5-331094f3212d"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+			<element kind="textField" uuid="59b35576-5413-43c2-be54-470cde353924" x="696" y="1" width="60" height="14" fontName="Calibri" fontSize="7.0">
+				<expression><![CDATA[$F{tipoItem}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="1079c5c1-ee97-4179-992a-72a86ecc0728"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+				<property name="com.jaspersoft.studio.unit.width" value="px"/>
+			</element>
+			<element kind="textField" uuid="cb4dae18-075e-48d9-adf3-3daf366e3a05" x="757" y="1" width="44" height="14" fontName="Calibri" fontSize="8.0" pattern="#,##0.00">
+				<expression><![CDATA[$F{diferencaPercentualPreco}]]></expression>
+				<property name="com.jaspersoft.studio.spreadsheet.connectionID" value="32c74251-c4a1-4fe6-b877-e5f66971e066"/>
+				<property name="com.jaspersoft.studio.unit.height" value="px"/>
+			</element>
+		</band>
+	</detail>
+	<columnFooter height="13" splitType="Stretch"/>
+	<pageFooter height="23" splitType="Stretch">
+		<element kind="textField" uuid="228dd99b-c1bd-461b-bc0f-88b0ec918879" x="702" y="3" width="53" height="20" fontName="Calibri" hTextAlign="Right">
+			<expression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></expression>
+		</element>
+		<element kind="textField" uuid="8cc5f329-47bb-4bb5-be11-66fe6a89b104" x="760" y="3" width="40" height="20" fontName="Calibri" evaluationTime="Report">
+			<expression><![CDATA[" " + $V{PAGE_NUMBER}]]></expression>
+		</element>
+		<element kind="line" uuid="a4f2ae4e-a105-45c8-8f9b-fea38f17f2b2" x="3" y="0" width="797" height="1"/>
+	</pageFooter>
+	<summary height="22" splitType="Stretch">
+		<element kind="textField" uuid="cc839b7d-df1c-4933-a12f-244e3f0ab975" x="700" y="2" width="100" height="20" fontName="Calibri" evaluationTime="Report">
+			<expression><![CDATA[$V{PAGE_NUMBER}]]></expression>
+		</element>
+		<element kind="line" uuid="27f574bf-43fd-40ac-b6b1-5f73d77ec919" x="2" y="0" width="797" height="1"/>
+		<element kind="staticText" uuid="78997387-80a9-4ef0-9003-10adc81484cf" x="633" y="2" width="66" height="20" fontName="Calibri">
+			<text><![CDATA[Total Páginas:]]></text>
+		</element>
+	</summary>
+</jasperReport>

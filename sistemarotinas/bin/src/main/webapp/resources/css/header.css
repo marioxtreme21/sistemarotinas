@@ -1,0 +1,143 @@
+/* Topbar estilo moderno */
+.topbar-modern {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #002f66;
+    color: white;
+    padding: 8px 20px;
+    height: 50px;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.topbar-left img {
+    height: 30px;
+}
+
+.topbar-search input {
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: none;
+    font-size: 14px;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.topbar-right i,
+.topbar-right .user {
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+.topbar-right .user {
+    background-color: #144d89;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar {
+    width: 60px;
+    background-color: #2c3e50;
+    transition: width 0.3s ease;
+    overflow-x: hidden;
+    overflow-y: auto;
+    color: white;
+}
+
+.sidebar:hover {
+    width: 250px;
+}
+
+.sidebar .logo-container {
+    text-align: center;
+    padding: 10px;
+}
+
+.sidebar .logo-container img {
+    max-height: 40px;
+}
+
+.custom-menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-item {
+    padding: 12px;
+    cursor: pointer;
+    color: white !important;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.menu-item:hover {
+    background-color: #1a252f;
+}
+
+.menu-item i {
+    font-size: 1.6rem !important;
+    width: 40px;
+    text-align: center;
+}
+
+.menu-item .text {
+    display: none;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .menu-item .text {
+    display: inline;
+    opacity: 1;
+    margin-left: 10px;
+}
+
+.submenu {
+    display: none;
+    flex-direction: column;
+    padding-left: 20px;
+}
+
+.submenu.active {
+    display: flex;
+}
+
+.submenu a {
+    padding: 6px 10px;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.submenu a i {
+    font-size: 1.4rem !important;
+    width: 40px;
+    text-align: center;
+}
+
+.submenu a span {
+    display: none;
+}
+
+.sidebar:hover .submenu a span {
+    display: inline;
+    margin-left: 5px;
+}
+
+.submenu a:hover {
+    background-color: #1a252f;
+}

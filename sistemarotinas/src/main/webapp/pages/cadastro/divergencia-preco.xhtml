@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+	<title>Divergência de Preço — Promo 144 × Nível 50</title>
+</h:head>
+<h:body>
+	<h:form id="form">
+		<p:panel
+			header="Divergência de Preço (Promoções 144 vigentes × Nível 50)">
+			<p:messages id="msgs" showDetail="true" closable="true" />
+
+			<p:panelGrid columns="4" layout="grid"
+				columnClasses="ui-g-12 ui-md-2,ui-g-12 ui-md-4,ui-g-12 ui-md-2,ui-g-12 ui-md-4">
+				<h:outputLabel for="loja144" value="Loja (144):" />
+				<p:inputNumber id="loja144" value="#{divergenciaPrecoBean.loja144}"
+					decimalPlaces="0" />
+
+				<h:outputLabel for="nivel50" value="Nível (50):" />
+				<p:inputNumber id="nivel50" value="#{divergenciaPrecoBean.nivel50}"
+					decimalPlaces="0" />
+			</p:panelGrid>
+
+			<p:separator />
+
+			<p:commandButton value="Comparar"
+				actionListener="#{divergenciaPrecoBean.comparar}"
+				update="form msgs tabela" icon="pi pi-search" />
+
+			<p:commandButton value="Baixar XLSX" ajax="false"
+				icon="pi pi-download">
+				<p:fileDownload value="#{divergenciaPrecoBean.arquivoXlsx}" />
+			</p:commandButton>
+		</p:panel>
+
+		<p:panel header="Resultado — Somente itens com preços diferentes">
+			<p:dataTable id="tabela" value="#{divergenciaPrecoBean.resultado}"
+				var="r" rows="50" paginator="true">
+
+				<p:column headerText="EAN">
+					<h:outputText value="#{r.codigoEan}" />
+				</p:column>
+
+				<p:column headerText="Produto">
+					<h:outputText value="#{r.codigoProduto}" />
+				</p:column>
+
+				<p:column headerText="Descrição">
+					<h:outputText value="#{r.descricao}" />
+				</p:column>
+
+				<p:column headerText="Embalagem">
+					<h:outputText value="#{r.embalagem}" />
+				</p:column>
+
+				<!-- NOVAS COLUNAS -->
+				<p:column headerText="Data inicial">
+					<h:outputText value="#{r.dataInicial}">
+						<!-- Em Jakarta Faces 3/4 use 'type="localDateTime"'; ajuste se necessário -->
+						<f:convertDateTime type="localDateTime"
+							pattern="dd/MM/yyyy HH:mm:ss" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="Data final">
+					<h:outputText value="#{r.dataFinal}">
+						<f:convertDateTime type="localDateTime"
+							pattern="dd/MM/yyyy HH:mm:ss" />
+					</h:outputText>
+				</p:column>
+
+				<p:column headerText="Preço 144">
+					<h:outputText value="#{r.preco144}" />
+				</p:column>
+
+				<p:column headerText="Preço 50">
+					<h:outputText value="#{r.preco50}" />
+				</p:column>
+
+				<p:column headerText="Diferença">
+					<h:outputText value="#{r.diferenca}" />
+				</p:column>
+
+			</p:dataTable>
+		</p:panel>
+	</h:form>
+</h:body>
+</html>

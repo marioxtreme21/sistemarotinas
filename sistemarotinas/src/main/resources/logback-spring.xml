@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <contextName>default</contextName>
+
+    <!-- Diretório base dos logs -->
+    <springProperty name="LOG_DIR" source="logging.file.path"
+        defaultValue="${catalina.base}/webapps/sistemaecommerce/logs" />
+
+    <property name="LOG_PATTERN"
+        value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
+
+    <!-- ===================== APPENDERS COMUNS ===================== -->
+
+    <!-- Console -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Arquivo principal -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/sistemaecommerce.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/sistemaecommerce.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Hibernate SQL -->
+    <appender name="HIBERNATE_SQL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/hibernate-sql.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/hibernate-sql.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Hibernate Bind -->
+    <appender name="HIBERNATE_BIND" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/hibernate-binder.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/hibernate-binder.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Importação de usuários do AD -->
+    <appender name="IMPORTACAO_USUARIO_AD" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/log_importacao_usuario.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/log_importacao_usuario.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Cadastro de loja -->
+    <appender name="CADASTRO_LOJA" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/cadastroloja.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/cadastroloja.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>15</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ===================== PREÇO (existentes) ===================== -->
+
+    <!-- Orquestração de Preço -->
+    <appender name="PRICE_UPDATE_ASYNC" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/price-update.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/price-update.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>15</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Cliente VTEX Pricing -->
+    <appender name="VTEX_PRICING_ASYNC" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/vtex-pricing.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/vtex-pricing.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>15</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ===================== ESTOQUE (NOVOS) ===================== -->
+
+    <!-- Orquestração/Serviço de Estoque -->
+    <appender name="INVENTORY_UPDATE_ASYNC" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/inventory-update.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/inventory-update.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>15</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Cliente VTEX de Estoque -->
+    <appender name="VTEX_INVENTORY_ASYNC" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/vtex-inventory.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/vtex-inventory.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>15</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ===================== ROOT & LOGGERS ===================== -->
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+
+    <!-- Hibernate SQL Logger -->
+    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+        <appender-ref ref="HIBERNATE_SQL" />
+    </logger>
+
+    <!-- Hibernate Bind Logger -->
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+        <appender-ref ref="HIBERNATE_BIND" />
+    </logger>
+
+    <!-- Importação AD -->
+    <logger name="sistema.helpdesk.primefaces.service.LdapImportService" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="IMPORTACAO_USUARIO_AD" />
+    </logger>
+
+    <!-- PREÇO -->
+    <logger name="sistema.ecommerce.primefaces.service.ParallelPriceUpdateOrchestrator" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="PRICE_UPDATE_ASYNC"/>
+    </logger>
+
+    <logger name="sistema.ecommerce.primefaces.vtex.VtexPricingClientImpl" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="VTEX_PRICING_ASYNC"/>
+    </logger>
+
+    <!-- ===== ESTOQUE (novos loggers) ===== -->
+
+    <!-- Orquestrador paralelo de estoque -->
+    <logger name="sistema.ecommerce.primefaces.service.ParallelInventoryUpdateOrchestrator" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="INVENTORY_UPDATE_ASYNC"/>
+    </logger>
+
+    <!-- Service principal de estoque (ajuste o nome se usar outro) -->
+    <logger name="sistema.ecommerce.primefaces.service.InventoryUpdateServiceImpl" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="INVENTORY_UPDATE_ASYNC"/>
+    </logger>
+
+    <!-- Bean JSF de estoque (tela) -->
+    <logger name="sistema.ecommerce.primefaces.bean.InventoryUpdateBean" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="INVENTORY_UPDATE_ASYNC"/>
+    </logger>
+
+    <!-- Cliente VTEX de estoque -->
+    <logger name="sistema.ecommerce.primefaces.vtex.VtexInventoryClientImpl" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="VTEX_INVENTORY_ASYNC"/>
+    </logger>
+
+</configuration>

@@ -1,0 +1,59 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:pesquisaTemplateComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	xmlns:botoesCrudComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	template="/WEB-INF/templates/layout.xhtml">
+
+	<h:head>
+		<h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+	</h:head>
+
+	<ui:define name="title">Cadastro de Setor Responsável</ui:define>
+
+	<ui:define name="content">
+		<h:form id="formPesquisa">
+			<ui:include src="/resources/componentes/pesquisaSetorResponsavel.xhtml" />
+		</h:form>
+
+		<h:form id="formCadastroSetor">
+			<p:growl id="growl" showDetail="true" life="3000" />
+
+			<p:commandButton value="Novo Cadastro" 
+				actionListener="#{setorResponsavelBean.prepararNovoCadastro}" 
+				update="formCadastroSetor" process="@this" />
+
+			<p:panel id="panelCadastroSetor" header="Cadastro de Setor Responsável" 
+				styleClass="panelPesquisa" visible="#{setorResponsavelBean.mostrarFormulario}">
+
+				<p:panelGrid id="cadastroSetor" columns="2" cellpadding="10" styleClass="panelPesquisa"
+					columnClasses="label, value">
+
+					<p:outputLabel for="nome" value="Nome:" />
+					<p:inputText id="nome" value="#{setorResponsavelBean.setor.nome}" required="true" />
+
+					<p:outputLabel for="descricao" value="Descrição:" />
+					<p:inputText id="descricao" value="#{setorResponsavelBean.setor.descricao}" />
+
+					<p:outputLabel for="ativo" value="Ativo:" />
+					<p:selectBooleanCheckbox id="ativo" value="#{setorResponsavelBean.setor.ativo}" />
+				</p:panelGrid>
+
+				<p:commandButton value="Salvar" action="#{setorResponsavelBean.salvar}" 
+					update="growl formCadastroSetor formTable" />
+			</p:panel>
+		</h:form>
+
+		<h:form id="formTable">
+			<p:dataTable id="tableResult" value="#{setorResponsavelBean.setoresLazy}"
+				var="setor" emptyMessage="Não há valores para exibição."
+				paginator="true" rows="10" lazy="true"
+				rowsPerPageTemplate="10,20,50"
+				paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+				<ui:include src="/resources/componentes/dataTableCadastroSetorResponsavel.xhtml" />
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

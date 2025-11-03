@@ -1,0 +1,31 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+	<p:column headerText="Nome">
+		<h:outputText value="#{setor.nome}" />
+	</p:column>
+
+	<p:column headerText="Descrição">
+		<h:outputText value="#{setor.descricao}" />
+	</p:column>
+
+	<p:column headerText="Ativo">
+		<h:outputText value="#{setor.ativo ? 'Sim' : 'Não'}" />
+	</p:column>
+
+	<p:column headerText="Ações">
+		<p:commandButton value="Editar" icon="pi pi-pencil"
+			action="#{setorResponsavelBean.prepararEditar(setor)}"
+			process="@this"
+			update=":formCadastroSetor" />
+
+		<p:commandButton value="Excluir"
+			action="#{setorResponsavelBean.excluir(setor.id)}"
+			update=":formTable :formCadastroSetor"
+			onclick="if(!confirm('Confirma a exclusão do setor: #{setor.nome}?')) return false;" />
+	</p:column>
+
+</ui:composition>

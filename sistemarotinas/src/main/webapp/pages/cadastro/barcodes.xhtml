@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+<h:head>
+    <title>Barcodes Rotativos</title>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <style>
+        html, body { height: 100%; margin: 0; padding: 0; background:#fff; }
+        .wrap {
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        #barcode { width: 120vw; height: 48vh; }
+        .code-label { font-family: Arial, sans-serif; font-size: 1.4rem; letter-spacing: 0.06rem; }
+        .meta-label { font-family: Arial, sans-serif; font-size: 1.1rem; opacity: .9; }
+        #flashOverlay{ position: fixed; inset: 0; background: #ffffff; display: none; z-index: 9999; }
+        .lote-info { font-size: .95rem; opacity: .8; margin-left: .75rem; }
+        .counter { font-family: Arial, sans-serif; font-size: 0.95rem; margin-top: 6px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; justify-content: center; }
+        .progress { width: 80vw; max-width: 900px; height: 8px; background: #eee; border-radius: 8px; overflow: hidden; margin: 4px auto 0; }
+        .progress-inner { height: 100%; width: 0%; background: #4caf50; transition: width .3s ease; }
+    </style>
+</h:head>
+
+<h:body>
+<div id="flashOverlay" aria-hidden="true"></div>
+
+<h:form id="frm">
+    <!-- Seletor de consulta -->
+    <p:toolbar style="margin-bottom:10px">
+        <p:toolbarGroup>
+            <p:outputLabel for="modo" value="Consulta: " style="margin-right:6px"/>
+            <p:selectOneMenu id="modo" value="#{barcodeBean.modoConsulta}" style="min-width:260px">
+                <f:selectItem itemValue="TODOS"   itemLabel="Todos os produtos (BASE_SQL)"/>
+                <f:selectItem itemValue="LISTA_A" itemLabel="Promoção Fidelidade"/>
+                <f:selectItem itemValue="LISTA_B" itemLabel="Promoção Normal"/>
+                <f:selectItem itemValue="LISTA_C" itemLabel="Promocao Leve e Pague"/>
+                <p:ajax listener="#{barcodeBean.onModoConsultaChange}" update="@none" oncomplete="location.reload();"/>
+            </p:selectOneMenu>
+        </p:toolbarGroup>
+        <p:toolbarGroup align="right">
+            <p:outputLabel value="Nível atual: #{barcodeBean.codigoNivel}" />
+        </p:toolbarGroup>
+    </p:toolbar>
+
+    <p:panel id="panel" header="Leitor de Códigos — Rotação (lotes de 500)">
+        <div class="wrap">
+            <svg id="barcode"></svg>
+
+            <div class="code-label">
+                Código atual: <span id="codeValue"></span>
+            </div>
+
+            <!-- Metadados abaixo do barcode -->
+            <div class="meta-label">
+                <small>Produto: <b><span id="produtoValue"></span></b></small>
+            </div>
+            <!-- NOVO: Descrição entre Produto e EAN -->
+            <div class="meta-label">
+                <small>Descrição: <b><span id="descValue"></span></b></small>
+            </div>
+            <div class="meta-label">
+                <small>EAN: <b><span id="eanValue"></span></b></small>
+            </div>
+            <div class="meta-label">
+                <small>Preço: <b><span id="priceValue"></span></b></small>
+            </div>
+
+            <!-- HUD -->
+            <div class="counter">
+                <span>Exibidos: <b><span id="shownCount">0</span></b> de <b><span id="totalCount">0</span></b> (<span id="shownPercent">0</span>%)</span>
+                <span>Status: <b id="statusBadge">Rodando</b></span>
+                <div class="progress">
+                    <div id="progressInner" class="progress-inner"></div>
+                </div>
+            </div>
+        </div>
+
+        <p:toolbar style="margin-top:10px">
+            <p:toolbarGroup>
+                <p:commandButton id="btnPause" type="button" value="Pausar" onclick="togglePause();" />
+                <p:spacer width="8"/>
+                <p:commandButton type="button" value="Anterior agora" onclick="cyclePrev();"/>
+                <p:spacer width="8"/>
+                <p:commandButton type="button" value="Próximo agora" onclick="cycleNow();"/>
+                <span class="lote-info">
+                    Lote #{barcodeBean.loteIndice + 1} / #{barcodeBean.totalLotes}
+                    — exibindo até #{barcodeBean.loteTamanho} códigos
+                </span>
+            </p:toolbarGroup>
+            <p:toolbarGroup align="right">
+                <p:commandButton value="Lote anterior"
+                                 actionListener="#{barcodeBean.loteAnterior}"
+                                 update="@none"
+                                 oncomplete="location.reload();"/>
+                <p:commandButton value="Próximos 500"
+                                 actionListener="#{barcodeBean.proximoLote}"
+                                 update="@none"
+                                 oncomplete="location.reload();"/>
+                <p:commandButton value="Recarregar lista do servidor"
+                                 actionListener="#{barcodeBean.refresh}"
+                                 update="@none"
+                                 oncomplete="location.reload();"/>
+            </p:toolbarGroup>
+        </p:toolbar>
+    </p:panel>
+
+    <!-- Códigos e metadados do lote atual -->
+    <h:outputScript target="body">
+        var codes       = #{barcodeBean.codigosParaTelaJson};
+        var produtos    = #{barcodeBean.produtosParaTelaJson};
+        var descricoes  = #{barcodeBean.descricoesParaTelaJson}; <!-- NOVO -->
+        var eans        = #{barcodeBean.eansParaTelaJson};
+        var precos      = #{barcodeBean.precosParaTelaJson};
+
+        if (!Array.isArray(codes) || !codes.length) { codes = ["7890123456789"]; }
+        if (!Array.isArray(produtos))   { produtos = []; }
+        if (!Array.isArray(descricoes)) { descricoes = []; }
+        if (!Array.isArray(eans))       { eans = []; }
+        if (!Array.isArray(precos))     { precos = []; }
+
+        console.log("Lote -> Codes:", codes.length, "Produtos:", produtos.length, "Descrições:", descricoes.length, "EANs:", eans.length, "Preços:", precos.length);
+    </h:outputScript>
+
+    <h:outputScript target="body">
+    //<![CDATA[
+    (function(){
+        var idx = 0;                 // índice do item que SERÁ desenhado
+        var intervalMs = 6000;
+        var blankMs = 400;
+        var paused = false;
+        var timer  = null;
+
+        function setText(id, txt){
+            var el = document.getElementById(id);
+            if (el) el.textContent = (txt == null ? "" : txt);
+        }
+
+        // Agora a contagem usa o ÍNDICE atual (assim, ao voltar, a contagem decresce)
+        function updateCounterFromIdx() {
+            var total = codes.length || 0;
+            var shown = total ? (idx + 1) : 0;  // 1..N
+            setText('shownCount', shown);
+            setText('totalCount', total);
+            var pct = total ? Math.floor(shown * 100 / total) : 0;
+            setText('shownPercent', pct);
+            var bar = document.getElementById('progressInner');
+            if (bar) bar.style.width = pct + '%';
+        }
+
+        setText('totalCount', codes.length);
+
+        function showFlash(){ document.getElementById("flashOverlay").style.display = "block"; }
+        function hideFlash(){ document.getElementById("flashOverlay").style.display = "none"; }
+
+        function render(format, value){
+            JsBarcode("#barcode", value, {
+                format: format,
+                displayValue: true,
+                fontSize: 34,
+                margin: 8,
+                textMargin: 4
+            });
+        }
+
+        function draw(){
+            var raw = (codes[idx] || "").toString().trim();
+            var onlyDigits = raw.replace(/\D/g, "");
+            setText("codeValue", raw);
+
+            // Metadados na MESMA posição do lote
+            var produto   = (produtos   && produtos[idx])   ? produtos[idx]   : "";
+            var descricao = (descricoes && descricoes[idx]) ? descricoes[idx] : "";
+            var ean       = (eans       && eans[idx])       ? eans[idx]       : "";
+            var preco     = (precos     && precos[idx])     ? precos[idx]     : "";
+
+            // Formata preço (pt-BR) se for numérico
+            var precoFmt = preco;
+            var n = (typeof preco === 'string') ? Number(preco.replace(',', '.')) : Number(preco);
+            if (!isNaN(n)) {
+                try { precoFmt = n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); } catch(e) {}
+            }
+
+            setText("produtoValue", produto);
+            setText("descValue", descricao);   // NOVO
+            setText("eanValue", ean);
+            setText("priceValue", precoFmt);
+
+            if (/^\d{13}$/.test(onlyDigits)) {
+                try { render("EAN13", onlyDigits); }
+                catch (e) { console.warn("EAN13 inválido, usando CODE128", e); render("CODE128", raw); }
+            } else {
+                render("CODE128", raw);
+            }
+
+            updateCounterFromIdx();
+
+            // avança para o PRÓXIMO a ser desenhado na próxima chamada
+            idx = (idx + 1) % codes.length;
+        }
+
+        function cycle(){
+            showFlash();
+            setTimeout(function(){ draw(); hideFlash(); }, blankMs);
+        }
+
+        // Próximo imediato
+        window.cycleNow = function(){ cycle(); };
+
+        // Anterior imediato: move 2 para trás (porque o draw() incrementa 1 no final)
+        window.cyclePrev = function(){
+            if (!codes.length) return;
+            idx = (idx - 2 + codes.length) % codes.length;
+            cycle();
+        };
+
+        function schedule(){
+            if (timer) { clearInterval(timer); timer = null; }
+            if (!paused) { timer = setInterval(cycle, intervalMs); }
+        }
+
+        window.togglePause = function(){
+            paused = !paused;
+            var b = document.getElementById('btnPause');
+            if (b) b.value = paused ? 'Continuar' : 'Pausar';
+            setText('statusBadge', paused ? 'Pausado' : 'Rodando');
+            schedule();
+        };
+
+        draw();
+        schedule();
+    })();
+    //]]>
+    </h:outputScript>
+</h:form>
+</h:body>
+</html>

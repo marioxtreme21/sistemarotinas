@@ -1,0 +1,14 @@
+package sistema.rotinas.primefaces.enums;
+
+public enum TipoInteracao {
+
+    EMAIL_RECEBIDO,
+    EMAIL_ENVIADO,
+    INTERACAO_MANUAL,
+    STATUS_ATUALIZADO,
+    MUDANCA_PRIORIDADE,
+    ATRIBUICAO_TECNICO,
+    REABERTURA_CHAMADO,
+    ENCERRAMENTO_CHAMADO,
+    CRIACAO_CHAMADO, RESPOSTA_USUARIO;
+}

@@ -1,0 +1,101 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" />
+    </h:head>
+
+    <ui:define name="title">Teste – Produtos E-commerce</ui:define>
+
+    <ui:define name="content">
+        <h:form id="formTeste">
+            <p:growl id="growl" showDetail="true" life="3000" />
+
+            <!-- Leitura simples na view externa -->
+            <p:panel header="Leitura de Produtos (View: produtos_ecommerce)" styleClass="panelPesquisa">
+                <p:panelGrid columns="3" columnClasses="label,value,btns" styleClass="panelPesquisa">
+                    <p:outputLabel for="limite" value="Qtde p/ leitura:" />
+                    <p:inputNumber id="limite" value="#{produtoEcommerceExternoBean.limiteLeitura}"
+                                   minValue="1" decimalPlaces="0" />
+                    <p:commandButton value="Ler Produtos do Oracle"
+                                     icon="pi pi-database"
+                                     actionListener="#{produtoEcommerceExternoBean.lerPrimeiros}"
+                                     update="growl"
+                                     styleClass="ui-button-primary" />
+                </p:panelGrid>
+            </p:panel>
+
+            <!-- Comparação / Relatório -->
+            <p:panel header="Comparação &amp; Relatório (.xlsx) – situação = 1" styleClass="panelPesquisa">
+                <p:panelGrid columns="4" columnClasses="label,value,label,value" styleClass="panelPesquisa">
+                    <p:outputLabel for="direcao" value="Direção:" />
+                    <p:selectOneMenu id="direcao" value="#{produtoEcommerceExternoBean.direcao}" style="min-width:220px">
+                        <f:selectItem itemLabel="EXTERNO \ @rms (B \ A)" itemValue="B_A" />
+                        <f:selectItem itemLabel="@rms \ EXTERNO (A \ B)" itemValue="A_B" />
+                        <p:ajax update="toolCompare totalBA totalAB growl" />
+                    </p:selectOneMenu>
+
+                    <p:outputLabel for="sample" value="Tamanho do sample:" />
+                    <p:inputNumber id="sample" value="#{produtoEcommerceExternoBean.sampleComparacao}"
+                                   minValue="1" decimalPlaces="0" />
+                </p:panelGrid>
+
+                <p:toolbar id="toolCompare" style="margin-top:.5rem">
+                    <p:toolbarGroup>
+                        <!-- Contar diffs conforme direção -->
+                        <p:commandButton value="Contar diferenças"
+                                         icon="pi pi-hashtag"
+                                         actionListener="#{produtoEcommerceExternoBean.contarDiferencas}"
+                                         rendered="#{produtoEcommerceExternoBean.direcao eq 'B_A'}"
+                                         update="growl totalBA" styleClass="ui-button-secondary"/>
+                        <p:commandButton value="Contar diferenças"
+                                         icon="pi pi-hashtag"
+                                         actionListener="#{produtoEcommerceExternoBean.contarDiferencasRmsMenosExterno}"
+                                         rendered="#{produtoEcommerceExternoBean.direcao eq 'A_B'}"
+                                         update="growl totalAB" styleClass="ui-button-secondary"/>
+
+                        <!-- Sample conforme direção -->
+                        <p:commandButton value="Gerar sample (console)"
+                                         icon="pi pi-list"
+                                         actionListener="#{produtoEcommerceExternoBean.compararMostrarSample}"
+                                         rendered="#{produtoEcommerceExternoBean.direcao eq 'B_A'}"
+                                         update="growl" styleClass="ui-button-help"/>
+                        <p:commandButton value="Gerar sample (console)"
+                                         icon="pi pi-list"
+                                         actionListener="#{produtoEcommerceExternoBean.compararMostrarSampleRmsMenosExterno}"
+                                         rendered="#{produtoEcommerceExternoBean.direcao eq 'A_B'}"
+                                         update="growl" styleClass="ui-button-help"/>
+                    </p:toolbarGroup>
+
+                    <p:toolbarGroup align="right">
+                        <!-- Download XLSX: por COD -->
+                        <p:commandButton value="Exportar diferenças (.xlsx)" icon="pi pi-file-excel" ajax="false">
+                            <p:fileDownload value="#{produtoEcommerceExternoBean.relatorioDiferencasXlsx}" />
+                        </p:commandButton>
+
+                        <!-- NOVO: Download XLSX por LOJA+COD -->
+                        <p:commandButton value="Exportar por LOJA (.xlsx)" icon="pi pi-file-excel" ajax="false"
+                                         styleClass="ui-button-success" style="margin-left:.5rem">
+                            <p:fileDownload value="#{produtoEcommerceExternoBean.relatorioDiferencasPorLojaXlsx}" />
+                        </p:commandButton>
+                    </p:toolbarGroup>
+                </p:toolbar>
+
+                <!-- Totais de cada sentido -->
+                <h:panelGroup id="totalBA" style="display:block;margin-top:.5rem">
+                    <h:outputText value="Total EXTERNO \ @rms (B \ A): #{produtoEcommerceExternoBean.totalDiferencas}"
+                                  rendered="#{not empty produtoEcommerceExternoBean.totalDiferencas}" />
+                </h:panelGroup>
+                <h:panelGroup id="totalAB" style="display:block">
+                    <h:outputText value="Total @rms \ EXTERNO (A \ B): #{produtoEcommerceExternoBean.totalDiferencasRmsMenosExterno}"
+                                  rendered="#{not empty produtoEcommerceExternoBean.totalDiferencasRmsMenosExterno}" />
+                </h:panelGroup>
+            </p:panel>
+
+        </h:form>
+    </ui:define>
+</ui:composition>

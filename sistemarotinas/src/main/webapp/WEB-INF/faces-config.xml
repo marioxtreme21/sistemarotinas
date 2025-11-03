@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<faces-config xmlns="https://jakarta.ee/xml/ns/jakartaee"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+              https://jakarta.ee/xml/ns/jakartaee/web-facesconfig_4_1.xsd"
+              version="4.1">
+              
+    <application>
+        <!-- Configuração do Locale padrão -->
+        <locale-config>
+            <default-locale>en</default-locale>
+        </locale-config>
+        
+        <!-- Resolvedor de expressões personalizado -->
+        <el-resolver>org.primefaces.application.exceptionhandler.PrimeExceptionHandlerELResolver</el-resolver>
+
+        <!-- Arquivo de mensagens para internacionalização -->
+        <resource-bundle>
+            <base-name>build</base-name>
+            <var>build</var>
+        </resource-bundle>
+    </application>
+
+    <lifecycle>
+        <!-- Listener de Fase -->
+        <phase-listener>org.primefaces.component.lifecycle.LifecyclePhaseListener</phase-listener>
+    </lifecycle>
+
+    <factory>
+        <!-- Fabrica de Contexto do Faces para suporte HTML5 -->
+        <faces-context-factory>org.primefaces.application.factory.Html5FacesContextFactory</faces-context-factory>
+        
+        <!-- Fábrica de Tratamento de Exceções do PrimeFaces -->
+        <exception-handler-factory>org.primefaces.application.exceptionhandler.PrimeExceptionHandlerFactory</exception-handler-factory>
+
+        <!-- Fábrica de Ciclo de Vida do PrimeFaces -->
+        <lifecycle-factory>org.primefaces.clientwindow.PrimeClientWindowLifecycleFactory</lifecycle-factory>
+    </factory>
+    
+</faces-config>

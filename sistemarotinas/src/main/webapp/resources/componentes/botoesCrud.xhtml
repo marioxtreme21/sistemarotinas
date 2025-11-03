@@ -1,0 +1,31 @@
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:p="http://primefaces.org/ui"
+              xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+              xmlns:composite="http://xmlns.jcp.org/jsf/composite"
+              xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+    <!-- Definindo a interface do componente com o nome "botoesCrud" -->
+    <composite:interface name="botoesCrud">
+    
+        <composite:attribute name="managedBeanView" required="true" />
+        <!-- Declaração dos atributos esperados para ações CRUD -->
+        <composite:attribute name="salvar" required="true" />
+        <composite:attribute name="editar" required="true" />
+        <composite:attribute name="excluir" required="true" />
+        <composite:attribute name="atualizar" required="true" />
+    </composite:interface>
+
+    <composite:implementation>
+    
+      <p:commandButton value="#{lojaBean.editing ? 'Atualizar' : 'Salvar'}" 
+                         action="#{lojaBean.salvar()}"
+                         update="@form formCadastroLoja formTable growl"
+                         process="@this" />
+
+        <p:commandButton value="Cancelar" 
+                         action="#{lojaBean.clearForm()}" 
+                         update="formCadastroLoja" />
+    
+
+    </composite:implementation>
+</ui:component>

@@ -1,0 +1,42 @@
+<!-- src/main/webapp/pages/rotinas/frete_nfce.xhtml -->
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Processamento de Frete (NFC-e)</ui:define>
+
+    <ui:define name="content">
+        <h:form id="formFrete">
+            <p:growl id="growl" showDetail="true" life="4000" />
+
+            <p:panel header="Parâmetros" styleClass="panelPesquisa">
+                <p:panelGrid id="gridParams" columns="2" columnClasses="label,value" cellpadding="8">
+
+                    <p:outputLabel for="dataInicial" value="Data inicial:" />
+                    <p:datePicker id="dataInicial"
+                                  value="#{freteNfceBean.dataInicial}"
+                                  showIcon="true"
+                                  pattern="dd/MM/yyyy"
+                                  manualInput="false"
+                                  touchUI="false">
+                        <f:convertDateTime type="localDate" pattern="dd/MM/yyyy" />
+                    </p:datePicker>
+
+                </p:panelGrid>
+
+                <p:separator />
+
+                <p:commandButton value="Executar"
+                                 icon="pi pi-play"
+                                 actionListener="#{freteNfceBean.executar}"
+                                 process="@form"
+                                 update="growl"
+                                 styleClass="ui-button-primary" />
+
+            </p:panel>
+        </h:form>
+    </ui:define>
+</ui:composition>

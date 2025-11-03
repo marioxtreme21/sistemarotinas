@@ -1,0 +1,96 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	template="/WEB-INF/templates/layout.xhtml">
+
+	<h:head>
+		<h:outputStylesheet name="estilo.css" library="css" />
+	</h:head>
+
+	<ui:define name="title">Cadastro de Usuários</ui:define>
+
+	<ui:define name="content">
+
+		<!-- 🔍 Filtro de Pesquisa -->
+		<h:form id="formPesquisaUsuario">
+			<ui:include src="/resources/componentes/pesquisaUsuario.xhtml" />
+		</h:form>
+
+		<!-- ✏️ Diálogo de Cadastro (fora de form) -->
+		<p:dialog id="userDialog"
+			header="#{userEditBean.editing ? 'Edição de Usuário' : 'Criar Novo Usuário'}"
+			widgetVar="userDialog" modal="true" resizable="false" draggable="true"
+			appendTo="@(body)" styleClass="wide-dialog">
+
+			<h:form id="formDialogCadastro">
+				<h:panelGrid columns="2" cellpadding="10" style="width: 100%;">
+
+					<h:outputLabel for="nome" value="Nome:" />
+					<p:inputText id="nome" value="#{userEditBean.user.nome}" required="true" />
+
+					<h:outputLabel for="sobrenome" value="Sobrenome:" />
+					<p:inputText id="sobrenome" value="#{userEditBean.user.sobrenome}" />
+
+					<h:outputLabel for="username" value="Username:" />
+					<p:inputText id="username" value="#{userEditBean.user.username}" required="true" />
+
+					<h:outputLabel for="password" value="Senha:" />
+					<p:password id="password" value="#{userEditBean.user.password}" required="#{!userEditBean.editing}" />
+
+					<h:outputLabel for="role" value="Papel:" />
+					<p:selectOneMenu id="role" value="#{userEditBean.selectedRole}" converter="roleConverter" required="true">
+						<f:selectItem itemLabel="Selecione" itemValue="#{null}" />
+						<f:selectItems value="#{userEditBean.availableRoles}" var="role" itemLabel="#{role.name}" itemValue="#{role}" />
+					</p:selectOneMenu>
+
+					<h:outputLabel for="lojasPickList" value="Lojas Permitidas:" />
+					<p:pickList id="lojasPickList"
+						value="#{userEditBean.lojasDualList}" var="loja"
+						itemLabel="#{loja.nome}" itemValue="#{loja}"
+						converter="lojaConverter" showSourceControls="true"
+						showTargetControls="true" showSourceFilter="true"
+						showTargetFilter="true" filterMatchMode="contains"
+						responsive="true" styleClass="wide-picklist">
+
+						<f:facet name="sourceCaption">Disponíveis</f:facet>
+						<f:facet name="targetCaption">Selecionadas</f:facet>
+
+						<p:column style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 320px;">
+							<h:outputText value="#{loja.nome}" title="#{loja.nome}" />
+						</p:column>
+					</p:pickList>
+				</h:panelGrid>
+
+				<p:separator />
+				<p:commandButton
+					value="#{userEditBean.editing ? 'Atualizar' : 'Salvar'}"
+					action="#{userEditBean.saveUser}"
+					update=":formTable :formTable:growl"
+					process="@form"
+					oncomplete="PF('userDialog').hide()"
+					style="width: 100%; max-width: 200px; display: block; margin: 10px auto;" />
+			</h:form>
+		</p:dialog>
+
+		<!-- 📋 Tabela de resultados -->
+		<h:form id="formTable">
+			<p:growl id="growl" showDetail="true" life="3000" />
+
+			<p:commandButton value="Novo Usuário"
+				actionListener="#{userEditBean.prepareCreateUser}"
+				update=":formDialogCadastro"
+				process="@this"
+				resetValues="true"
+				oncomplete="PF('userDialog').show()" />
+
+			<p:dataTable id="tableUsuarios" value="#{userEditBean.usuariosLazy}"
+				var="user" paginator="true" rows="10" lazy="true" responsive="true"
+				rowsPerPageTemplate="10,20,50" emptyMessage="Nenhum usuário encontrado.">
+				<ui:include src="/resources/componentes/dataTableCadastroUsuario.xhtml" />
+			</p:dataTable>
+		</h:form>
+
+	</ui:define>
+</ui:composition>

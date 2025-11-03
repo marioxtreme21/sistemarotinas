@@ -1,0 +1,59 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:pesquisaTemplateComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	xmlns:botoesCrudComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	template="/WEB-INF/templates/layout.xhtml">
+
+	<h:head>
+		<h:outputStylesheet name="estilo.css" library="css" />
+	</h:head>
+
+	<ui:define name="title">Cadastro de Status de Chamado</ui:define>
+
+	<ui:define name="content">
+		<h:form id="formPesquisa">
+			<ui:include src="/resources/componentes/pesquisaStatusChamado.xhtml" />
+		</h:form>
+
+		<h:form id="formCadastroStatusChamado">
+			<p:growl id="growl" showDetail="true" life="3000" />
+
+			<p:commandButton value="Novo Cadastro"
+				actionListener="#{statusChamadoBean.prepararNovoCadastro}"
+				update="formCadastroStatusChamado" process="@this" />
+
+			<p:panel id="panelCadastroStatusChamado" header="Cadastro de Status"
+				styleClass="panelPesquisa"
+				visible="#{statusChamadoBean.mostrarFormulario}">
+
+				<p:panelGrid id="cadastroStatusChamado" columns="2" cellpadding="10"
+					columnClasses="label, value" styleClass="panelPesquisa">
+
+					<p:outputLabel for="nome" value="Nome:" />
+					<p:inputText id="nome" value="#{statusChamadoBean.statusChamado.nome}" required="true" />
+
+					<p:outputLabel for="descricao" value="Descrição:" />
+					<p:inputTextarea id="descricao" value="#{statusChamadoBean.statusChamado.descricao}" autoResize="true" />
+				</p:panelGrid>
+
+				<p:commandButton value="Salvar"
+					action="#{statusChamadoBean.salvar}"
+					update="growl formCadastroStatusChamado formTable" />
+			</p:panel>
+		</h:form>
+
+		<h:form id="formTable">
+			<p:dataTable id="tableResult"
+				value="#{statusChamadoBean.statusChamadosLazy}"
+				var="status" emptyMessage="Não há valores para exibição."
+				paginator="true" rows="10" lazy="true"
+				rowsPerPageTemplate="10,20,50"
+				paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+				<ui:include src="/resources/componentes/dataTableCadastroStatusChamado.xhtml" />
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

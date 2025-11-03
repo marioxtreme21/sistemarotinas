@@ -1,0 +1,72 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Teste — Atualização de Preços</ui:define>
+
+    <ui:define name="content">
+        <h:form id="formTeste">
+
+            <!-- Evita que a tecla Enter dispare algum botão "por engano" -->
+            <p:commandButton id="noop" style="display:none" />
+            <p:defaultCommand target="noop" />
+
+            <p:growl id="msgs" showDetail="true" life="4000" />
+
+            <!-- Pesquisa (select de loja, etc.) -->
+            <ui:include src="/resources/componentes/pesquisaPriceUpdate.xhtml" />
+
+            <p:spacer height="8" />
+
+            <!-- Ações paralelas (NOVO) -->
+            <p:toolbar>
+                <p:toolbarGroup>
+                    <p:commandButton id="btnExecParaleloAll"
+                                     value="Executar paralelo (todas as lojas)"
+                                     icon="pi pi-forward"
+                                     actionListener="#{priceUpdateBean.executarParaleloTodasAsLojas}"
+                                     update="msgs resumo tbl" />
+                    <p:commandButton id="btnExecParaleloOne"
+                                     value="Executar paralelo (loja selecionada)"
+                                     icon="pi pi-play"
+                                     actionListener="#{priceUpdateBean.executarParaleloLojaSelecionada}"
+                                     update="msgs resumo tbl"
+                                     styleClass="ui-button-secondary" />
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <!-- BlockUI para cobrir o formulário enquanto executa ações paralelas -->
+            <p:blockUI block="@form" trigger="btnExecParaleloAll btnExecParaleloOne">
+                <h:panelGroup>
+                    <i class="pi pi-spin pi-spinner" style="margin-right:8px"></i>
+                    <h:outputText value="Processando... aguarde" />
+                </h:panelGroup>
+            </p:blockUI>
+
+            <p:spacer height="10" />
+
+            <!-- Resumo -->
+            <p:panel id="resumo" header="Resumo">
+                <p:panelGrid columns="6" columnClasses="label,value,label,value,label,value">
+                    <h:outputText value="Total de registros:" />
+                    <h:outputText value="#{priceUpdateBean.totalRegistros}" />
+
+                    <h:outputText value="Pendentes de envio:" />
+                    <h:outputText value="#{priceUpdateBean.totalPendentes}" />
+
+                    <h:outputText value="Última execução:" />
+                    <h:outputText value="#{priceUpdateBean.ultimaExecucao}" converter="localDateTimeConverter" />
+                </p:panelGrid>
+            </p:panel>
+
+            <p:spacer height="10" />
+
+            <!-- DataTable -->
+            <ui:include src="/resources/componentes/dataTablePriceUpdate.xhtml" />
+
+        </h:form>
+    </ui:define>
+</ui:composition>

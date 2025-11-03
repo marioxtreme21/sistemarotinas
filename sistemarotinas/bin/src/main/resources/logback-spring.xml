@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+
+    <contextName>default</contextName>
+
+    <!-- Define a variável LOG_DIR usando o catalina.base -->
+	<springProperty name="LOG_DIR" source="logging.file.path"
+		defaultValue="${catalina.base}/webapps/sistemarcg/logs" />
+
+	<property name="LOG_PATTERN"
+		value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
+
+    <!-- Appender Console -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender Principal (sistemarcg.log) -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/sistemarcg.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/sistemarcg.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender para Hibernate SQL -->
+    <appender name="HIBERNATE_SQL" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/hibernate-sql.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/hibernate-sql.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Appender para Hibernate Bind -->
+    <appender name="HIBERNATE_BIND" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/hibernate-binder.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/hibernate-binder.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+	<!-- ✅ Appender para importação de usuários do AD -->
+	<appender name="IMPORTACAO_USUARIO_AD"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOG_DIR}/log_importacao_usuario.log</file>
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>
+				${LOG_DIR}/log_importacao_usuario.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- Appender para logs do cadastro de loja -->
+    <appender name="CADASTRO_LOJA" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/cadastroloja.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/cadastroloja.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>15</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+
+	<!-- ROOT LOGGER -->
+    <root level="INFO">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="FILE" />
+    </root>
+
+
+	<!-- Hibernate SQL Logger -->
+    <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+		<appender-ref ref="HIBERNATE_SQL" />
+    </logger>
+
+	<!-- Hibernate Bind Logger -->
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
+		<appender-ref ref="HIBERNATE_BIND" />
+    </logger>
+
+	<!-- ✅ Logger para importação de usuários do AD -->
+	<logger name="sistema.helpdesk.primefaces.service.LdapImportService"
+		level="DEBUG" additivity="false">
+		<appender-ref ref="CONSOLE" />
+		<appender-ref ref="IMPORTACAO_USUARIO_AD" />
+	</logger>
+
+</configuration>

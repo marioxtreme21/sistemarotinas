@@ -1,0 +1,92 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+    <p:panel header="Disparo manual">
+        <p:panelGrid columns="4" columnClasses="label,value,actions,actions" styleClass="panelPesquisa">
+
+            <p:outputLabel for="loja" value="Loja:" />
+            <p:selectOneMenu id="loja" value="#{priceUpdateBean.lojaId}"
+                             style="min-width:260px" filter="true"
+                             filterMatchMode="contains" showClear="true">
+                <f:selectItem itemLabel="Todas as lojas" itemValue="#{null}" noSelectionOption="true" />
+                <f:selectItems value="#{priceUpdateBean.lojasPermitidas}"
+                               var="lz" itemValue="#{lz.lojaId}"
+                               itemLabel="#{empty lz.nome ? lz.lojaId : lz.nome} - RMS #{lz.codLojaRms}" />
+            </p:selectOneMenu>
+
+         
+            <p:commandButton id="btnExec" type="button"
+                             value="Executar atualização" icon="pi pi-play"
+                             actionListener="#{priceUpdateBean.executarAtualizacaoPorLoja}"
+                             update=":formTeste:msgs :formTeste:resumo :formTeste:tbl"
+                             disabled="#{priceUpdateBean.executando}" />
+
+            <p:commandButton id="btnReproc" type="button"
+                             value="Reprocessar pendentes" icon="pi pi-refresh"
+                             actionListener="#{priceUpdateBean.reprocessarPendentes}"
+                             update=":formTeste:msgs :formTeste:resumo :formTeste:tbl"
+                             styleClass="ui-button-secondary"
+                             disabled="#{priceUpdateBean.executando}" />
+        </p:panelGrid>
+    </p:panel>
+
+    <p:spacer height="10" />
+
+
+    <p:panel header="Pesquisa de Atualizações de Preço">
+        <p:panelGrid id="panelGridPesquisaPU" columns="4" cellpadding="5">
+
+            <p:row>
+                <p:outputLabel for="campoPesquisaPU" value="Campo:" />
+                <p:selectOneMenu id="campoPesquisaPU"
+                                 value="#{priceUpdateBean.campoSelecionado}" style="width: 100%;">
+                    <f:selectItem itemLabel="Selecione um campo" itemValue="" />
+                    <f:selectItems value="#{priceUpdateBean.camposPesquisa}" var="c"
+                                   itemLabel="#{c.label}" itemValue="#{c.value}" />
+                </p:selectOneMenu>
+            </p:row>
+
+            <p:row>
+                <p:outputLabel for="condicaoPesquisaPU" value="Condição:" />
+                <p:selectOneMenu id="condicaoPesquisaPU"
+                                 value="#{priceUpdateBean.condicaoSelecionada}" style="width: 100%;">
+                    <f:selectItem itemLabel="Selecione uma condição" itemValue="" />
+                    <f:selectItem itemLabel="Igual" itemValue="equal" />
+                    <f:selectItem itemLabel="Contém" itemValue="contains" />
+                </p:selectOneMenu>
+            </p:row>
+
+            <p:row>
+                <p:outputLabel for="valorPesquisaPU" value="Valor:" />
+                <p:inputText id="valorPesquisaPU" value="#{priceUpdateBean.valorPesquisa}" style="width: 100%;" />
+            </p:row>
+
+            <p:row>
+                <p:outputLabel />
+                <p:commandButton id="btnPesquisarPU" value="Pesquisar" icon="pi pi-search"
+                                 actionListener="#{priceUpdateBean.pesquisar}"
+                                 update=":formTeste:resumo :formTeste:tbl"
+                                 ajax="false" immediate="false"
+                                 process="@this,panelGridPesquisaPU"
+                                 styleClass="ui-button-primary" style="width: 100%;" />
+            </p:row>
+
+            <p:row>
+                <p:outputLabel />
+                <p:commandButton value="Limpar Filtros" icon="pi pi-times"
+                                 actionListener="#{priceUpdateBean.limparFiltros}"
+                                 update=":formTeste:resumo :formTeste:tbl"
+                                 ajax="false" immediate="false"
+                                 process="@this,panelGridPesquisaPU"
+                                 styleClass="ui-button-secondary" style="width: 100%;" />
+            </p:row>
+
+        </p:panelGrid>
+    </p:panel>
+
+ 
+    <p:defaultCommand target="btnPesquisarPU" />
+</ui:composition>

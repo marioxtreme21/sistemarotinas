@@ -1,0 +1,13 @@
+/* Ajusta a largura do submenu "Cadastro" */
+.ui-menu .ui-menu-list {
+    min-width: 220px; /* Ajuste o valor conforme necessário */
+}
+
+/* Centraliza os itens do menu */
+.ui-menuitem-link {
+    display: flex;
+    align-items: center;
+    padding-left: 15px; /* Ajuste o espaçamento conforme necessário */
+    padding-right: 15px;
+    white-space: nowrap; /* Garante que o texto não quebre em várias linhas */
+}

@@ -1,0 +1,130 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.layout-wrapper {
+    display: flex;
+    height: 100vh;
+}
+
+.topbar {
+    background-color: #002f66;
+    color: white;
+    padding: 10px 20px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.sidebar {
+    width: 60px;
+    background-color: #2c3e50;
+    transition: width 0.3s ease;
+    overflow-x: hidden;
+    overflow-y: auto;
+    color: white;
+}
+
+.sidebar:hover {
+    width: 250px;
+}
+
+.sidebar .logo-container {
+    text-align: center;
+    padding: 10px;
+}
+
+.sidebar .logo-container img {
+    max-height: 40px;
+}
+
+.custom-menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-item {
+    padding: 10px;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+}
+
+.menu-item:hover {
+    background-color: #1a252f;
+}
+
+.menu-item i {
+    font-size: 1.6rem;
+    min-width: 40px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-item .text {
+    display: none;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar:hover .menu-item .text {
+    display: inline;
+    opacity: 1;
+}
+
+.submenu {
+    display: none;
+    flex-direction: column;
+    padding-left: 20px;
+}
+
+.submenu.active {
+    display: flex;
+}
+
+.submenu a {
+    padding: 6px 10px;
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.submenu a:hover {
+    background-color: #1a252f;
+}
+
+.submenu i {
+    font-size: 1.4rem;
+    min-width: 30px;
+    text-align: center;
+    margin-right: 5px;
+}
+
+.content-area {
+    flex: 1;
+    padding: 20px;
+    background-color: #f4f4f4;
+    overflow-y: auto;
+}
+
+.page-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 10px;
+    padding-bottom: 15px;
+}
+
+.page-title {
+    font-size: 26px;
+    font-weight: bold;
+    color: #333;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+    text-align: center;
+}

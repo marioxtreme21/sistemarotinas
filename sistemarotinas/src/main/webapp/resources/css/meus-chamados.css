@@ -1,0 +1,226 @@
+/* Container do título e botão */
+.titulo-sidebar-container {
+    display: flex;                   /* Usa flexbox para layout flexível */
+    align-items: center;             /* Alinha verticalmente os itens ao centro */
+    justify-content: space-between; /* Espaça os itens horizontalmente ao máximo */
+    padding: 8px 12px;               /* Espaçamento interno */
+    position: relative;              /* Necessário para posicionar tooltip depois */
+}
+
+/* Sidebar com borda geral ao redor (quando aberta) */
+.sidebar-meus-chamados:not(.collapsed) {
+    border: 1px solid #ccc;          /* Borda cinza clara */
+    border-radius: 4px;              /* Cantos arredondados */
+    background-color: #fff;          /* Fundo branco */
+    width: 290px !important;         /* Largura fixa quando aberta */
+    padding: 10px 12px;              /* Espaçamento interno */
+    box-sizing: border-box;          /* Inclui padding na largura total */
+}
+
+/* Sidebar colapsada oculta títulos e links */
+.sidebar-meus-chamados.collapsed .titulo-sidebar,
+.sidebar-meus-chamados.collapsed .chamado-link {
+    display: none !important;        /* Esconde título e links quando sidebar está fechada */
+}
+
+/* Botão toggle visível mesmo sidebar fechada */
+.sidebar-meus-chamados.collapsed .titulo-sidebar-container > button#toggleSidebarBtn {
+    display: inline-flex;            /* Mostra botão toggle */
+    font-size: 0.9rem;               /* Ajusta tamanho da fonte do botão */
+}
+
+/* Sidebar fechada com largura reduzida */
+.sidebar-meus-chamados.collapsed {
+    width: 90px !important;          /* Largura pequena para sidebar fechada */
+    overflow: hidden !important;    /* Oculta conteúdo que ultrapasse a largura */
+    border: none;                    /* Remove borda para visual limpo */
+    padding: 0;                     /* Remove padding */
+}
+
+/* Esconder todo o conteúdo da sidebar exceto o título e botão toggle */
+.sidebar-meus-chamados.collapsed > *:not(.titulo-sidebar-container) {
+    display: none !important;        /* Esconde todos os filhos menos o container do título e botão */
+}
+
+/* Esconder listas e itens dentro da sidebar colapsada */
+.sidebar-meus-chamados.collapsed ul,
+.sidebar-meus-chamados.collapsed li {
+    display: none !important;        /* Esconde elementos de lista para evitar espaço extra */
+}
+
+/* Resetar margens e paddings para evitar espaços extras na sidebar colapsada */
+.sidebar-meus-chamados.collapsed * {
+    margin: 0 !important;            /* Remove todas as margens */
+    padding: 0 !important;           /* Remove todos os paddings */
+}
+
+/* Botão toggle menor com legenda */
+#toggleSidebarBtn {
+    display: flex;                   /* Flex para ícone e texto lado a lado */
+    align-items: center;             /* Centraliza verticalmente */
+    background-color: black;         /* Fundo preto */
+    border: none;                   /* Sem borda */
+    cursor: pointer;                /* Cursor pointer para indicar clique */
+    color: white;                   /* Cor do texto branca */
+    font-size: 0.0rem;              /* Esconde texto (usar classe .texto-btn para mostrar) */
+    padding: 6px 12px;              /* Espaçamento interno */
+    border-radius: 5px;             /* Cantos arredondados */
+    transition: background-color 0.3s ease; /* Transição suave ao alterar cor */
+}
+
+/* Hover para botão toggle */
+#toggleSidebarBtn:hover {
+    background-color: #333;         /* Cor do fundo mais escura ao passar mouse */
+}
+
+/* Ícone dentro do botão toggle */
+#toggleSidebarBtn i.pi {
+    font-size: 0.9rem;              /* Tamanho do ícone */
+    margin-right: 8px;              /* Espaço entre ícone e texto */
+}
+
+/* Texto dentro do botão em coluna */
+#toggleSidebarBtn .texto-btn {
+    display: flex;                  /* Flex container */
+    flex-direction: column;         /* Coloca os textos em coluna */
+    line-height: 1.1;               /* Espaçamento entre linhas */
+}
+
+/* Evita quebra de linha no texto do botão */
+#toggleSidebarBtn .texto-btn span {
+    white-space: nowrap;            /* Não permite quebra de linha */
+}
+
+/* Opcional: negrito para a primeira linha */
+#toggleSidebarBtn .linha1 {
+    font-weight: bold;              /* Negrito para destaque */
+}
+
+/* Mostrar título e links quando sidebar estiver aberta */
+.sidebar-meus-chamados:not(.collapsed) .titulo-sidebar,
+.sidebar-meus-chamados:not(.collapsed) .chamado-link {
+    display: block !important;      /* Força exibição */
+}
+
+/* Legenda "Meus Chamados" do lado do botão toggle */
+/* Escondida pois está desabilitada */
+#toggleSidebarBtn .toggle-label {
+    display: none !important;
+}
+
+/* Ajustes do botão toggle quando sidebar está fechada */
+.sidebar-meus-chamados.collapsed #toggleSidebarBtn {
+    width: auto !important;         /* Ajusta largura automaticamente */
+    padding: 2px 3px !important;    /* Padding reduzido */
+    border-radius: 5px !important; /* Cantos arredondados */
+    justify-content: flex-start !important; /* Alinha conteúdo à esquerda */
+}
+
+/* Ajuste do ícone com sidebar fechada */
+.sidebar-meus-chamados.collapsed #toggleSidebarBtn i.pi {
+    font-size: 0.9rem !important;   /* Ícone menor */
+    margin-right: 6px !important;   /* Espaço menor à direita */
+}
+
+/* Ajuste no tamanho da legenda (se usar) quando sidebar está fechada */
+.sidebar-meus-chamados.collapsed #toggleSidebarBtn .toggle-label {
+    font-size: 0.9rem !important;
+}
+
+/* Margem do conteúdo principal conforme estado da sidebar */
+.margin-collapsed {
+    margin-left: 5px !important;    /* Espaço reservado para sidebar fechada */
+}
+
+.margin-expanded {
+    margin-left: 20px !important;   /* Espaço reservado para sidebar aberta */
+}
+
+/* Transição suave para a margem do conteúdo principal */
+#mainContent {
+    transition: margin-left 0.9s ease;
+}
+
+/* Estilos para o resumo dos chamados */
+.chamado-resumo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.chamado-resumo:hover {
+    background-color: #f5f5f5;
+}
+
+.chamado-id {
+    font-weight: bold;
+    margin-right: 6px;
+    color: #555;
+    min-width: 40px;
+}
+
+.chamado-titulo {
+    flex: 1 1 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #222;
+}
+
+.chamado-status {
+    font-weight: 600;
+    text-transform: capitalize;
+    min-width: 70px;
+}
+
+.chamado-status.aberto {
+    color: green;
+}
+
+.chamado-status.fechado {
+    color: red;
+}
+
+.chamado-prioridade {
+    font-weight: 600;
+    text-transform: capitalize;
+    min-width: 50px;
+}
+
+.chamado-prioridade.baixa {
+    color: green;
+}
+
+.chamado-prioridade.media {
+    color: orange;
+}
+
+.chamado-prioridade.alta {
+    color: red;
+}
+
+.chamado-data {
+    color: #777;
+    min-width: 80px;
+}
+
+/* Tooltip para o botão toggle - aparece quando hover */
+#toggleSidebarBtn:hover::after {
+    content: attr(data-tooltip);        /* Pega conteúdo do atributo data-tooltip */
+    position: absolute;                  /* Posiciona absolutamente */
+    left: 60px;                         /* Posiciona à esquerda do botão */
+    top: 50%;                          /* Centraliza verticalmente */
+    transform: translateY(-50%);       /* Ajusta para exato centro vertical */
+    background: #333;                   /* Fundo escuro */
+    color: white;                      /* Texto branco */
+    padding: 5px 10px;                  /* Espaçamento interno */
+    border-radius: 4px;                 /* Cantos arredondados */
+    white-space: nowrap;                /* Não permite quebra de linha */
+    z-index: 1000;                     /* Fica acima de outros elementos */
+    pointer-events: none;               /* Não interfere com mouse */
+    font-size: 0.85rem;                 /* Tamanho da fonte */
+}

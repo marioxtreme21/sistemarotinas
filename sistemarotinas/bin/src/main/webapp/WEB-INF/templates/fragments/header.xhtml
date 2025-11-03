@@ -1,0 +1,116 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+	<h:head>
+		<h:outputStylesheet name="estiloMenu.css" library="css" />
+	</h:head>
+
+	<div class="sidebar">
+		<div class="logo-container">
+			<p:graphicImage name="/logo.png" library="images" alt="Logo" />
+		</div>
+
+		<div class="custom-menu">
+
+			<!-- Home -->
+			<div class="menu-item">
+				<a href="/sistemahelpdesk/pages/index.xhtml"
+					style="display: flex; align-items: center; color: white;"> <i
+					class="pi pi-home"></i> <span class="text">Home</span>
+				</a>
+			</div>
+
+			<!-- Cadastro -->
+			<ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+				<div class="menu-item expandable" onclick="toggleSubMenu(this)">
+					<i class="pi pi-briefcase"></i> <span class="text">Cadastro</span>
+				</div>
+				<div class="submenu">
+					<a href="/sistemahelpdesk/pages/cadastro/cadastro_loja.xhtml">
+						<i class="pi pi-building"></i><span>Cadastro de Loja</span>
+					</a> <a
+						href="/sistemahelpdesk/pages/cadastro/cadastro_prioridade_chamado.xhtml">
+						<i class="pi pi-sort-amount-up"></i><span>Cadastro de
+							Prioridade</span>
+					</a> <a
+						href="/sistemahelpdesk/pages/cadastro/cadastro_status_chamado.xhtml">
+						<i class="pi pi-flag"></i><span>Cadastro de Status</span>
+					</a> <a
+						href="/sistemahelpdesk/pages/cadastro/cadastro_tipo_chamado.xhtml">
+						<i class="pi pi-tag"></i><span>Cadastro de Tipo</span>
+					</a> <a
+						href="/sistemahelpdesk/pages/cadastro/cadastro_setor_responsavel.xhtml">
+						<i class="pi pi-sitemap"></i><span>Cadastro de Setor
+							Responsável</span>
+					</a> <a
+						href="/sistemahelpdesk/pages/cadastro/cadastro_origem_chamado.xhtml">
+						<i class="pi pi-send"></i><span>Cadastro de Origem</span>
+					</a> <a
+						href="/sistemahelpdesk/pages/cadastro/cadastro_nivel_atendimento.xhtml">
+						<i class="pi pi-sliders-h"></i><span>Cadastro de Nível de
+							Atendimento</span>
+					</a> <a href="/sistemahelpdesk/pages/cadastro/cadastro_impacto.xhtml">
+						<i class="pi pi-exclamation-circle"></i><span>Cadastro de
+							Impacto</span>
+					</a> <a href="/sistemahelpdesk/pages/cadastro/cadastro_urgencia.xhtml">
+						<i class="pi pi-clock"></i><span>Cadastro de Urgência</span>
+					</a> <a
+						href="/sistemahelpdesk/pages/cadastro/cadastro_categoria_chamado.xhtml">
+						<i class="pi pi-list"></i><span>Cadastro de Categoria</span>
+					</a> <a href="/sistemahelpdesk/pages/cadastro/cadastro_cliente.xhtml">
+						<i class="pi pi-briefcase"></i><span>Cadastro de Cliente</span>
+					</a>
+
+
+				</div>
+
+			</ui:fragment>
+
+			<!-- Usuários -->
+			<ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+				<div class="menu-item expandable" onclick="toggleSubMenu(this)">
+					<i class="pi pi-users"></i> <span class="text">Usuários</span>
+				</div>
+				<div class="submenu">
+					<a href="/sistemahelpdesk/pages/cadastro/user-edit.xhtml"> <i
+						class="pi pi-user-edit"></i><span>Editar Usuário</span>
+					</a>
+				</div>
+			</ui:fragment>
+
+			<!-- Relatórios -->
+			<ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+				<div class="menu-item expandable" onclick="toggleSubMenu(this)">
+					<i class="pi pi-chart-line"></i> <span class="text">Relatórios</span>
+				</div>
+				<div class="submenu">
+					<!-- Adicione itens conforme necessário -->
+				</div>
+			</ui:fragment>
+
+			<!-- Rotinas -->
+			<ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+				<div class="menu-item expandable" onclick="toggleSubMenu(this)">
+					<i class="pi pi-cog"></i> <span class="text">Rotinas</span>
+				</div>
+				<div class="submenu">
+					<!-- Adicione itens conforme necessário -->
+				</div>
+			</ui:fragment>
+
+			<!-- Logout -->
+			<h:form style="margin: 0; padding: 0;">
+				<div class="menu-item">
+					<h:commandLink action="#{loginBean.logout}"
+						style="color: white; text-decoration: none; border: none; background: none;">
+						<i class="pi pi-sign-out"></i>
+						<span class="text">Sair</span>
+					</h:commandLink>
+				</div>
+			</h:form>
+		</div>
+	</div>
+</ui:composition>

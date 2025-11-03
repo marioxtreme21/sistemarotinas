@@ -1,0 +1,42 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" />
+    </h:head>
+
+    <ui:define name="title">CTR_INT_VDA – tip_int = 16</ui:define>
+
+    <ui:define name="content">
+        <h:form id="formCtrIntVda">
+            <p:growl id="growl" showDetail="true" life="3000" />
+
+            <p:panel header="Consulta e Exportação – ctr_int_vda (tip_int = 16)" styleClass="panelPesquisa">
+                <p:panelGrid columns="1" styleClass="panelPesquisa" columnClasses="value">
+                    <p:outputPanel>
+                        Esta rotina executa <b>SELECT * FROM ctr_int_vda WHERE tip_int = 16</b> no MySQL (10.1.1.50)
+                        e adiciona a coluna <b>TRANSACTION_ID</b> extraída do JSON em <b>JSO_ENV</b>.
+                    </p:outputPanel>
+                </p:panelGrid>
+            </p:panel>
+
+            <p:panel header="Exportação (.xlsx)" styleClass="panelPesquisa">
+                <p:toolbar style="margin-top:.5rem">
+                    <p:toolbarGroup>
+                        <p:commandButton value="Exportar XLSX – ctr_int_vda (16)"
+                                         icon="pi pi-file-excel"
+                                         ajax="false"
+                                         styleClass="ui-button-success">
+                            <p:fileDownload value="#{ctrIntVdaBean.relatorioCtrIntVdaXlsx}" />
+                        </p:commandButton>
+                    </p:toolbarGroup>
+                </p:toolbar>
+            </p:panel>
+
+        </h:form>
+    </ui:define>
+</ui:composition>

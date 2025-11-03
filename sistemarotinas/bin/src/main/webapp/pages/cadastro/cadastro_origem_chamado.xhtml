@@ -1,0 +1,60 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:pesquisaTemplateComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	xmlns:botoesCrudComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	template="/WEB-INF/templates/layout.xhtml">
+
+	<h:head>
+		<h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+	</h:head>
+
+	<ui:define name="title">Cadastro de Origem do Chamado</ui:define>
+
+	<ui:define name="content">
+		<h:form id="formPesquisa">
+			<ui:include src="/resources/componentes/pesquisaOrigemChamado.xhtml" />
+		</h:form>
+
+		<h:form id="formCadastroOrigem">
+			<p:growl id="growl" showDetail="true" life="3000" />
+
+			<p:commandButton value="Novo Cadastro" 
+				actionListener="#{origemChamadoBean.prepararNovoCadastro}" 
+				update="formCadastroOrigem" process="@this" />
+
+			<p:panel id="panelCadastroOrigem" header="Cadastro de Origem do Chamado" 
+				styleClass="panelPesquisa" visible="#{origemChamadoBean.mostrarFormulario}">
+
+				<p:panelGrid id="cadastroOrigem" columns="2" cellpadding="10" styleClass="panelPesquisa"
+					columnClasses="label, value">
+
+					<p:outputLabel for="nome" value="Nome:" />
+					<p:inputText id="nome"
+						value="#{origemChamadoBean.origem.nome}" required="true" />
+
+					<p:outputLabel for="descricao" value="Descrição:" />
+					<p:inputText id="descricao" value="#{origemChamadoBean.origem.descricao}" required="true" />
+
+					<p:outputLabel for="ativo" value="Ativo:" />
+					<p:selectBooleanCheckbox id="ativo" value="#{origemChamadoBean.origem.ativo}" />
+				</p:panelGrid>
+
+				<p:commandButton value="Salvar" action="#{origemChamadoBean.salvar}" 
+					update="growl formCadastroOrigem formTable" />
+			</p:panel>
+		</h:form>
+
+		<h:form id="formTable">
+			<p:dataTable id="tableResult" value="#{origemChamadoBean.origensLazy}"
+				var="origem" emptyMessage="Não há valores para exibição."
+				paginator="true" rows="10" lazy="true"
+				rowsPerPageTemplate="10,20,50"
+				paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+				<ui:include src="/resources/componentes/dataTableCadastroOrigemChamado.xhtml" />
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

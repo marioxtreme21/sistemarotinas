@@ -1,0 +1,63 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:pesquisaTemplateComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	xmlns:botoesCrudComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	template="/WEB-INF/templates/layout.xhtml">
+
+	<h:head>
+		<h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+	</h:head>
+
+	<ui:define name="title">Cadastro de Técnico</ui:define>
+
+	<ui:define name="content">
+		<h:form id="formPesquisa">
+			<ui:include src="/resources/componentes/pesquisaTecnico.xhtml" />
+		</h:form>
+
+		<h:form id="formCadastroTecnico">
+			<p:growl id="growl" showDetail="true" life="3000" />
+
+			<p:commandButton value="Novo Cadastro" 
+				actionListener="#{tecnicoBean.prepararNovoCadastro}" 
+				update="formCadastroTecnico" process="@this" />
+
+			<p:panel id="panelCadastroTecnico" header="Cadastro Técnico" styleClass="panelPesquisa"
+				visible="#{tecnicoBean.mostrarFormulario}">
+
+				<p:panelGrid id="cadastroTecnico" columns="2" cellpadding="10" styleClass="panelPesquisa"
+					columnClasses="label, value">
+
+					<p:outputLabel for="nome" value="Nome:" />
+					<p:inputText id="nome" value="#{tecnicoBean.tecnico.user.nome}" required="true" />
+
+					<p:outputLabel for="username" value="Username:" />
+					<p:inputText id="username" value="#{tecnicoBean.tecnico.user.username}" required="true" />
+
+					<p:outputLabel for="email" value="E-mail:" />
+					<p:inputText id="email" value="#{tecnicoBean.tecnico.user.email}" />
+
+					<p:outputLabel for="ativo" value="Ativo:" />
+					<p:selectBooleanCheckbox id="ativo" value="#{tecnicoBean.tecnico.ativo}" />
+
+				</p:panelGrid>
+
+				<p:commandButton value="Salvar" action="#{tecnicoBean.salvar}" 
+					update="growl formCadastroTecnico formTable" />
+			</p:panel>
+		</h:form>
+
+		<h:form id="formTable">
+			<p:dataTable id="tableResult" value="#{tecnicoBean.tecnicosLazy}"
+				var="tecnico" emptyMessage="Nenhum técnico encontrado."
+				paginator="true" rows="10" lazy="true"
+				rowsPerPageTemplate="10,20,50"
+				paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+				<ui:include src="/resources/componentes/dataTableCadastroTecnico.xhtml" />
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>

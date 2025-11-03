@@ -1,0 +1,53 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui">
+
+    <p:column headerText="ID">
+        <h:outputText value="#{user.id}" />
+    </p:column>
+
+    <p:column headerText="Nome">
+        <h:outputText value="#{user.nome}" />
+    </p:column>
+
+    <p:column headerText="Sobrenome">
+        <h:outputText value="#{user.sobrenome}" />
+    </p:column>
+
+    <p:column headerText="E-mail">
+        <h:outputText value="#{user.email}" />
+    </p:column>
+
+    <p:column headerText="Username">
+        <h:outputText value="#{user.username}" />
+    </p:column>
+
+    <p:column headerText="Origem">
+        <h:outputText value="#{user.origem}" />
+    </p:column>
+
+    <p:column headerText="Tipo">
+        <h:outputText value="#{user.tipo}" />
+    </p:column>
+
+    <p:column headerText="Ações">
+        <p:commandButton value="Editar"
+                         actionListener="#{userEditBean.loadUser(user.id)}"
+                         oncomplete="PF('userDialog').show()"
+                         update="formCadastroUsuario"
+                         process="@this"
+                         icon="pi pi-pencil"
+                         styleClass="ui-button-warning" />
+
+        <p:commandButton value="Excluir"
+                         action="#{userEditBean.deleteUser(user.id)}"
+                         update="formTable formCadastroUsuario growl"
+                         process="@this"
+                         icon="pi pi-trash"
+                         styleClass="ui-button-danger"
+                         onclick="return confirm('Deseja realmente excluir o usuário: #{user.nome}?');" />
+    </p:column>
+
+</ui:composition>

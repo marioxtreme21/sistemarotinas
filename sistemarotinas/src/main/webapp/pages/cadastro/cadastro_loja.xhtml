@@ -1,0 +1,116 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+    </h:head>
+
+    <ui:define name="title">Cadastro de Loja</ui:define>
+
+    <ui:define name="content">
+
+        <!-- Filtros de pesquisa -->
+        <h:form id="formPesquisa">
+            <ui:include src="/resources/componentes/pesquisaLoja.xhtml" />
+        </h:form>
+
+        <h:form id="formCadastroLoja">
+            <p:growl id="growl" showDetail="true" life="3000" />
+
+            <p:commandButton value="Novo Cadastro"
+                             actionListener="#{lojaBean.prepararNovoCadastro}"
+                             update="formCadastroLoja"
+                             process="@this"
+                             icon="pi pi-plus"
+                             styleClass="ui-button-success" />
+
+            <p:panel id="panelCadastroLoja"
+                     header="Cadastro Loja"
+                     styleClass="panelPesquisa"
+                     visible="#{lojaBean.mostrarFormulario}">
+
+                <p:panelGrid id="cadastroLoja"
+                             columns="2"
+                             cellpadding="10"
+                             styleClass="panelPesquisa"
+                             columnClasses="label,value">
+
+                    <p:outputLabel for="nome" value="Nome:" />
+                    <p:inputText id="nome" value="#{lojaBean.loja.nome}" required="true" />
+
+                    <p:outputLabel for="cnpj" value="CNPJ:" />
+                    <p:inputText id="cnpj" value="#{lojaBean.loja.cnpj}" required="true" />
+
+                    <p:outputLabel for="politicaComercial" value="Política Comercial:" />
+                    <p:inputText id="politicaComercial" value="#{lojaBean.loja.politicaComercial}" />
+
+                    <p:outputLabel for="codEconect" value="Código E-Connect:" />
+                    <p:inputText id="codEconect" value="#{lojaBean.loja.codLojaEconect}" />
+
+                    <p:outputLabel for="codRms" value="Código RMS:" />
+                    <p:inputText id="codRms" value="#{lojaBean.loja.codLojaRms}" />
+
+                    <p:outputLabel for="codRmsDg" value="Código RMS DG:" />
+                    <p:inputText id="codRmsDg" value="#{lojaBean.loja.codLojaRmsDg}" />
+
+                    <p:outputLabel for="codigoEmpresaSitef" value="Código Empresa SITEF:" />
+                    <p:inputText id="codigoEmpresaSitef" value="#{lojaBean.loja.codigoEmpresaSitef}" required="true" />
+
+                    <p:outputLabel for="ecommerceAtivo" value="E-commerce Ativo:" />
+                    <p:selectBooleanCheckbox id="ecommerceAtivo" value="#{lojaBean.loja.ecommerceAtivo}" />
+
+                    <p:outputLabel for="pickAndPackAtivo" value="Pick and Pack Ativo:" />
+                    <p:selectBooleanCheckbox id="pickAndPackAtivo" value="#{lojaBean.loja.pickAndPackAtivo}" />
+
+                    <p:outputLabel for="horarioPriceUpdate" value="Horário Price Update:" />
+                    <p:inputText id="horarioPriceUpdate"
+                                 value="#{lojaBean.loja.horarioPriceUpdate}"
+                                 placeholder="ex.: 08:00, 13:30, 22:00" />
+
+                    <p:outputLabel for="warehouse" value="Warehouse:" />
+                    <p:inputText id="warehouse"
+                                 value="#{lojaBean.loja.warehouse}"
+                                 placeholder="ex.: 1_1, 5_5, etc." />
+
+                    <!-- ✅ NOVOS CAMPOS DE PRIORIDADE -->
+                    <p:outputLabel for="prioridadeAtiva" value="Prioridade de Envio Ativa:" />
+                    <p:selectBooleanCheckbox id="prioridadeAtiva"
+                                             value="#{lojaBean.loja.prioridadeEnvioAtivo}" />
+
+                    <p:outputLabel for="prioridadeRanking" value="Ranking de Prioridade:" />
+                    <p:inputNumber id="prioridadeRanking"
+                                   value="#{lojaBean.loja.prioridadeEnvioRanking}"
+                                   decimalPlaces="0"
+                                   minValue="1"
+                                   placeholder="1 = mais prioritária" />
+                </p:panelGrid>
+
+                <p:commandButton value="Salvar"
+                                 actionListener="#{lojaBean.salvar}"
+                                 update="growl formCadastroLoja formTable"
+                                 icon="pi pi-save"
+                                 styleClass="ui-button-primary" />
+            </p:panel>
+        </h:form>
+
+        <!-- Tabela -->
+        <h:form id="formTable">
+            <p:dataTable id="tableResult"
+                         value="#{lojaBean.lojasLazy}"
+                         var="loja"
+                         emptyMessage="Não há registros para exibir."
+                         paginator="true"
+                         rows="10"
+                         lazy="true"
+                         rowsPerPageTemplate="10,20,50"
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                <ui:include src="/resources/componentes/dataTableCadastroLoja.xhtml" />
+            </p:dataTable>
+        </h:form>
+
+    </ui:define>
+</ui:composition>

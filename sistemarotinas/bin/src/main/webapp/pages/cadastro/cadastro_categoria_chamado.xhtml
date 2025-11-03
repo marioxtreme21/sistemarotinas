@@ -1,0 +1,66 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	xmlns:pesquisaTemplateComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	xmlns:botoesCrudComposite="http://xmlns.jcp.org/jsf/composite/componentes"
+	template="/WEB-INF/templates/layout.xhtml">
+
+	<h:head>
+		<h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+	</h:head>
+
+	<ui:define name="title">Cadastro de Categoria de Chamado</ui:define>
+
+	<ui:define name="content">
+		<h:form id="formPesquisa">
+			<ui:include src="/resources/componentes/pesquisaCategoriaChamado.xhtml" />
+		</h:form>
+
+		<h:form id="formCadastroCategoria">
+			<p:growl id="growl" showDetail="true" life="3000" />
+
+			<p:commandButton value="Novo Cadastro" 
+				actionListener="#{categoriaChamadoBean.prepararNovoCadastro}" 
+				update="formCadastroCategoria" process="@this" />
+
+			<p:panel id="panelCadastroCategoria" header="Cadastro de Categoria de Chamado" 
+				styleClass="panelPesquisa" visible="#{categoriaChamadoBean.mostrarFormulario}">
+
+				<p:panelGrid id="cadastroCategoria" columns="2" cellpadding="10" styleClass="panelPesquisa"
+					columnClasses="label, value">
+
+					<p:outputLabel for="nome" value="Nome:" />
+					<p:inputText id="nome" value="#{categoriaChamadoBean.categoria.nome}" required="true" />
+
+					<p:outputLabel for="descricao" value="Descrição:" />
+					<p:inputText id="descricao" value="#{categoriaChamadoBean.categoria.descricao}" />
+
+					<p:outputLabel for="categoriaPai" value="Categoria Pai:" />
+					<p:selectOneMenu id="categoriaPai" value="#{categoriaChamadoBean.categoria.categoriaPai}" converter="categoriaChamadoConverter">
+						<f:selectItem itemLabel="Nenhuma" itemValue="#{null}" />
+						<f:selectItems value="#{categoriaChamadoBean.categoriasAtivas}" var="cat"
+							itemLabel="#{cat.nome}" itemValue="#{cat}" />
+					</p:selectOneMenu>
+
+					<p:outputLabel for="ativo" value="Ativo:" />
+					<p:selectBooleanCheckbox id="ativo" value="#{categoriaChamadoBean.categoria.ativo}" />
+				</p:panelGrid>
+
+				<p:commandButton value="Salvar" action="#{categoriaChamadoBean.salvar}" 
+					update="growl formCadastroCategoria formTable" />
+			</p:panel>
+		</h:form>
+
+		<h:form id="formTable">
+			<p:dataTable id="tableResult" value="#{categoriaChamadoBean.categoriasLazy}"
+				var="categoria" emptyMessage="Não há valores para exibição."
+				paginator="true" rows="10" lazy="true"
+				rowsPerPageTemplate="10,20,50"
+				paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+				<ui:include src="/resources/componentes/dataTableCadastroCategoriaChamado.xhtml" />
+			</p:dataTable>
+		</h:form>
+	</ui:define>
+</ui:composition>
