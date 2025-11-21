@@ -113,9 +113,21 @@
                         <i class="pi pi-file-pdf"></i><span>Preços Alterados (por período)</span>
                     </h:outputLink>
 
-                    <!-- ✅ NOVO: Relatório de Vendas por Loja -->
+                    <!-- ✅ Relatório de Vendas por Loja -->
                     <h:outputLink value="#{request.contextPath}/pages/relatorios/relatorio_vendas_lojas.xhtml">
                         <i class="pi pi-chart-bar"></i><span>Vendas por Loja</span>
+                    </h:outputLink>
+                </div>
+            </ui:fragment>
+
+            <!-- Rotinas -->
+            <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
+                <div class="menu-item expandable" onclick="toggleSubMenu(this)">
+                    <i class="pi pi-clock"></i> <span class="text">Rotinas</span>
+                </div>
+                <div class="submenu">
+                    <h:outputLink value="#{request.contextPath}/pages/rotinas/rotina_bebida_alcoolicas_self.xhtml">
+                        <i class="pi pi-glass"></i><span>Bebidas Alcoólicas (Self)</span>
                     </h:outputLink>
                 </div>
             </ui:fragment>

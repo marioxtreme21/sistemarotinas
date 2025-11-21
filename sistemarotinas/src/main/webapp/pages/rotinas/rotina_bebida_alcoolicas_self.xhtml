@@ -1,0 +1,86 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+    </h:head>
+
+    <ui:define name="title">Rotina Bebidas Alcoólicas (Self)</ui:define>
+
+    <ui:define name="content">
+
+        <!-- Form para execução da rotina -->
+        <h:form id="formRotinaBebida">
+            <p:growl id="growl" showDetail="true" life="5000" />
+
+            <p:panel header="Rotina Bebidas Alcoólicas - Self-Service" styleClass="panelPesquisa">
+                <p:panelGrid columns="1" style="width:100%" columnClasses="label,value">
+
+                    <h:outputText
+                        value="Esta rotina marca como 'bebida alcoólica' os produtos da seção 6808 e grupos 7067/7052, e zera a flag para os demais produtos."
+                        style="font-weight:bold;" />
+
+                    <h:outputText
+                        value="Após a execução, será exibida a lista de produtos que ficaram com bebida_alcoolica = 1."
+                        style="margin-top:4px;" />
+
+                    <p:spacer height="10" />
+
+                    <p:commandButton value="Executar Rotina"
+                                     icon="pi pi-play"
+                                     actionListener="#{rotinaBebidaAlcoolicaSelfBean.executarRotina}"
+                                     update=":formRotinaBebida:growl :formResultado"
+                                     process="@this"
+                                     styleClass="ui-button-danger"
+                                     disabled="#{rotinaBebidaAlcoolicaSelfBean.executando}" />
+                </p:panelGrid>
+            </p:panel>
+        </h:form>
+
+        <!-- Resultado da rotina -->
+        <h:form id="formResultado">
+            <p:panel header="Produtos marcados como bebida alcoólica" styleClass="panelPesquisa">
+
+                <p:dataTable id="tableProdutos"
+                             value="#{rotinaBebidaAlcoolicaSelfBean.produtos}"
+                             var="produto"
+                             paginator="true"
+                             rows="20"
+                             rowsPerPageTemplate="20,50,100"
+                             emptyMessage="Nenhum produto encontrado. Execute a rotina.">
+
+                    <p:column headerText="Código Produto" sortBy="#{produto.codigoProduto}">
+                        <h:outputText value="#{produto.codigoProduto}" />
+                    </p:column>
+
+                    <p:column headerText="Seção" sortBy="#{produto.codigoSecao}">
+                        <h:outputText value="#{produto.codigoSecao}" />
+                    </p:column>
+
+                    <p:column headerText="Grupo" sortBy="#{produto.codigoGrupo}">
+                        <h:outputText value="#{produto.codigoGrupo}" />
+                    </p:column>
+
+                    <p:column headerText="Subgrupo" sortBy="#{produto.codigoSubGrupo}">
+                        <h:outputText value="#{produto.codigoSubGrupo}" />
+                    </p:column>
+
+                    <p:column headerText="Descrição" sortBy="#{produto.descricao}">
+                        <h:outputText value="#{produto.descricao}" />
+                    </p:column>
+
+                    <p:column headerText="Bebida Alcoólica">
+                        <h:outputText
+                            value="#{produto.bebidaAlcoolica == 1 ? 'Sim' : 'Não'}" />
+                    </p:column>
+
+                </p:dataTable>
+            </p:panel>
+        </h:form>
+
+    </ui:define>
+</ui:composition>
