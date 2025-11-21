@@ -217,6 +217,27 @@
 			<version>33.2.1-jre</version>
 		</dependency>
 
+		<!-- SFTP -->
+		<dependency>
+			<groupId>com.github.mwiede</groupId>
+			<artifactId>jsch</artifactId>
+			<version>0.2.16</version>
+		</dependency>
+
+		<!-- Suporte a chaves Ed25519 (recomendado) -->
+		<dependency>
+			<groupId>net.i2p.crypto</groupId>
+			<artifactId>eddsa</artifactId>
+			<version>0.3.0</version>
+		</dependency>
+
+		<!-- FTP/FTPS -->
+		<dependency>
+			<groupId>commons-net</groupId>
+			<artifactId>commons-net</artifactId>
+			<version>3.10.0</version>
+		</dependency>
+
 
 	</dependencies>
 

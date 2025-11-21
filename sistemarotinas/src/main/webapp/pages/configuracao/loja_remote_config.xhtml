@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<h:head>
+    <title>Configuração Remota por Loja</title>
+    <h:outputStylesheet library="css" name="loja-remote-config.css"/>
+</h:head>
+<h:body>
+
+<h:form id="frm">
+    <p:growl id="msgs" showDetail="true" life="7000" autoUpdate="true"/>
+
+    <!-- Toolbar -->
+    <p:toolbar styleClass="mb-3">
+        <p:toolbarGroup>
+            <p:commandButton value="Novo" icon="pi pi-plus"
+                             actionListener="#{lojaRemoteConfigBean.prepararNovo}"
+                             process="@this" immediate="true" resetValues="true"
+                             update=":frm:pnlEdicao :frm:tabela :frm:msgs"/>
+
+            <p:commandButton value="Novo GLOBAL" icon="pi pi-plus-circle" styleClass="ui-button-secondary"
+                             actionListener="#{lojaRemoteConfigBean.prepararNovoGlobal}"
+                             process="@this" immediate="true" resetValues="true"
+                             update=":frm:pnlEdicao :frm:tabela :frm:msgs"/>
+
+            <p:commandButton value="Salvar" icon="pi pi-save" styleClass="ui-button-success"
+                             actionListener="#{lojaRemoteConfigBean.salvar}"
+                             process="@form"
+                             update=":frm:msgs :frm:tabela :frm:pnlEdicao"/>
+
+            <p:commandButton value="Testar conexão" icon="pi pi-plug" styleClass="ui-button-info"
+                             actionListener="#{lojaRemoteConfigBean.testarConexao}"
+                             process="@form"
+                             update=":frm:msgs"/>
+        </p:toolbarGroup>
+    </p:toolbar>
+
+    <!-- Painel de edição -->
+    <p:panel id="pnlEdicao" header="Cadastro de Configuração Remota">
+        <div class="grid p-fluid twocol">
+
+            <!-- Global x Por-loja -->
+            <div class="col-12">
+                <div class="twocol__check">
+                    <!-- ATENÇÃO: bind no FLAG do BEAN, não no entity -->
+                    <p:selectBooleanCheckbox id="global"
+                                             value="#{lojaRemoteConfigBean.globalFlag}">
+                        <p:ajax process="@this" update=":frm:pnlEdicao :frm:msgs"/>
+                    </p:selectBooleanCheckbox>
+                    <p:outputLabel for="global" value="Configuração Global (todas as lojas)"/>
+                </div>
+            </div>
+
+            <!-- Loja (obrigatória quando NÃO global) -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="loja" value="Loja: * *"/>
+                    <p:selectOneMenu id="loja"
+                                     value="#{lojaRemoteConfigBean.selectedLojaId}"
+                                     disabled="#{lojaRemoteConfigBean.globalFlag}"
+                                     required="#{!lojaRemoteConfigBean.globalFlag}"
+                                     requiredMessage="Loja é obrigatória quando a configuração não for global.">
+                        <f:selectItem itemLabel="-- selecione --" itemValue="#{null}"/>
+                        <f:selectItems value="#{lojaRemoteConfigBean.lojas}" var="l"
+                                       itemValue="#{l.lojaId}" itemLabel="#{l.lojaId} - #{l.nome}"/>
+                        <p:ajax update=":frm:msgs"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+
+            <!-- Protocolo -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="proto" value="Protocolo: * *"/>
+                    <p:selectOneMenu id="proto" value="#{lojaRemoteConfigBean.cfg.protocolo}" required="true">
+                        <f:selectItems value="#{lojaRemoteConfigBean.protocolos}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+
+            <!-- Host -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="host" value="Host remoto: * *"/>
+                    <p:inputText id="host" value="#{lojaRemoteConfigBean.cfg.hostRemoto}" required="true"
+                                 requiredMessage="Host remoto é obrigatório."/>
+                </div>
+            </div>
+
+            <!-- Porta -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="porta" value="Porta: * *"/>
+                    <p:inputNumber id="porta" value="#{lojaRemoteConfigBean.cfg.portaRemota}"
+                                   decimalPlaces="0" required="true"
+                                   requiredMessage="Porta é obrigatória."/>
+                </div>
+            </div>
+
+            <!-- Usuário -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="user" value="Usuário: * *"/>
+                    <p:inputText id="user" value="#{lojaRemoteConfigBean.cfg.usuarioRemoto}" required="true"
+                                 requiredMessage="Usuário é obrigatório."/>
+                </div>
+            </div>
+
+            <!-- Senha (campo da tela) -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="pwd" value="Senha:"/>
+                    <p:password id="pwd"
+                                value="#{lojaRemoteConfigBean.senhaInput}"
+                                feedback="false" toggleMask="true" redisplay="true"
+                                placeholder="(mantida se em branco)"/>
+                </div>
+            </div>
+
+            <!-- Chave privada -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="key" value="Chave privada (SFTP opcional):"/>
+                    <p:inputText id="key" value="#{lojaRemoteConfigBean.cfg.caminhoChavePrivada}"
+                                 placeholder="/caminho/para/id_rsa (se usar chave)"/>
+                </div>
+            </div>
+
+            <!-- Base dir -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="basedir" value="Diretório base remoto:"/>
+                    <p:inputText id="basedir" value="#{lojaRemoteConfigBean.cfg.baseDirRemoto}"
+                                 placeholder="/LJ102/MARGEM ou similar"/>
+                </div>
+            </div>
+
+            <!-- Flags -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__check">
+                    <p:selectBooleanCheckbox id="passive"
+                                             value="#{lojaRemoteConfigBean.cfg.ftpPassiveMode}"/>
+                    <p:outputLabel for="passive" value="FTP Passive Mode"/>
+                </div>
+            </div>
+
+            <div class="col-12 md:col-6">
+                <div class="twocol__check">
+                    <p:selectBooleanCheckbox id="ftps"
+                                             value="#{lojaRemoteConfigBean.cfg.ftpsTlsExplicit}"/>
+                    <p:outputLabel for="ftps" value="FTPS TLS Explícito"/>
+                </div>
+            </div>
+
+            <div class="col-12 md:col-6">
+                <div class="twocol__check">
+                    <p:selectBooleanCheckbox id="valcert"
+                                             value="#{lojaRemoteConfigBean.cfg.validarCertificado}"/>
+                    <p:outputLabel for="valcert" value="Validar Certificado"/>
+                </div>
+            </div>
+
+            <!-- Timeouts / Retries -->
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="cto" value="Connect Timeout (ms)"/>
+                    <p:inputNumber id="cto" value="#{lojaRemoteConfigBean.cfg.connectTimeoutMs}"
+                                   decimalPlaces="0" placeholder="20000"/>
+                </div>
+            </div>
+
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="rto" value="Read Timeout (ms)"/>
+                    <p:inputNumber id="rto" value="#{lojaRemoteConfigBean.cfg.readTimeoutMs}"
+                                   decimalPlaces="0" placeholder="30000"/>
+                </div>
+            </div>
+
+            <div class="col-12 md:col-6">
+                <div class="twocol__row">
+                    <p:outputLabel for="ret" value="Retries"/>
+                    <p:inputNumber id="ret" value="#{lojaRemoteConfigBean.cfg.retries}"
+                                   decimalPlaces="0" placeholder="3"/>
+                </div>
+            </div>
+
+        </div>
+    </p:panel>
+
+    <p:spacer height="16"/>
+
+    <!-- Lista -->
+    <p:panel header="Configurações Cadastradas">
+        <p:dataTable id="tabela" value="#{lojaRemoteConfigBean.lista}" var="item"
+                     paginator="true" rows="10" rowKey="#{item.remoteConfigId}"
+                     emptyMessage="Nenhum registro.">
+
+            <!-- Escopo (sem usar '+', evita NumberFormatException) -->
+            <p:column headerText="Escopo">
+                <h:panelGroup rendered="#{empty item.loja}">
+                    <h:outputText value="-" />
+                </h:panelGroup>
+                <h:panelGroup rendered="#{not empty item.loja}">
+                    <h:outputText value="#{item.loja.lojaId}" />
+                    <h:outputText value=" - " />
+                    <h:outputText value="#{item.loja.nome}" />
+                </h:panelGroup>
+            </p:column>
+
+            <p:column headerText="Protocolo">#{item.protocolo}</p:column>
+            <p:column headerText="Host">#{item.hostRemoto}</p:column>
+            <p:column headerText="Porta" style="width:80px;text-align:center">#{item.portaRemota}</p:column>
+            <p:column headerText="Base Dir">#{item.baseDirRemoto}</p:column>
+
+            <p:column headerText="Ações" style="width:160px;text-align:center">
+                <p:commandButton icon="pi pi-pencil" title="Editar"
+                                 actionListener="#{lojaRemoteConfigBean.editar(item)}"
+                                 process="@this" immediate="true" resetValues="true"
+                                 update=":frm:pnlEdicao :frm:msgs"/>
+                <p:commandButton icon="pi pi-trash" title="Excluir" styleClass="ui-button-danger"
+                                 actionListener="#{lojaRemoteConfigBean.excluir(item.remoteConfigId)}"
+                                 process="@this" update=":frm:tabela :frm:msgs"/>
+                <p:commandButton icon="pi pi-plug" title="Testar"
+                                 actionListener="#{lojaRemoteConfigBean.testarConexao(item)}"
+                                 process="@this" update=":frm:msgs"/>
+            </p:column>
+        </p:dataTable>
+    </p:panel>
+
+</h:form>
+</h:body>
+</html>

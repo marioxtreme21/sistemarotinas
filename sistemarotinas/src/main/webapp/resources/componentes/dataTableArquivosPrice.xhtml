@@ -1,0 +1,39 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:column headerText="Loja" sortBy="#{cfg.loja.codLojaRms}">
+        <h:outputText value="#{cfg.loja.codLojaRms} - #{cfg.loja.nome}" />
+    </p:column>
+
+    <p:column headerText="Subpasta Remota" sortBy="#{cfg.subpastaRemota}">
+        <h:outputText value="#{cfg.subpastaRemota}" />
+    </p:column>
+
+    <p:column headerText="Tipo Destino" sortBy="#{cfg.tipoDestino}">
+        <h:outputText value="#{cfg.tipoDestino}" />
+    </p:column>
+
+    <p:column headerText="Destino (principal)">
+        <h:outputText value="#{cfg.tipoDestino eq 'SFTP' ? cfg.destHost : (cfg.tipoDestino eq 'FS' ? cfg.caminhoFsDestino : cfg.smbServidor)}" />
+    </p:column>
+
+    <p:column headerText="Verificação">
+        <h:outputText value="#{cfg.verificacaoDiariaAtiva ? 'Ativa' : 'Inativa'}" />
+    </p:column>
+
+    <p:column headerText="Ações">
+        <p:commandButton value="Editar"
+                         icon="pi pi-pencil"
+                         action="#{arquivosPriceBean.prepararEditar(cfg)}"
+                         process="@this"
+                         update=":formCadastroArquivosPrice" />
+        <p:commandButton value="Excluir"
+                         action="#{arquivosPriceBean.excluir(cfg.priceId)}"
+                         update=":formTable :formCadastroArquivosPrice"
+                         onclick="if(!confirm('Confirma a exclusão?')) return false;" />
+    </p:column>
+
+</ui:composition>

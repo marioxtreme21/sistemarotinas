@@ -1,0 +1,41 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:panelGrid id="gridAddPattern" columns="4" columnClasses="label,value,label,value" cellpadding="8">
+        <p:outputLabel for="patt" value="Pattern:" />
+        <p:inputText id="patt" value="#{arquivosPriceBean.novoPattern.pattern}" />
+
+        <p:outputLabel for="req" value="Obrigatório:" />
+        <p:selectBooleanCheckbox id="req" value="#{arquivosPriceBean.novoPattern.required}" />
+
+        <p:outputLabel />
+        <p:commandButton value="Adicionar Pattern" icon="pi pi-plus"
+                         actionListener="#{arquivosPriceBean.adicionarPattern}"
+                         update="patternsTable"
+                         styleClass="ui-button-success"/>
+    </p:panelGrid>
+
+    <p:dataTable id="patternsTable"
+                 value="#{arquivosPriceBean.patternsDaLoja}" var="pt"
+                 emptyMessage="Nenhum pattern cadastrado."
+                 rows="5" paginator="true" rowsPerPageTemplate="5,10">
+
+        <p:column headerText="Pattern">
+            <h:outputText value="#{pt.pattern}" />
+        </p:column>
+
+        <p:column headerText="Obrigatório">
+            <h:outputText value="#{pt.required ? 'Sim' : 'Não'}" />
+        </p:column>
+
+        <p:column headerText="Ações">
+            <p:commandButton value="Remover" icon="pi pi-trash"
+                             onclick="return confirm('Remover pattern?')"
+                             actionListener="#{arquivosPriceBean.removerPattern(pt.patternId)}"
+                             update="patternsTable" />
+        </p:column>
+    </p:dataTable>
+</ui:composition>

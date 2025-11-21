@@ -1,0 +1,132 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+    </h:head>
+
+    <ui:define name="title">Arquivos MGV</ui:define>
+
+    <ui:define name="content">
+
+        <!-- Filtros de pesquisa -->
+        <h:form id="formPesquisa">
+            <ui:include src="/resources/componentes/pesquisaArquivosMgv.xhtml" />
+        </h:form>
+
+        <h:form id="formCadastroArquivosMgv">
+            <p:growl id="growl" showDetail="true" life="3000" />
+
+            <p:commandButton value="Novo Cadastro"
+                             actionListener="#{arquivosMgvBean.prepararNovoCadastro}"
+                             update="formCadastroArquivosMgv"
+                             process="@this"
+                             icon="pi pi-plus"
+                             styleClass="ui-button-success" />
+
+            <p:panel id="panelCadastroArquivosMgv"
+                     header="Cadastro MGV"
+                     styleClass="panelPesquisa"
+                     visible="#{arquivosMgvBean.mostrarFormulario}">
+
+                <p:panelGrid id="cadastroArquivosMgv"
+                             columns="2"
+                             cellpadding="10"
+                             styleClass="panelPesquisa"
+                             columnClasses="label,value">
+
+                    <p:outputLabel for="loja" value="Loja:" />
+                    <p:selectOneMenu id="loja"
+                                     value="#{arquivosMgvBean.mgv.loja}"
+                                     converter="lojaConverter" filter="true" style="width:100%">
+                        <f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
+                        <f:selectItems value="#{arquivosMgvBean.lojas}" var="l"
+                                       itemValue="#{l}" itemLabel="#{l.codLojaRms} - #{l.nome}" />
+                    </p:selectOneMenu>
+
+                    <p:outputLabel for="subpasta" value="Subpasta Remota:" />
+                    <p:inputText id="subpasta" value="#{arquivosMgvBean.mgv.subpastaRemota}" />
+
+                    <p:outputLabel for="tz" value="Timezone:" />
+                    <p:inputText id="tz" value="#{arquivosMgvBean.mgv.timezone}" />
+
+                    <p:outputLabel for="grace" value="Grace Minutes:" />
+                    <p:inputNumber id="grace" value="#{arquivosMgvBean.mgv.graceMinutes}" decimalPlaces="0" />
+
+                    <p:outputLabel for="verif" value="Verificação Diária Ativa:" />
+                    <p:selectBooleanCheckbox id="verif" value="#{arquivosMgvBean.mgv.verificacaoDiariaAtiva}" />
+
+                    <p:outputLabel for="mover" value="Mover no remoto após cópia:" />
+                    <p:selectBooleanCheckbox id="mover" value="#{arquivosMgvBean.mgv.moverRemotoAposCopia}" />
+
+                    <p:outputLabel for="dirProc" value="Dir remoto processed/:" />
+                    <p:inputText id="dirProc" value="#{arquivosMgvBean.mgv.dirRemotoProcessed}" />
+
+                    <p:outputLabel for="fsUsar" value="Usar FS Montado:" />
+                    <p:selectBooleanCheckbox id="fsUsar" value="#{arquivosMgvBean.mgv.usarFsMontado}" />
+
+                    <p:outputLabel for="fsDest" value="Caminho FS destino:" />
+                    <p:inputText id="fsDest" value="#{arquivosMgvBean.mgv.caminhoFsDestino}" />
+
+                    <p:outputLabel for="smbUsar" value="Usar SMB Direto (fallback):" />
+                    <p:selectBooleanCheckbox id="smbUsar" value="#{arquivosMgvBean.mgv.usarSmbDireto}" />
+
+                    <p:outputLabel for="smbSrv" value="SMB Servidor:" />
+                    <p:inputText id="smbSrv" value="#{arquivosMgvBean.mgv.smbServidor}" />
+
+                    <p:outputLabel for="smbShare" value="SMB Compartilhamento:" />
+                    <p:inputText id="smbShare" value="#{arquivosMgvBean.mgv.smbCompartilhamento}" />
+
+                    <p:outputLabel for="smbSub" value="SMB Subpasta:" />
+                    <p:inputText id="smbSub" value="#{arquivosMgvBean.mgv.smbSubpasta}" />
+
+                    <p:outputLabel for="smbDom" value="SMB Domínio:" />
+                    <p:inputText id="smbDom" value="#{arquivosMgvBean.mgv.smbDominio}" />
+
+                    <p:outputLabel for="smbUser" value="SMB Usuário:" />
+                    <p:inputText id="smbUser" value="#{arquivosMgvBean.mgv.smbUsuario}" />
+
+                    <p:outputLabel for="smbPass" value="SMB Senha:" />
+                    <p:password id="smbPass" value="#{arquivosMgvBean.mgv.smbSenha}" feedback="false" />
+
+                    <p:outputLabel for="habil" value="Habilitado:" />
+                    <p:selectBooleanCheckbox id="habil" value="#{arquivosMgvBean.mgv.habilitado}" />
+                </p:panelGrid>
+
+                <p:commandButton value="Salvar"
+                                 actionListener="#{arquivosMgvBean.salvar}"
+                                 update="growl formCadastroArquivosMgv formTable"
+                                 icon="pi pi-save"
+                                 styleClass="ui-button-primary" />
+            </p:panel>
+
+            <!-- Patterns -->
+            <p:panel id="panelPatternsMgv"
+                     header="Patterns (arquivos esperados no MGV)"
+                     styleClass="panelPesquisa"
+                     visible="#{arquivosMgvBean.mostrarFormulario}">
+                <ui:include src="/resources/componentes/dataTableArquivosMgvPatterns.xhtml" />
+            </p:panel>
+
+        </h:form>
+
+        <!-- Tabela -->
+        <h:form id="formTable">
+            <p:dataTable id="tableResult"
+                         value="#{arquivosMgvBean.lista}"
+                         var="cfg"
+                         emptyMessage="Não há registros para exibir."
+                         paginator="true"
+                         rows="10"
+                         rowsPerPageTemplate="10,20,50"
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                <ui:include src="/resources/componentes/dataTableArquivosMgv.xhtml" />
+            </p:dataTable>
+        </h:form>
+
+    </ui:define>
+</ui:composition>

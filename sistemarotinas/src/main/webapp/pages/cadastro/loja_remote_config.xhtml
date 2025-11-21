@@ -1,0 +1,118 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+    </h:head>
+
+    <ui:define name="title">Configuração Remota (Loja)</ui:define>
+
+    <ui:define name="content">
+
+        <!-- Filtros de pesquisa -->
+        <h:form id="formPesquisa">
+            <ui:include src="/resources/componentes/pesquisaLojaRemoteConfig.xhtml" />
+        </h:form>
+
+        <h:form id="formCadastroLojaRemoteConfig">
+            <p:growl id="growl" showDetail="true" life="3000" />
+
+            <p:commandButton value="Novo Cadastro"
+                             actionListener="#{lojaRemoteConfigBean.prepararNovoCadastro}"
+                             update="formCadastroLojaRemoteConfig"
+                             process="@this"
+                             icon="pi pi-plus"
+                             styleClass="ui-button-success" />
+
+            <p:panel id="panelCadastroLojaRemoteConfig"
+                     header="Cadastro Configuração Remota"
+                     styleClass="panelPesquisa"
+                     visible="#{lojaRemoteConfigBean.mostrarFormulario}">
+
+                <p:panelGrid id="cadastroLojaRemoteConfig"
+                             columns="2"
+                             cellpadding="10"
+                             styleClass="panelPesquisa"
+                             columnClasses="label,value">
+
+                    <p:outputLabel for="loja" value="Loja:" />
+                    <p:selectOneMenu id="loja"
+                                     value="#{lojaRemoteConfigBean.config.loja}"
+                                     converter="lojaConverter" filter="true" style="width:100%">
+                        <f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
+                        <f:selectItems value="#{lojaRemoteConfigBean.lojas}" var="l"
+                                       itemValue="#{l}" itemLabel="#{l.codLojaRms} - #{l.nome}" />
+                    </p:selectOneMenu>
+
+                    <p:outputLabel for="protocolo" value="Protocolo:" />
+                    <p:selectOneMenu id="protocolo" value="#{lojaRemoteConfigBean.config.protocolo}" style="width:100%">
+                        <f:selectItem itemLabel="FTP"  itemValue="FTP"/>
+                        <f:selectItem itemLabel="FTPS" itemValue="FTPS"/>
+                        <f:selectItem itemLabel="SFTP" itemValue="SFTP"/>
+                    </p:selectOneMenu>
+
+                    <p:outputLabel for="host" value="Host Remoto:" />
+                    <p:inputText id="host" value="#{lojaRemoteConfigBean.config.hostRemoto}" required="true" />
+
+                    <p:outputLabel for="porta" value="Porta:" />
+                    <p:inputNumber id="porta" value="#{lojaRemoteConfigBean.config.portaRemota}" decimalPlaces="0" />
+
+                    <p:outputLabel for="usuario" value="Usuário:" />
+                    <p:inputText id="usuario" value="#{lojaRemoteConfigBean.config.usuarioRemoto}" required="true" />
+
+                    <p:outputLabel for="senha" value="Senha:" />
+                    <p:password id="senha" value="#{lojaRemoteConfigBean.config.senhaRemota}" feedback="false" />
+
+                    <p:outputLabel for="chavePriv" value="Chave Privada (SFTP):" />
+                    <p:inputText id="chavePriv" value="#{lojaRemoteConfigBean.config.caminhoChavePrivada}" />
+
+                    <p:outputLabel for="baseDir" value="Diretório Base Remoto:" />
+                    <p:inputText id="baseDir" value="#{lojaRemoteConfigBean.config.baseDirRemoto}" />
+
+                    <p:outputLabel for="passive" value="FTP Passive Mode:" />
+                    <p:selectBooleanCheckbox id="passive" value="#{lojaRemoteConfigBean.config.ftpPassiveMode}" />
+
+                    <p:outputLabel for="ftpsTlsExp" value="FTPS TLS Explicit:" />
+                    <p:selectBooleanCheckbox id="ftpsTlsExp" value="#{lojaRemoteConfigBean.config.ftpsTlsExplicit}" />
+
+                    <p:outputLabel for="valCert" value="Validar Certificado:" />
+                    <p:selectBooleanCheckbox id="valCert" value="#{lojaRemoteConfigBean.config.validarCertificado}" />
+
+                    <p:outputLabel for="connectTo" value="Connect Timeout (ms):" />
+                    <p:inputNumber id="connectTo" value="#{lojaRemoteConfigBean.config.connectTimeoutMs}" decimalPlaces="0" />
+
+                    <p:outputLabel for="readTo" value="Read Timeout (ms):" />
+                    <p:inputNumber id="readTo" value="#{lojaRemoteConfigBean.config.readTimeoutMs}" decimalPlaces="0" />
+
+                    <p:outputLabel for="retries" value="Retries:" />
+                    <p:inputNumber id="retries" value="#{lojaRemoteConfigBean.config.retries}" decimalPlaces="0" />
+                </p:panelGrid>
+
+                <p:commandButton value="Salvar"
+                                 actionListener="#{lojaRemoteConfigBean.salvar}"
+                                 update="growl formCadastroLojaRemoteConfig formTable"
+                                 icon="pi pi-save"
+                                 styleClass="ui-button-primary" />
+            </p:panel>
+        </h:form>
+
+        <!-- Tabela -->
+        <h:form id="formTable">
+            <p:dataTable id="tableResult"
+                         value="#{lojaRemoteConfigBean.lista}"
+                         var="cfg"
+                         emptyMessage="Não há registros para exibir."
+                         paginator="true"
+                         rows="10"
+                         rowsPerPageTemplate="10,20,50"
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                <ui:include src="/resources/componentes/dataTableLojaRemoteConfig.xhtml" />
+            </p:dataTable>
+        </h:form>
+
+    </ui:define>
+</ui:composition>

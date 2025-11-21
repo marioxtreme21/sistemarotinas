@@ -1,0 +1,121 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <!-- Título exibido no layout -->
+    <ui:define name="title">Relatório – Vendas por Loja</ui:define>
+
+    <!-- Conteúdo principal da página -->
+    <ui:define name="content">
+        <h:form id="formRelatorio">
+
+    
+            <p:growl id="growl" showDetail="true" life="5000" />
+
+            <p:panel header="Parâmetros">
+                <p:panelGrid columns="4" columnClasses="label,value,label,value"
+                             styleClass="panelPesquisa">
+
+    
+                    <p:outputLabel for="dataInicio" value="Data inicial:" />
+                    <p:datePicker id="dataInicio"
+                                  value="#{relatorioVendasLojasBean.dataInicio}"
+                                  pattern="dd/MM/yyyy"
+                                  showIcon="true" />
+
+         
+                    <p:outputLabel for="dataFim" value="Data final:" />
+                    <p:datePicker id="dataFim"
+                                  value="#{relatorioVendasLojasBean.dataFim}"
+                                  pattern="dd/MM/yyyy"
+                                  showIcon="true" />
+
+
+                    <p:outputLabel for="apenasPermitidas"
+                                   value="Apenas lojas permitidas:" />
+                    <p:selectBooleanCheckbox id="apenasPermitidas"
+                                             value="#{relatorioVendasLojasBean.apenasLojasPermitidas}" />
+
+   
+                    <p:outputLabel />
+                    <p:commandButton value="Gerar relatório"
+                                     icon="pi pi-search"
+                                     actionListener="#{relatorioVendasLojasBean.gerarRelatorio}"
+                                     process="@form"
+                                     update="@form" />
+                </p:panelGrid>
+            </p:panel>
+
+            <p:spacer height="15" />
+
+
+            <p:outputPanel id="painelResultado"
+                           rendered="#{not empty relatorioVendasLojasBean.resultados}">
+
+       
+                <p:panel header="Resumo do Período">
+                    <h:panelGrid columns="2" columnClasses="label,value">
+
+                        <h:outputText value="Período:" />
+                        <h:outputText value="#{relatorioVendasLojasBean.periodoFormatado}" />
+
+                        <h:outputText value="Total geral de vendas:" />
+                        <h:outputText value="#{relatorioVendasLojasBean.totalGeral}">
+                            <f:convertNumber type="currency"
+                                             currencySymbol="R$ "
+                                             locale="pt_BR"
+                                             minFractionDigits="2"
+                                             maxFractionDigits="2" />
+                        </h:outputText>
+
+                    </h:panelGrid>
+                </p:panel>
+
+                <p:spacer height="10" />
+
+    
+                <p:dataTable id="tabelaVendas"
+                             value="#{relatorioVendasLojasBean.resultados}"
+                             var="venda"
+                             paginator="true"
+                             rows="20"
+                             emptyMessage="Nenhum registro encontrado para o período informado.">
+
+
+                    <p:column headerText="Loja">
+                        <h:outputText value="#{venda.nomeLoja}" />
+                    </p:column>
+
+          
+                    <p:column headerText="Total de Vendas"
+                              style="text-align:right; width:160px;">
+                        <h:outputText value="#{venda.totalVenda}">
+                            <f:convertNumber type="currency"
+                                             currencySymbol="R$ "
+                                             locale="pt_BR"
+                                             minFractionDigits="2"
+                                             maxFractionDigits="2" />
+                        </h:outputText>
+                    </p:column>
+
+
+                    <p:column headerText="Qtd. Cupons"
+                              style="text-align:right; width:90px;">
+                        <h:outputText value="#{venda.numeroClientes}">
+                            <f:convertNumber type="number"
+                                             locale="pt_BR"
+                                             groupingUsed="true"
+                                             minFractionDigits="0"
+                                             maxFractionDigits="0" />
+                        </h:outputText>
+                    </p:column>
+
+                </p:dataTable>
+            </p:outputPanel>
+
+        </h:form>
+    </ui:define>
+</ui:composition>

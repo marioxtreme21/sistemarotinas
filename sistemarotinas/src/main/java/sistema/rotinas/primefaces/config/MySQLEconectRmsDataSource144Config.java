@@ -18,7 +18,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 public class MySQLEconectRmsDataSource144Config {
 
     // Configurações do banco de dados MySQL (somente leitura) no IP 10.1.1.144
-    private String url = "jdbc:mysql://10.1.1.44:3306/concentrador";
+    private String url = "jdbc:mysql://10.1.1.144:3306/concentrador";
     private String username = "root";
     private String password = "123456";
     private String driverClassName = "com.mysql.cj.jdbc.Driver";

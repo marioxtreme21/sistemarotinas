@@ -1,0 +1,157 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+    </h:head>
+
+    <ui:define name="title">Arquivos PRICE</ui:define>
+
+    <ui:define name="content">
+
+        <!-- Filtros de pesquisa -->
+        <h:form id="formPesquisa">
+            <ui:include src="/resources/componentes/pesquisaArquivosPrice.xhtml" />
+        </h:form>
+
+        <h:form id="formCadastroArquivosPrice">
+            <p:growl id="growl" showDetail="true" life="3000" />
+
+            <p:commandButton value="Novo Cadastro"
+                             actionListener="#{arquivosPriceBean.prepararNovoCadastro}"
+                             update="formCadastroArquivosPrice"
+                             process="@this"
+                             icon="pi pi-plus"
+                             styleClass="ui-button-success" />
+
+            <p:panel id="panelCadastroArquivosPrice"
+                     header="Cadastro PRICE"
+                     styleClass="panelPesquisa"
+                     visible="#{arquivosPriceBean.mostrarFormulario}">
+
+                <p:panelGrid id="cadastroArquivosPrice"
+                             columns="2"
+                             cellpadding="10"
+                             styleClass="panelPesquisa"
+                             columnClasses="label,value">
+
+                    <p:outputLabel for="loja" value="Loja:" />
+                    <p:selectOneMenu id="loja"
+                                     value="#{arquivosPriceBean.price.loja}"
+                                     converter="lojaConverter" filter="true" style="width:100%">
+                        <f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
+                        <f:selectItems value="#{arquivosPriceBean.lojas}" var="l"
+                                       itemValue="#{l}" itemLabel="#{l.codLojaRms} - #{l.nome}" />
+                    </p:selectOneMenu>
+
+                    <p:outputLabel for="subpasta" value="Subpasta Remota:" />
+                    <p:inputText id="subpasta" value="#{arquivosPriceBean.price.subpastaRemota}" />
+
+                    <p:outputLabel for="tipoDest" value="Tipo de Destino:" />
+                    <p:selectOneMenu id="tipoDest" value="#{arquivosPriceBean.price.tipoDestino}" style="width:100%">
+                        <f:selectItem itemLabel="FS Montado" itemValue="FS"/>
+                        <f:selectItem itemLabel="SFTP" itemValue="SFTP"/>
+                        <f:selectItem itemLabel="SMB" itemValue="SMB"/>
+                    </p:selectOneMenu>
+
+                    <!-- SFTP destino -->
+                    <p:outputLabel for="dhost" value="Dest Host (SFTP):" />
+                    <p:inputText id="dhost" value="#{arquivosPriceBean.price.destHost}" />
+
+                    <p:outputLabel for="dport" value="Dest Porta (SFTP):" />
+                    <p:inputNumber id="dport" value="#{arquivosPriceBean.price.destPort}" decimalPlaces="0" />
+
+                    <p:outputLabel for="duser" value="Dest Usuário (SFTP):" />
+                    <p:inputText id="duser" value="#{arquivosPriceBean.price.destUsuario}" />
+
+                    <p:outputLabel for="dpass" value="Dest Senha (SFTP):" />
+                    <p:password id="dpass" value="#{arquivosPriceBean.price.destSenha}" feedback="false" />
+
+                    <p:outputLabel for="dkey" value="Chave Privada (SFTP):" />
+                    <p:inputText id="dkey" value="#{arquivosPriceBean.price.destCaminhoChavePrivada}" />
+
+                    <p:outputLabel for="dknown" value="Known Hosts (SFTP):" />
+                    <p:inputText id="dknown" value="#{arquivosPriceBean.price.destKnownHostsPath}" />
+
+                    <p:outputLabel for="ddir" value="Dir Remoto (SFTP):" />
+                    <p:inputText id="ddir" value="#{arquivosPriceBean.price.destDirRemoto}" />
+
+                    <!-- FS montado -->
+                    <p:outputLabel for="fsDest" value="Caminho FS destino:" />
+                    <p:inputText id="fsDest" value="#{arquivosPriceBean.price.caminhoFsDestino}" />
+
+                    <!-- SMB -->
+                    <p:outputLabel for="smbSrv" value="SMB Servidor:" />
+                    <p:inputText id="smbSrv" value="#{arquivosPriceBean.price.smbServidor}" />
+
+                    <p:outputLabel for="smbShare" value="SMB Compartilhamento:" />
+                    <p:inputText id="smbShare" value="#{arquivosPriceBean.price.smbCompartilhamento}" />
+
+                    <p:outputLabel for="smbSub" value="SMB Subpasta:" />
+                    <p:inputText id="smbSub" value="#{arquivosPriceBean.price.smbSubpasta}" />
+
+                    <p:outputLabel for="smbDom" value="SMB Domínio:" />
+                    <p:inputText id="smbDom" value="#{arquivosPriceBean.price.smbDominio}" />
+
+                    <p:outputLabel for="smbUser" value="SMB Usuário:" />
+                    <p:inputText id="smbUser" value="#{arquivosPriceBean.price.smbUsuario}" />
+
+                    <p:outputLabel for="smbPass" value="SMB Senha:" />
+                    <p:password id="smbPass" value="#{arquivosPriceBean.price.smbSenha}" feedback="false" />
+
+                    <p:outputLabel for="tz" value="Timezone:" />
+                    <p:inputText id="tz" value="#{arquivosPriceBean.price.timezone}" />
+
+                    <p:outputLabel for="grace" value="Grace Minutes:" />
+                    <p:inputNumber id="grace" value="#{arquivosPriceBean.price.graceMinutes}" decimalPlaces="0" />
+
+                    <p:outputLabel for="verif" value="Verificação Diária Ativa:" />
+                    <p:selectBooleanCheckbox id="verif" value="#{arquivosPriceBean.price.verificacaoDiariaAtiva}" />
+
+                    <p:outputLabel for="mover" value="Mover no remoto após cópia:" />
+                    <p:selectBooleanCheckbox id="mover" value="#{arquivosPriceBean.price.moverRemotoAposCopia}" />
+
+                    <p:outputLabel for="dirProc" value="Dir remoto processed/:" />
+                    <p:inputText id="dirProc" value="#{arquivosPriceBean.price.destDirRemotoProcessed}" />
+
+                    <p:outputLabel for="habil" value="Habilitado:" />
+                    <p:selectBooleanCheckbox id="habil" value="#{arquivosPriceBean.price.habilitado}" />
+                </p:panelGrid>
+
+                <p:commandButton value="Salvar"
+                                 actionListener="#{arquivosPriceBean.salvar}"
+                                 update="growl formCadastroArquivosPrice formTable"
+                                 icon="pi pi-save"
+                                 styleClass="ui-button-primary" />
+            </p:panel>
+
+            <!-- Patterns -->
+            <p:panel id="panelPatternsPrice"
+                     header="Patterns (arquivo(s) esperado(s) no PRICE)"
+                     styleClass="panelPesquisa"
+                     visible="#{arquivosPriceBean.mostrarFormulario}">
+                <ui:include src="/resources/componentes/dataTableArquivosPricePatterns.xhtml" />
+            </p:panel>
+
+        </h:form>
+
+        <!-- Tabela -->
+        <h:form id="formTable">
+            <p:dataTable id="tableResult"
+                         value="#{arquivosPriceBean.lista}"
+                         var="cfg"
+                         emptyMessage="Não há registros para exibir."
+                         paginator="true"
+                         rows="10"
+                         rowsPerPageTemplate="10,20,50"
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                <ui:include src="/resources/componentes/dataTableArquivosPrice.xhtml" />
+            </p:dataTable>
+        </h:form>
+
+    </ui:define>
+</ui:composition>

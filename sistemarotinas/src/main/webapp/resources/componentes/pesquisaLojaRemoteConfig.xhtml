@@ -1,0 +1,65 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+    </h:head>
+
+    <p:panel header="Pesquisa de Configuração Remota" styleClass="panelPesquisa">
+        <p:spacer />
+
+        <p:panelGrid id="panelGridPesquisa" columns="4" cellpadding="5">
+
+            <p:row>
+                <p:outputLabel for="campoPesquisa" value="Campo:" />
+                <p:selectOneMenu id="campoPesquisa"
+                                 value="#{lojaRemoteConfigBean.campoSelecionado}" style="width: 100%;">
+                    <f:selectItem itemLabel="Selecione um campo" itemValue="" />
+                    <f:selectItem itemLabel="Loja (RMS)" itemValue="loja.cod_loja_rms" />
+                    <f:selectItem itemLabel="Host Remoto" itemValue="host_remoto" />
+                    <f:selectItem itemLabel="Protocolo" itemValue="protocolo" />
+                </p:selectOneMenu>
+            </p:row>
+
+            <p:row>
+                <p:outputLabel for="condicaoPesquisa" value="Condição:" />
+                <p:selectOneMenu id="condicaoPesquisa"
+                                 value="#{lojaRemoteConfigBean.condicaoSelecionada}" style="width: 100%;">
+                    <f:selectItem itemLabel="Selecione uma condição" itemValue="" />
+                    <f:selectItem itemLabel="Igual" itemValue="equal" />
+                    <f:selectItem itemLabel="Contém" itemValue="contains" />
+                </p:selectOneMenu>
+            </p:row>
+
+            <p:row>
+                <p:outputLabel for="valorPesquisa" value="Valor:" />
+                <p:inputText id="valorPesquisa" value="#{lojaRemoteConfigBean.valorPesquisa}" style="width: 100%;" />
+            </p:row>
+
+            <p:row>
+                <p:outputLabel />
+                <p:commandButton value="Pesquisar" icon="pi pi-search"
+                                 actionListener="#{lojaRemoteConfigBean.pesquisar}"
+                                 update="@form"
+                                 ajax="false"
+                                 immediate="false"
+                                 process="@this,panelGridPesquisa"
+                                 styleClass="ui-button-primary" style="width: 100%;" />
+            </p:row>
+
+            <p:row>
+                <p:outputLabel />
+                <p:commandButton value="Limpar Filtros" icon="pi pi-times"
+                                 actionListener="#{lojaRemoteConfigBean.limparFiltros}"
+                                 update="@form"
+                                 ajax="false" immediate="false"
+                                 process="@this,panelGridPesquisa"
+                                 styleClass="ui-button-secondary" style="width: 100%;" />
+            </p:row>
+
+        </p:panelGrid>
+    </p:panel>
+</ui:composition>

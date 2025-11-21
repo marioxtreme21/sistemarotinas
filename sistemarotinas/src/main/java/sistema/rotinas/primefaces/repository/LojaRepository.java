@@ -9,12 +9,15 @@ import sistema.rotinas.primefaces.model.Loja;
 
 public interface LojaRepository extends JpaRepository<Loja, Long> {
 
-	Optional<Loja> findByCodigoEmpresaSitef(String codigoEmpresaSitef);
+    Optional<Loja> findByCodigoEmpresaSitef(String codigoEmpresaSitef);
 
-	Optional<Loja> findByNome(String nome);
+    Optional<Loja> findByNome(String nome);
 
-	Optional<Loja> findByCnpj(String cnpj);
+    Optional<Loja> findByCnpj(String cnpj);
 
-	// ✅ para buscar lojas ativas por horário, sem SQL nativo
-	List<Loja> findByEcommerceAtivoTrueAndHorarioPriceUpdate(String horarioPriceUpdate);
+    // ✅ já existia para o Price Update
+    List<Loja> findByEcommerceAtivoTrueAndHorarioPriceUpdate(String horarioPriceUpdate);
+
+    // ✅ NOVO: usa o campo cod_loja_econect da sua entidade Loja
+    Optional<Loja> findByCodLojaEconect(String codLojaEconect);
 }
