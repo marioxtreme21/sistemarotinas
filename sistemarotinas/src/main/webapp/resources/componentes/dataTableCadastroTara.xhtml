@@ -1,0 +1,58 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+    <!-- PRD -->
+    <p:column headerText="PRD" sortBy="#{tara.prd}" filterBy="#{tara.prd}">
+        <h:outputText value="#{tara.prd}" />
+    </p:column>
+
+    <!-- Peso Embalagem -->
+    <p:column headerText="Peso Embalagem (pso_emb)" sortBy="#{tara.psoEmb}">
+        <h:outputText value="#{tara.psoEmb}" />
+    </p:column>
+
+    <!-- Seção -->
+    <p:column headerText="Seção (sec)" sortBy="#{tara.sec}">
+        <h:outputText value="#{tara.sec}" />
+    </p:column>
+
+    <!-- Grupo -->
+    <p:column headerText="Grupo (grp)" sortBy="#{tara.grp}">
+        <h:outputText value="#{tara.grp}" />
+    </p:column>
+
+    <!-- Subgrupo -->
+    <p:column headerText="Subgrupo (sgr)" sortBy="#{tara.sgr}">
+        <h:outputText value="#{tara.sgr}" />
+    </p:column>
+
+    <!-- Data Atualização - usando o converter de LocalDateTime -->
+    <p:column headerText="Data Atualização" sortBy="#{tara.datAtz}">
+        <h:outputText value="#{tara.datAtz}"
+                      converter="localDateTimeConverter" />
+    </p:column>
+
+    <!-- Ações -->
+    <p:column headerText="Ações" style="width: 140px; text-align:center;">
+        <!-- EDITAR -->
+        <p:commandButton icon="pi pi-pencil"
+                         title="Editar"
+                         actionListener="#{taraBean.prepararEditar(tara)}"
+                         update=":formCadastroTara :formCadastroTara:growl"
+                         process="@this"
+                         styleClass="ui-button-rounded ui-button-info" />
+
+        <p:spacer width="6" />
+
+        <!-- EXCLUIR -->
+        <p:commandButton icon="pi pi-trash"
+                         title="Excluir"
+                         actionListener="#{taraBean.excluir(tara)}"
+                         update=":formTable :formCadastroTara :formCadastroTara:growl"
+                         process="@this"
+                         styleClass="ui-button-rounded ui-button-danger" />
+    </p:column>
+
+</ui:composition>

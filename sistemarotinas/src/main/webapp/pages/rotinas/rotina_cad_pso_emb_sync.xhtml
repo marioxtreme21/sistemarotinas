@@ -1,0 +1,39 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+    </h:head>
+
+    <ui:define name="title">Rotina cad_pso_emb (Tara)</ui:define>
+
+    <ui:define name="content">
+
+        <h:form id="formRotinaTara">
+            <p:growl id="growl" showDetail="true" life="4000" />
+
+            <p:panel header="Rotina de Sincronização cad_pso_emb (Tara)"
+                     styleClass="panelPesquisa">
+
+                <p:outputPanel style="margin-bottom:16px;">
+                    <h:outputText value="Esta rotina sincroniza a tabela local cad_pso_emb (Tara) com o servidor 144 (concentrador). 
+Ela apaga o conteúdo atual da tabela no 144 e reinsere todos os registros configurados no Sistema Rotinas."
+                                  escape="false" />
+                </p:outputPanel>
+
+                <p:commandButton value="Executar Sincronização Agora"
+                                 actionListener="#{taraBean.sincronizarComServidor144}"
+                                 update="@form"
+                                 process="@this"
+                                 icon="pi pi-sync"
+                                 styleClass="ui-button-danger" />
+
+            </p:panel>
+        </h:form>
+
+    </ui:define>
+</ui:composition>

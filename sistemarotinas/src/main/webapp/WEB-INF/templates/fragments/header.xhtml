@@ -35,6 +35,11 @@
                         <i class="pi pi-building"></i><span>Cadastro de Loja</span>
                     </h:outputLink>
 
+                    <!-- Tara -->
+                    <h:outputLink value="#{request.contextPath}/pages/cadastro/cadastro_tara.xhtml">
+                        <i class="pi pi-balance-scale"></i><span>Cadastro de Tara</span>
+                    </h:outputLink>
+
                     <!-- Integrações de Arquivos (já existente) -->
                     <h:outputLink value="#{request.contextPath}/pages/cadastro/loja_remote_config.xhtml">
                         <i class="pi pi-share-alt"></i><span>Configuração Remota (Loja)</span>
@@ -113,7 +118,7 @@
                         <i class="pi pi-file-pdf"></i><span>Preços Alterados (por período)</span>
                     </h:outputLink>
 
-                    <!-- ✅ Relatório de Vendas por Loja -->
+                    <!-- Relatório de Vendas por Loja -->
                     <h:outputLink value="#{request.contextPath}/pages/relatorios/relatorio_vendas_lojas.xhtml">
                         <i class="pi pi-chart-bar"></i><span>Vendas por Loja</span>
                     </h:outputLink>
@@ -126,8 +131,18 @@
                     <i class="pi pi-clock"></i> <span class="text">Rotinas</span>
                 </div>
                 <div class="submenu">
+
+                    <!-- NOVA: Baixa de Voucher -->
+                    <h:outputLink value="#{request.contextPath}/pages/rotinas/ajuste_baixa_voucher.xhtml">
+                        <i class="pi pi-ticket"></i><span>Baixa de Voucher (Finalizadora 31)</span>
+                    </h:outputLink>
+
                     <h:outputLink value="#{request.contextPath}/pages/rotinas/rotina_bebida_alcoolicas_self.xhtml">
                         <i class="pi pi-glass"></i><span>Bebidas Alcoólicas (Self)</span>
+                    </h:outputLink>
+
+                    <h:outputLink value="#{request.contextPath}/pages/rotinas/rotina_cad_pso_emb_sync.xhtml">
+                        <i class="pi pi-sync"></i><span>Sincronização Tara (cad_pso_emb)</span>
                     </h:outputLink>
                 </div>
             </ui:fragment>

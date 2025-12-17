@@ -1,0 +1,110 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+    </h:head>
+
+    <ui:define name="title">Cadastro de Tara (cad_pso_emb)</ui:define>
+
+    <ui:define name="content">
+
+       
+        <h:form id="formPesquisa">
+            <ui:include src="/resources/componentes/pesquisaTara.xhtml" />
+        </h:form>
+
+        <h:form id="formCadastroTara">
+            <p:growl id="growl" showDetail="true" life="4000" />
+
+            <p:commandButton value="Novo Cadastro"
+                             actionListener="#{taraBean.prepararNovoCadastro}"
+                             update="formCadastroTara"
+                             process="@this"
+                             icon="pi pi-plus"
+                             styleClass="ui-button-success" />
+
+            <p:spacer width="10" />
+
+            <p:commandButton value="Sincronizar com 144"
+                             actionListener="#{taraBean.sincronizarComServidor144}"
+                             update="growl"
+                             process="@this"
+                             icon="pi pi-sync"
+                             styleClass="ui-button-info" />
+
+            <p:panel id="panelCadastroTara"
+                     header="Cadastro de Tara (Peso Embalagem)"
+                     styleClass="panelPesquisa"
+                     visible="#{taraBean.mostrarFormulario}">
+
+                <p:panelGrid id="cadastroTara"
+                             columns="2"
+                             cellpadding="10"
+                             styleClass="panelPesquisa"
+                             columnClasses="label,value">
+
+            
+                    <p:outputLabel for="prd" value="Código Produto (PRD): *" />
+                    <p:inputText id="prd"
+                                 value="#{taraBean.tara.prd}"
+                                 required="true"
+                                 requiredMessage="Informe o código do produto." />
+
+                    <p:outputLabel for="psoEmb" value="Peso Embalagem (pso_emb): *" />
+                    <p:inputNumber id="psoEmb"
+                                   value="#{taraBean.tara.psoEmb}"
+                                   minValue="0"
+                                   decimalPlaces="0"
+                                   required="true"
+                                   requiredMessage="Informe o peso de embalagem." />
+
+                    <p:outputLabel for="sec" value="Seção (sec):" />
+                    <p:inputNumber id="sec"
+                                   value="#{taraBean.tara.sec}"
+                                   minValue="0"
+                                   decimalPlaces="0" />
+
+                    <p:outputLabel for="grp" value="Grupo (grp):" />
+                    <p:inputNumber id="grp"
+                                   value="#{taraBean.tara.grp}"
+                                   minValue="0"
+                                   decimalPlaces="0" />
+
+                    <p:outputLabel for="sgr" value="Subgrupo (sgr):" />
+                    <p:inputNumber id="sgr"
+                                   value="#{taraBean.tara.sgr}"
+                                   minValue="0"
+                                   decimalPlaces="0" />
+
+                </p:panelGrid>
+
+                <p:commandButton value="Salvar"
+                                 actionListener="#{taraBean.salvar}"
+                                 update="growl formCadastroTara formTable"
+                                 icon="pi pi-save"
+                                 styleClass="ui-button-primary" />
+            </p:panel>
+        </h:form>
+
+  
+        <h:form id="formTable">
+            <p:dataTable id="tableResult"
+                         value="#{taraBean.tarasLazy}"
+                         var="tara"
+                         emptyMessage="Não há registros para exibir."
+                         paginator="true"
+                         rows="10"
+                         lazy="true"
+                         rowsPerPageTemplate="10,20,50"
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                <ui:include src="/resources/componentes/dataTableCadastroTara.xhtml" />
+            </p:dataTable>
+        </h:form>
+
+    </ui:define>
+</ui:composition>

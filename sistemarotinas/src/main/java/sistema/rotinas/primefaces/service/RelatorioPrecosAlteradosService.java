@@ -66,6 +66,7 @@ public class RelatorioPrecosAlteradosService implements IRelatorioPrecosAlterado
             LEFT JOIN CONSINCO.MAP_PRODUTO mp
               ON mp.SEQPRODUTO = pa.SEQPRODUTO
             WHERE pa.NROEMPRESA = ?
+              AND pa.NROSEGMENTO IN (1, 3)
               AND pa.DTABASEEXPORTACAO BETWEEN
                   TO_DATE(?,'DD/MM/YYYY HH24:MI:SS') AND
                   TO_DATE(?,'DD/MM/YYYY HH24:MI:SS')

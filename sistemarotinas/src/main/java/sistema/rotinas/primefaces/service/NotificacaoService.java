@@ -39,7 +39,7 @@ public class NotificacaoService {
     // ✅ NOVO: destinatários específicos para o relatório de preços alterados
     private static final List<String> DESTINATARIOS_RELATORIO_PRECO =
             List.of("relatorioalterados@hiperideal.com.br");
-    // List.of("mario.emmanuel@hiperideal.com.br");
+    //List.of("mario.emmanuel@hiperideal.com.br");
 
     // ✅ NOVO: destinatários para Relatório de Vendas por Loja
     private static final List<String> DESTINATARIOS_RELATORIO_VENDAS_LOJAS =

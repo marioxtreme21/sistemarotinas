@@ -1,0 +1,73 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Rotina - Baixa Voucher (Finalizadora 31)</ui:define>
+
+    <ui:define name="content">
+
+        <h:form id="formRotina">
+            <p:growl id="growl" showDetail="true" life="5000"/>
+
+            <p:panel header="Baixa de Voucher por CPF (ECONECT → CONSINCO)" styleClass="panelPesquisa">
+
+                <p:panelGrid columns="4" layout="grid" style="width:100%;" cellpadding="5">
+
+                    <p:outputLabel for="ini" value="Data/Hora Inicial:"/>
+                    <p:datePicker id="ini"
+                                  value="#{ajusteBaixaVoucherBean.dataInicial}"
+                                  showTime="true"
+                                  pattern="dd/MM/yyyy HH:mm:ss"
+                                  showIcon="true"/>
+
+                    <p:outputLabel for="fim" value="Data/Hora Final:"/>
+                    <p:datePicker id="fim"
+                                  value="#{ajusteBaixaVoucherBean.dataFinal}"
+                                  showTime="true"
+                                  pattern="dd/MM/yyyy HH:mm:ss"
+                                  showIcon="true"/>
+
+                </p:panelGrid>
+
+                <p:commandButton value="Executar Rotina"
+                                 icon="pi pi-play"
+                                 actionListener="#{ajusteBaixaVoucherBean.executar}"
+                                 update="growl panelResultado"
+                                 process="@form"
+                                 styleClass="ui-button-success"/>
+
+            </p:panel>
+
+            <p:panel id="panelResultado"
+                     header="Resultado"
+                     rendered="#{not empty ajusteBaixaVoucherBean.resultado}"
+                     styleClass="panelPesquisa">
+
+                <p:panelGrid columns="2" layout="grid" style="width:100%;" cellpadding="5">
+
+                    <h:outputText value="Total lidos no ECONECT:"/>
+                    <h:outputText value="#{ajusteBaixaVoucherBean.resultado.totalLidosEconect}"/>
+
+                    <h:outputText value="Clientes marcados com Situação = 99:"/>
+                    <h:outputText value="#{ajusteBaixaVoucherBean.resultado.totalClientesMarcadosSituacao99}"/>
+
+                    <h:outputText value="Movimentações inseridas (tb_bdc_controle_clientes_mov):"/>
+                    <h:outputText value="#{ajusteBaixaVoucherBean.resultado.totalMovInseridos}"/>
+
+                    <h:outputText value="Movimentações já existentes (sem ação):"/>
+                    <h:outputText value="#{ajusteBaixaVoucherBean.resultado.totalMovJaExistentes}"/>
+
+                    <h:outputText value="CPF/CNPJ não encontrado na tb_bdc_controle_clientes:"/>
+                    <h:outputText value="#{ajusteBaixaVoucherBean.resultado.totalClientesNaoEncontrados}"/>
+
+                </p:panelGrid>
+
+            </p:panel>
+
+        </h:form>
+
+    </ui:define>
+</ui:composition>
