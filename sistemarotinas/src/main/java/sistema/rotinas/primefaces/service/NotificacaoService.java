@@ -3,6 +3,7 @@ package sistema.rotinas.primefaces.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import sistema.rotinas.primefaces.dto.DivergenciaResumoLojaDto;
 import sistema.rotinas.primefaces.dto.PriceUpdateRunResult;
 import sistema.rotinas.primefaces.dto.VendaLojaResumo;
 
@@ -44,6 +45,11 @@ public class NotificacaoService {
     // ✅ NOVO: destinatários para Relatório de Vendas por Loja
     private static final List<String> DESTINATARIOS_RELATORIO_VENDAS_LOJAS =
             List.of("relatoriovendas@hiperideal.com.br");
+
+    // ✅ NOVO: destinatários para Divergência Preço CRM x Preço Normal
+    private static final List<String> DESTINATARIOS_DIVERGENCIA_PRECO_CRM =
+            List.of("relatoriocrmrock@hiperideal.com.br");
+            //List.of("mario.emmanuel@hiperideal.com.br");
 
     // ✅ CID da imagem inline do logo para o Relatório de Vendas por Loja
     // Deve ser o MESMO ID usado em EmailService.addInline("logoRelatorioVendas", ...)
@@ -159,7 +165,6 @@ public class NotificacaoService {
               .append("</tr>");
         }
 
-        // Linha de totais
         sb.append("<tr style=\"font-weight:bold;background:#fafafa;\">")
           .append(td("TOTAL")).append(td("")).append(td(""))
           .append(td("")).append(td(""))
@@ -227,6 +232,60 @@ public class NotificacaoService {
     }
 
     /* ===========================================================
+       ✅ NOVO: Divergência Preço CRM x Preço Normal (XLSX em anexo)
+       =========================================================== */
+    public void notificarRelatorioDivergenciaPrecoCrm(List<String> caminhosArquivosXlsx,
+                                                      List<DivergenciaResumoLojaDto> resumo) {
+
+        if (caminhosArquivosXlsx == null || caminhosArquivosXlsx.isEmpty()) return;
+        if (resumo == null || resumo.isEmpty()) return;
+
+        // ✅ Mostra no corpo apenas lojas com divergência
+        // ✅ Ordena pelo campo codLojaRms (numérico quando possível)
+        List<DivergenciaResumoLojaDto> resumoFiltrado = resumo.stream()
+                .filter(r -> r.getTotalDivergencias() > 0)
+                .sorted(Comparator.comparingInt(r -> parseIntSafe(r.getCodLojaRms())))
+                .toList();
+
+        if (resumoFiltrado.isEmpty()) return;
+
+        String hoje = LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        String assunto = "📊 Divergência Preço CRM x Preço Normal — Geração: " + hoje;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div style=\"font-family:Arial, Helvetica, sans-serif;font-size:13px;\">");
+
+        // ✅ Texto ajustado conforme solicitado
+        sb.append("<p>Prezados,</p>")
+          .append("<p>")
+          .append("Segue(m) em anexo o(s) relatório(s) de divergência entre o <b>Preço CRM</b> e <b>Preço Normal</b> por loja, ")
+          .append("gentileza analisar e efetuar a correção, ressalto que essa correção vai para o PDV apenas no dia seguinte, ")
+          .append("em casos emergências deve ser solicitado autorização a <b>Amanda Vasconcelos</b> para aprovação de preços e liberação da carga.")
+          .append("</p>");
+
+        sb.append("<table border=\"1\" cellspacing=\"0\" cellpadding=\"6\" style=\"border-collapse:collapse;\">");
+        sb.append("<thead style=\"background:#f0f0f0;\">")
+          .append("<tr><th>Loja</th><th>Cod L CONSINCO</th><th>Total divergências</th></tr>")
+          .append("</thead><tbody>");
+
+        for (DivergenciaResumoLojaDto r : resumoFiltrado) {
+            sb.append("<tr>")
+              .append("<td>").append(nz(r.getNomeLoja())).append("</td>")
+              .append("<td>").append(nz(r.getCodLojaRms())).append("</td>")
+              .append("<td style=\"text-align:right;\">").append(r.getTotalDivergencias()).append("</td>")
+              .append("</tr>");
+        }
+
+        sb.append("</tbody></table>");
+        sb.append("<p style=\"color:#888;\">E-mail gerado automaticamente pelo Sistema de Rotinas.</p>");
+        sb.append("</div>");
+
+        emailService.enviarEmailComAnexosPaths(
+            DESTINATARIOS_DIVERGENCIA_PRECO_CRM, assunto, sb.toString(), caminhosArquivosXlsx
+        );
+    }
+
+    /* ===========================================================
        ✅ Relatório de Vendas por Loja (HTML com logo + layout melhorado)
        =========================================================== */
 
@@ -287,7 +346,6 @@ public class NotificacaoService {
         // 1ª linha: logo + título
         sb.append("<tr>")
           .append("<td rowspan='2' style='background:#FFFFFF;text-align:center;'>")
-          // 🔽 AQUI diminuímos o tamanho do logo
           .append("<img src='cid:").append(LOGO_CID_RELATORIO_VENDAS)
           .append("' alt='Hiperideal' height='80' style='display:block;margin:auto;'/>")
           .append("</td>")
@@ -326,7 +384,6 @@ public class NotificacaoService {
         // ================== LINHAS POR LOJA ==================
         for (VendaLojaResumo r : dados) {
             sb.append("<tr>")
-              // LOJA em uma única linha (nowrap)
               .append("<td style='background:").append(corLinha)
               .append(";white-space:nowrap;text-align:left;'><strong>")
               .append(r.getDescricaoLoja())
@@ -395,7 +452,19 @@ public class NotificacaoService {
     private static String td(String v) {
         return "<td style=\"white-space:nowrap;\">" + v + "</td>";
     }
+
     private static String nz(String v) {
         return (v == null || v.isBlank()) ? "-" : v;
+    }
+
+    private static int parseIntSafe(String v) {
+        if (v == null) return Integer.MAX_VALUE;
+        String s = v.trim();
+        if (s.isEmpty()) return Integer.MAX_VALUE;
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return Integer.MAX_VALUE;
+        }
     }
 }

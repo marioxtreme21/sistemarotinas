@@ -1,0 +1,51 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Relatório Divergência Preço CRM</ui:define>
+
+    <ui:define name="content">
+        <h:form id="formRotina">
+            <p:growl id="growl" showDetail="true" life="4000" />
+
+            <p:panel header="Executar rotina" styleClass="panelPesquisa">
+
+                <p:selectBooleanCheckbox id="chkTodas"
+                    value="#{divergenciaPrecoCrmBean.todas}"
+                    itemLabel="Todas as lojas">
+
+                    <!-- ✅ Atualiza o combo quando marcar/desmarcar -->
+                    <p:ajax update="loja" listener="#{divergenciaPrecoCrmBean.onToggleTodas}" />
+                </p:selectBooleanCheckbox>
+
+                <p:spacer height="10"/>
+
+                <p:outputLabel for="loja" value="Loja:" style="display:block;margin-bottom:4px;"/>
+                <p:selectOneMenu id="loja"
+                    value="#{divergenciaPrecoCrmBean.lojaSelecionada}"
+                    converter="lojaConverter"
+                    disabled="#{divergenciaPrecoCrmBean.todas}"
+                    style="width: 420px;"
+                    filter="true" filterMatchMode="contains">
+                    <f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
+                    <f:selectItems value="#{divergenciaPrecoCrmBean.lojas}"
+                                   var="l"
+                                   itemLabel="#{l.nome}"
+                                   itemValue="#{l}" />
+                </p:selectOneMenu>
+
+                <p:spacer height="12"/>
+
+                <p:commandButton value="Executar"
+                    icon="pi pi-play"
+                    actionListener="#{divergenciaPrecoCrmBean.executar}"
+                    update="growl"
+                    ajax="false"
+                    styleClass="ui-button-primary"/>
+            </p:panel>
+        </h:form>
+    </ui:define>
+</ui:composition>
