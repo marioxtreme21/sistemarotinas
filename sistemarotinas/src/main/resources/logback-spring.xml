@@ -131,6 +131,18 @@
         </encoder>
     </appender>
 
+    <!-- ===================== NOVO: LOG DO TESTE DE CONEXÃO REMOTA ===================== -->
+    <appender name="REMOTE_CONN_TEST_FTP" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/remote-conn-test_ftp.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/remote-conn-test_ftp.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <!-- ===================== ROOT & LOGGERS ===================== -->
 
     <root level="INFO">
@@ -165,30 +177,31 @@
         <appender-ref ref="VTEX_PRICING_ASYNC"/>
     </logger>
 
-    <!-- ===== ESTOQUE (novos loggers) ===== -->
-
-    <!-- Orquestrador paralelo de estoque -->
+    <!-- ESTOQUE -->
     <logger name="sistema.ecommerce.primefaces.service.ParallelInventoryUpdateOrchestrator" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="INVENTORY_UPDATE_ASYNC"/>
     </logger>
 
-    <!-- Service principal de estoque (ajuste o nome se usar outro) -->
     <logger name="sistema.ecommerce.primefaces.service.InventoryUpdateServiceImpl" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="INVENTORY_UPDATE_ASYNC"/>
     </logger>
 
-    <!-- Bean JSF de estoque (tela) -->
     <logger name="sistema.ecommerce.primefaces.bean.InventoryUpdateBean" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="INVENTORY_UPDATE_ASYNC"/>
     </logger>
 
-    <!-- Cliente VTEX de estoque -->
     <logger name="sistema.ecommerce.primefaces.vtex.VtexInventoryClientImpl" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="VTEX_INVENTORY_ASYNC"/>
+    </logger>
+
+    <!-- ✅ Logger dedicado para o teste remoto (somente o que for logado com este nome) -->
+    <logger name="REMOTE_CONN_TEST_FTP" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="REMOTE_CONN_TEST_FTP"/>
     </logger>
 
 </configuration>

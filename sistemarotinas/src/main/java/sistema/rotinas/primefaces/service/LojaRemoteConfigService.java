@@ -1,6 +1,7 @@
 package sistema.rotinas.primefaces.service;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,7 +23,15 @@ import sistema.rotinas.primefaces.service.interfaces.ILojaRemoteConfigService;
 public class LojaRemoteConfigService implements ILojaRemoteConfigService {
 
     private static final Logger log = LoggerFactory.getLogger(LojaRemoteConfigService.class);
+
+    // ✅ logger dedicado (vai para remote-conn-test_ftp.log)
+    private static final Logger logConn = LoggerFactory.getLogger("REMOTE_CONN_TEST_FTP");
+
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(15);
+
+    // Limites para não explodir tela/log caso o diretório tenha MUITO arquivo
+    private static final int LIST_MAX_ITENS = 80;
+    private static final int RETURN_MAX_ITENS = 15;
 
     @Autowired
     private LojaRemoteConfigRepository repo;
@@ -100,25 +109,22 @@ public class LojaRemoteConfigService implements ILojaRemoteConfigService {
     private void prepararEValidar(LojaRemoteConfig cfg, boolean novo) {
         validarBasico(cfg);
 
-        // Regra 1: global X loja (exclusivos)
         if (Boolean.TRUE.equals(cfg.getGlobal())) {
-            // global => loja obrigatoriamente null
             cfg.setLoja(null);
 
-            // permitir no máximo 1 global
             LojaRemoteConfig existenteGlobal = findGlobal();
             if (existenteGlobal != null) {
-                // se estamos salvando um novo OU atualizando outro registro diferente do existente
                 if (novo || !Objects.equals(existenteGlobal.getRemoteConfigId(), cfg.getRemoteConfigId())) {
-                    throw new IllegalArgumentException("Já existe uma configuração global. Edite a existente ou desmarque 'global'.");
+                    throw new IllegalArgumentException(
+                        "Já existe uma configuração global. Edite a existente ou desmarque 'global'."
+                    );
                 }
             }
         } else {
-            // não-global => loja obrigatória
             if (cfg.getLoja() == null || cfg.getLoja().getLojaId() == null) {
                 throw new IllegalArgumentException("Selecione a Loja ou marque a configuração como Global.");
             }
-            // Só para mensagem amigável: já existe config para essa loja?
+
             LojaRemoteConfig existenteLoja = findByLojaId(cfg.getLoja().getLojaId());
             if (existenteLoja != null) {
                 if (novo || !Objects.equals(existenteLoja.getRemoteConfigId(), cfg.getRemoteConfigId())) {
@@ -136,7 +142,6 @@ public class LojaRemoteConfigService implements ILojaRemoteConfigService {
             throw new IllegalArgumentException("Informe o Usuário remoto.");
         if (cfg.getPortaRemota() == null || cfg.getPortaRemota() <= 0)
             throw new IllegalArgumentException("Informe a Porta remota válida.");
-        // Nada mais aqui para não interferir no que já estava funcional.
     }
 
     /* ==================== Teste de conexão ==================== */
@@ -151,7 +156,6 @@ public class LojaRemoteConfigService implements ILojaRemoteConfigService {
                 return testarSFTP(cfg, to);
             case FTP:
             case FTPS:
-                // Mantido simples para não introduzir dependências agora.
                 return "Protocolo " + cfg.getProtocolo() + " ainda não implementado no teste de conexão.";
             default:
                 return "Protocolo desconhecido: " + cfg.getProtocolo();
@@ -162,10 +166,11 @@ public class LojaRemoteConfigService implements ILojaRemoteConfigService {
         Session session = null;
         ChannelSftp channel = null;
 
+        String baseDirSolicitado = (cfg.getBaseDirRemoto() == null ? "" : cfg.getBaseDirRemoto().trim());
+
         try {
             JSch jsch = new JSch();
 
-            // Suporte opcional a chave privada (se o campo estiver preenchido)
             if (cfg.getCaminhoChavePrivada() != null && !cfg.getCaminhoChavePrivada().isBlank()) {
                 jsch.addIdentity(cfg.getCaminhoChavePrivada());
             }
@@ -176,30 +181,68 @@ public class LojaRemoteConfigService implements ILojaRemoteConfigService {
                 session.setPassword(cfg.getSenhaRemota());
             }
 
-            // Evita prompt de host key em primeiro uso
             session.setConfig("StrictHostKeyChecking", "no");
 
-            log.info("Conectando via SFTP para {}:{} (timeout={} ms)", cfg.getHostRemoto(), cfg.getPortaRemota(), timeout.toMillis());
+            log.info("Conectando via SFTP para {}:{} (timeout={} ms)",
+                    cfg.getHostRemoto(), cfg.getPortaRemota(), timeout.toMillis());
+
+            // ✅ log dedicado (sem senha)
+            logConn.info("TESTE SFTP -> host={} porta={} usuario={} baseDir='{}' timeoutMs={}",
+                    cfg.getHostRemoto(), cfg.getPortaRemota(), cfg.getUsuarioRemoto(),
+                    (baseDirSolicitado.isBlank() ? "(vazio)" : baseDirSolicitado),
+                    timeout.toMillis());
+
             session.connect((int) timeout.toMillis());
 
             channel = (ChannelSftp) session.openChannel("sftp");
             channel.connect((int) timeout.toMillis());
 
-            // Se tiver baseDirRemoto, tenta mudar de diretório (valida permissão)
-            if (cfg.getBaseDirRemoto() != null && !cfg.getBaseDirRemoto().isBlank()) {
+            // Diretório alvo: se vazio, tenta "/"
+            String dirAlvo = baseDirSolicitado.isBlank() ? "/" : baseDirSolicitado;
+            String dirEfetivo = null;
+
+            // tenta cd, se falhar, mantém diretório atual
+            try {
+                channel.cd(dirAlvo);
+                dirEfetivo = channel.pwd();
+            } catch (Exception cdEx) {
+                // fallback: diretório atual (home)
                 try {
-                    channel.cd(cfg.getBaseDirRemoto());
-                } catch (Exception e) {
-                    log.warn("Conexão SFTP ok, porém não foi possível acessar o diretório remoto '{}': {}",
-                             cfg.getBaseDirRemoto(), e.getMessage());
-                    return "OK parcial: conectou via SFTP, mas não acessou o diretório '" + cfg.getBaseDirRemoto() + "'. Motivo: " + e.getMessage();
+                    dirEfetivo = channel.pwd();
+                } catch (Exception ignore) {
+                    dirEfetivo = "(desconhecido)";
                 }
+                log.warn("Conexão SFTP ok, porém não foi possível acessar o diretório remoto '{}': {}",
+                        dirAlvo, cdEx.getMessage());
+
+                logConn.warn("SFTP OK, mas CD falhou. dirSolicitado='{}' fallbackDir='{}' motivo={}",
+                        dirAlvo, dirEfetivo, cdEx.getMessage());
             }
 
-            return "OK: Conexão SFTP estabelecida com " + cfg.getHostRemoto() + ":" + cfg.getPortaRemota();
+            // ✅ Lista conteúdo do diretório efetivo (ou do atual)
+            List<String> itens = listarSftpItens(channel, ".", LIST_MAX_ITENS);
+
+            logConn.info("SFTP LIST -> dirEfetivo='{}' itensRetornados={} (max={})",
+                    dirEfetivo, itens.size(), LIST_MAX_ITENS);
+
+            // log detalhado (1 por linha) para facilitar leitura
+            for (String it : itens) {
+                logConn.debug("SFTP ITEM -> {}", it);
+            }
+
+            // Resumo para retorno (UI)
+            String resumo = montarResumo(itens, RETURN_MAX_ITENS);
+
+            return "OK: Conexão SFTP estabelecida com " + cfg.getHostRemoto() + ":" + cfg.getPortaRemota()
+                    + " | Dir: " + dirEfetivo
+                    + " | Itens: " + resumo;
 
         } catch (Exception e) {
             log.error("Falha ao testar SFTP para {}:{} - {}", cfg.getHostRemoto(), cfg.getPortaRemota(), e.getMessage(), e);
+            logConn.error("FALHA TESTE SFTP -> host={} porta={} usuario={} erro={} msg={}",
+                    cfg.getHostRemoto(), cfg.getPortaRemota(), cfg.getUsuarioRemoto(),
+                    e.getClass().getSimpleName(), e.getMessage(), e);
+
             return "Falha: " + e.getClass().getSimpleName() + " - " + e.getMessage();
         } finally {
             try {
@@ -209,5 +252,47 @@ public class LojaRemoteConfigService implements ILojaRemoteConfigService {
                 if (session != null && session.isConnected()) session.disconnect();
             } catch (Exception ignore) {}
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> listarSftpItens(ChannelSftp channel, String dir, int maxItens) {
+        List<String> out = new ArrayList<>();
+        try {
+            List<ChannelSftp.LsEntry> ls = channel.ls(dir);
+            for (ChannelSftp.LsEntry e : ls) {
+                String name = e.getFilename();
+                if (".".equals(name) || "..".equals(name)) continue;
+
+                boolean isDir = e.getAttrs() != null && e.getAttrs().isDir();
+                String label = (isDir ? "[DIR] " : "[FILE] ") + name;
+
+                out.add(label);
+                if (out.size() >= maxItens) {
+                    out.add("... (limitado a " + maxItens + " itens)");
+                    break;
+                }
+            }
+        } catch (Exception ex) {
+            out.add("Falha ao listar: " + ex.getMessage());
+            logConn.warn("Falha ao listar SFTP dir='{}' motivo={}", dir, ex.getMessage());
+        }
+        return out;
+    }
+
+    private String montarResumo(List<String> itens, int max) {
+        if (itens == null || itens.isEmpty()) return "(vazio)";
+        StringBuilder sb = new StringBuilder();
+        int count = 0;
+        for (String s : itens) {
+            if (s == null) continue;
+            if (count >= max) break;
+            if (sb.length() > 0) sb.append(", ");
+            sb.append(s.replace("[DIR] ", "").replace("[FILE] ", ""));
+            count++;
+        }
+        if (itens.size() > max) {
+            sb.append(" ... (+").append(itens.size() - max).append(")");
+        }
+        return sb.toString();
     }
 }
