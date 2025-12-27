@@ -38,7 +38,7 @@ public class ScheduledRelatorioPrecosAlteradosTask {
      *
      * cron = "segundo minuto hora diaDoMês mês diaDaSemana"
      */
-    @Scheduled(cron = "0 00 01 * * *", zone = "America/Sao_Paulo")
+    //@Scheduled(cron = "0 00 01 * * *", zone = "America/Sao_Paulo")
     public void gerarEEnviarRelatorioDiario() {
         ZonedDateTime agora = ZonedDateTime.now(ZONE_SP);
         LocalDate hoje = agora.toLocalDate();

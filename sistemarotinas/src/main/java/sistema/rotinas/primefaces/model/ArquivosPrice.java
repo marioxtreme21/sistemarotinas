@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 import jakarta.persistence.*;
+import sistema.rotinas.primefaces.crypto.CryptoStringAttributeConverter;
 
 @Entity
 @Table(name = "arquivos_price")
@@ -64,6 +65,7 @@ public class ArquivosPrice implements Serializable {
 	private String destUsuario;
 
 	@Column(name = "dest_senha", length = 255)
+	@Convert(converter = CryptoStringAttributeConverter.class)
 	private String destSenha;
 
 	@Column(name = "dest_caminho_chave_privada", length = 255)
@@ -95,6 +97,7 @@ public class ArquivosPrice implements Serializable {
 	private String smbUsuario;
 
 	@Column(name = "smb_senha", length = 255)
+	@Convert(converter = CryptoStringAttributeConverter.class)
 	private String smbSenha;
 
 	@Column(name = "habilitado", nullable = false)

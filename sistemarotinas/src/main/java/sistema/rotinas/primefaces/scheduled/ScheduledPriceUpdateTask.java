@@ -31,7 +31,7 @@ public class ScheduledPriceUpdateTask {
      * Executa todos os envios de preço diariamente às 00:50.
      * Cron: segundo minuto hora dia mes diaDaSemana
      */
-  //  @Scheduled(cron = "0 50 0 * * *"/*, zone = "America/Sao_Paulo"*/)
+    //@Scheduled(cron = "0 50 0 * * *"/*, zone = "America/Sao_Paulo"*/)
     public void executarMadrugada() {
         final Instant t0 = Instant.now();
         log.info("[Scheduler][PriceUpdate] Início da rotina diária (00:50).");
