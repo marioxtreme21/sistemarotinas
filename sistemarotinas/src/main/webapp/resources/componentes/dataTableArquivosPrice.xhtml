@@ -17,22 +17,46 @@
     </p:column>
 
     <p:column headerText="Destino (principal)">
-        <h:outputText value="#{cfg.tipoDestino eq 'SFTP' ? cfg.destHost : (cfg.tipoDestino eq 'FS' ? cfg.caminhoFsDestino : cfg.smbServidor)}" />
+        <h:outputText
+            value="#{cfg.tipoDestino eq 'SFTP'
+                        ? cfg.destHost
+                        : (cfg.tipoDestino eq 'FS'
+                            ? cfg.caminhoFsDestino
+                            : cfg.smbServidor)}" />
     </p:column>
 
-    <p:column headerText="Verificação">
+    <p:column headerText="Verificação" sortBy="#{cfg.verificacaoDiariaAtiva}">
         <h:outputText value="#{cfg.verificacaoDiariaAtiva ? 'Ativa' : 'Inativa'}" />
     </p:column>
 
-    <p:column headerText="Ações">
+    <p:column headerText="Ações" style="white-space:nowrap;">
+
         <p:commandButton value="Editar"
                          icon="pi pi-pencil"
-                         action="#{arquivosPriceBean.prepararEditar(cfg)}"
+                         actionListener="#{arquivosPriceBean.prepararEditar(cfg)}"
                          process="@this"
-                         update=":formCadastroArquivosPrice" />
+                         update=":formCadastroArquivosPrice"
+                         styleClass="ui-button-secondary" />
+
+        <p:spacer width="6" />
+
+        <!-- ✅ NOVO: Testar (usa a linha selecionada) -->
+        <p:commandButton value="Testar"
+                         icon="pi pi-play"
+                         actionListener="#{arquivosPriceBean.testar(cfg)}"
+                         process="@this"
+                         update=":formCadastroArquivosPrice:growl"
+                         styleClass="ui-button-secondary"
+                         onclick="if(!confirm('Deseja executar o teste de transferência para esta loja?')) return false;" />
+
+        <p:spacer width="6" />
+
         <p:commandButton value="Excluir"
-                         action="#{arquivosPriceBean.excluir(cfg.priceId)}"
+                         icon="pi pi-trash"
+                         actionListener="#{arquivosPriceBean.excluir(cfg.priceId)}"
+                         process="@this"
                          update=":formTable :formCadastroArquivosPrice"
+                         styleClass="ui-button-danger"
                          onclick="if(!confirm('Confirma a exclusão?')) return false;" />
     </p:column>
 

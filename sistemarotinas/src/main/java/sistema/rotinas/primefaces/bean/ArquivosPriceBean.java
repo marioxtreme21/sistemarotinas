@@ -1,6 +1,8 @@
 package sistema.rotinas.primefaces.bean;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -21,6 +23,7 @@ import sistema.rotinas.primefaces.model.ArquivosPrice;
 import sistema.rotinas.primefaces.model.ArquivosPricePattern;
 import sistema.rotinas.primefaces.model.Loja;
 import sistema.rotinas.primefaces.model.LojaRemoteConfig;
+import sistema.rotinas.primefaces.service.PriceTransferService;
 import sistema.rotinas.primefaces.service.interfaces.IArquivosPricePatternService;
 import sistema.rotinas.primefaces.service.interfaces.IArquivosPriceService;
 import sistema.rotinas.primefaces.service.interfaces.ILojaRemoteConfigService;
@@ -67,6 +70,10 @@ public class ArquivosPriceBean implements Serializable {
 
     @Autowired
     private ILojaRemoteConfigService remoteCfgService;
+
+    // serviço responsável por executar o teste (download SFTP + cópia FS/SMB)
+    @Autowired
+    private PriceTransferService priceTransferService;
 
     @PostConstruct
     public void init() {
@@ -151,24 +158,20 @@ public class ArquivosPriceBean implements Serializable {
         this.editarSmbSenha = false;
         this.editarDestSenha = false;
 
-        // ✅ importante: não deixar a senha "viva" no model durante a edição
-        // (a tela exibirá máscara ******** e só abrirá p:password ao clicar em Alterar)
+        // importante: não deixar a senha "viva" no model durante a edição
         if (this.price != null) {
             this.price.setSmbSenha(null);
             this.price.setDestSenha(null);
         }
 
-        // limpa input de novo pattern
         this.novoPattern = new ArquivosPricePattern();
-
         carregarPatterns();
     }
 
-    // ========= Controle de edição das senhas (usado no XHTML) =========
+    // ========= Controle de edição das senhas =========
 
     public void habilitarEdicaoSmbSenha() {
         this.editarSmbSenha = true;
-        // deixa o campo vazio para digitação de nova senha
         if (this.price != null) {
             this.price.setSmbSenha(null);
         }
@@ -183,7 +186,6 @@ public class ArquivosPriceBean implements Serializable {
 
     public void habilitarEdicaoDestSenha() {
         this.editarDestSenha = true;
-        // deixa o campo vazio para digitação de nova senha
         if (this.price != null) {
             this.price.setDestSenha(null);
         }
@@ -226,7 +228,7 @@ public class ArquivosPriceBean implements Serializable {
 
             boolean novo = (price.getPriceId() == null);
 
-            // ✅ Preserva senha original quando:
+            // Preserva senha original quando:
             // - usuário NÃO clicou em “Alterar”
             // - ou clicou, mas deixou em branco
             if (!novo) {
@@ -243,7 +245,7 @@ public class ArquivosPriceBean implements Serializable {
                 }
             }
 
-            // ✅ NOVO: valida e normaliza campos conforme tipo selecionado (sem apagar SMB/FS do outro modo)
+            // valida e normaliza campos conforme tipo selecionado (sem apagar SMB/FS do outro modo)
             validarENormalizarPorTipoDestino(price);
 
             if (novo) {
@@ -273,7 +275,6 @@ public class ArquivosPriceBean implements Serializable {
             this.editarDestSenha = false;
 
         } catch (IllegalArgumentException ex) {
-            // ✅ NOVO: mensagens de validação amigáveis (sem stacktrace)
             addMsg(FacesMessage.SEVERITY_WARN, "Validação", ex.getMessage());
             this.mostrarFormulario = true;
         } catch (Exception e) {
@@ -295,7 +296,6 @@ public class ArquivosPriceBean implements Serializable {
             }
 
             service.deleteById(id);
-
             atualizarLista();
 
             if (this.price != null && Objects.equals(this.price.getPriceId(), id)) {
@@ -459,6 +459,208 @@ public class ArquivosPriceBean implements Serializable {
         addMsg(FacesMessage.SEVERITY_INFO, "Filtros limpos", "Todos os filtros foram removidos.");
     }
 
+    // ================================
+    // ✅ Ação do botão "Testar" (com logs detalhados)
+    // ================================
+
+    public void testar(ArquivosPrice cfg) {
+        Long id = (cfg != null ? cfg.getPriceId() : null);
+        String lojaCod = (cfg != null && cfg.getLoja() != null ? cfg.getLoja().getCodLojaRms() : null);
+
+        long t0 = System.nanoTime();
+        log.info("[TESTE-PRICE] Início - priceId={} loja={}", id, lojaCod);
+
+        try {
+            if (cfg == null || cfg.getPriceId() == null) {
+                log.warn("[TESTE-PRICE] Abortado: cfg nulo ou sem priceId");
+                addMsg(FacesMessage.SEVERITY_WARN, "Teste", "Salve a configuração antes de testar.");
+                return;
+            }
+
+            log.info("[TESTE-PRICE] Preparando chamada ao PriceTransferService - priceId={}", id);
+
+            // ✅ robusto: tenta assinaturas conhecidas, MAS:
+            // - se o método existir e falhar, propaga o erro real (não tenta aliases)
+            Object result = invocarTesteNoService(cfg);
+
+            long ms = (System.nanoTime() - t0) / 1_000_000;
+            log.info("[TESTE-PRICE] Retorno do service em {} ms - priceId={}", ms, id);
+
+            // loga um “resumo” do resultado (sem depender de isOk())
+            Boolean downloadOk = getBoolean(result, "isDownloadOk", "getDownloadOk");
+            Boolean fsOk = getBoolean(result, "isFsOk", "getFsOk");
+            Boolean smbOk = getBoolean(result, "isSmbOk", "getSmbOk");
+            Object arqRemoto = getObject(result, "getArquivoRemoto", "getNomeArquivoRemoto", "getRemoteFile");
+            Object arqLocal = getObject(result, "getArquivoLocal", "getLocalFile", "getPathLocal");
+
+            log.info("[TESTE-PRICE] Resumo - priceId={} downloadOk={} fsOk={} smbOk={} arquivoRemoto={} arquivoLocal={}",
+                    id, downloadOk, fsOk, smbOk, arqRemoto, arqLocal);
+
+            publicarMensagensDoResultado(result);
+
+        } catch (IllegalArgumentException ex) {
+            log.warn("[TESTE-PRICE] Validação - priceId={} msg={}", id, ex.getMessage());
+            addMsg(FacesMessage.SEVERITY_WARN, "Validação", ex.getMessage());
+        } catch (Exception e) {
+            log.error("[TESTE-PRICE] Erro - priceId={}", id, e);
+            addMsg(FacesMessage.SEVERITY_ERROR, "Teste", "Falha no teste: " + e.getMessage());
+        } finally {
+            long msTotal = (System.nanoTime() - t0) / 1_000_000;
+            log.info("[TESTE-PRICE] Fim - priceId={} tempoTotal={} ms", id, msTotal);
+        }
+    }
+
+    public void testarAtual() {
+        Long id = (this.price != null ? this.price.getPriceId() : null);
+        log.info("[TESTE-PRICE] testarAtual chamado - priceId={}", id);
+        testar(this.price);
+    }
+
+    private Object invocarTesteNoService(ArquivosPrice cfg) throws Exception {
+        Long id = cfg.getPriceId();
+        log.info("[TESTE-PRICE] invocarTesteNoService - tentativas por ID e/ou objeto - priceId={}", id);
+
+        // 1) testar(Long)  (assinatura principal)
+        if (invokeIfExists(priceTransferService, "testar", new Class<?>[]{ Long.class }, new Object[]{ id })) {
+            log.info("[TESTE-PRICE] Método usado: PriceTransferService.testar(Long) - priceId={}", id);
+            return lastReturn;
+        }
+
+        // 2) testarTransfer(Long)
+        if (invokeIfExists(priceTransferService, "testarTransfer", new Class<?>[]{ Long.class }, new Object[]{ id })) {
+            log.info("[TESTE-PRICE] Método usado: PriceTransferService.testarTransfer(Long) - priceId={}", id);
+            return lastReturn;
+        }
+
+        // 3) testarTransferencia(Long)
+        if (invokeIfExists(priceTransferService, "testarTransferencia", new Class<?>[]{ Long.class }, new Object[]{ id })) {
+            log.info("[TESTE-PRICE] Método usado: PriceTransferService.testarTransferencia(Long) - priceId={}", id);
+            return lastReturn;
+        }
+
+        // 4) testar(ArquivosPrice)
+        if (invokeIfExists(priceTransferService, "testar", new Class<?>[]{ ArquivosPrice.class }, new Object[]{ cfg })) {
+            log.info("[TESTE-PRICE] Método usado: PriceTransferService.testar(ArquivosPrice) - priceId={}", id);
+            return lastReturn;
+        }
+
+        // 5) testarTransfer(ArquivosPrice)
+        if (invokeIfExists(priceTransferService, "testarTransfer", new Class<?>[]{ ArquivosPrice.class }, new Object[]{ cfg })) {
+            log.info("[TESTE-PRICE] Método usado: PriceTransferService.testarTransfer(ArquivosPrice) - priceId={}", id);
+            return lastReturn;
+        }
+
+        log.error("[TESTE-PRICE] Nenhuma assinatura compatível encontrada - priceId={}", id);
+
+        throw new IllegalStateException(
+            "Não encontrei um método de teste compatível em PriceTransferService. " +
+            "Esperado: testar(Long) ou testar(ArquivosPrice) (ou variantes)."
+        );
+    }
+
+    private transient Object lastReturn;
+
+    /**
+     * - Se NÃO existir: retorna false (continua tentando)
+     * - Se EXISTIR e OK: retorna true
+     * - Se EXISTIR e der erro: lança a exceção REAL (não tenta aliases)
+     */
+    private boolean invokeIfExists(Object target, String methodName, Class<?>[] paramTypes, Object[] args) throws Exception {
+        try {
+            Method m = target.getClass().getMethod(methodName, paramTypes);
+
+            log.debug("[TESTE-PRICE] Tentando invoke: {}({})",
+                    methodName,
+                    (paramTypes != null && paramTypes.length > 0 ? paramTypes[0].getSimpleName() : "sem params"));
+
+            try {
+                lastReturn = m.invoke(target, args);
+                return true;
+            } catch (InvocationTargetException ite) {
+                Throwable cause = (ite.getCause() != null ? ite.getCause() : ite);
+                log.error("[TESTE-PRICE] Erro dentro do método {}: {}", methodName, cause.getMessage(), cause);
+
+                if (cause instanceof Exception) throw (Exception) cause;
+                throw new RuntimeException(cause);
+            }
+
+        } catch (NoSuchMethodException nsme) {
+            log.debug("[TESTE-PRICE] Método não encontrado: {}({})",
+                    methodName,
+                    (paramTypes != null && paramTypes.length > 0 ? paramTypes[0].getSimpleName() : "sem params"));
+            return false;
+        }
+    }
+
+    private void publicarMensagensDoResultado(Object r) {
+        if (r == null) {
+            addMsg(FacesMessage.SEVERITY_ERROR, "Teste", "Resultado do teste veio vazio.");
+            log.warn("[TESTE-PRICE] Resultado nulo retornado do service");
+            return;
+        }
+
+        Boolean okGeral = getBoolean(r, "isOk", "getOk", "isSuccess", "getSuccess"); // se existir
+        Boolean downloadOk = getBoolean(r, "isDownloadOk", "getDownloadOk");
+        Boolean fsOk = getBoolean(r, "isFsOk", "getFsOk");
+        Boolean smbOk = getBoolean(r, "isSmbOk", "getSmbOk");
+
+        @SuppressWarnings("unchecked")
+        List<String> msgs = (List<String>) getObject(r, "getMsgs", "getMensagens", "getMessages");
+
+        StringBuilder detail = new StringBuilder();
+        if (downloadOk != null) detail.append("Download SFTP: ").append(downloadOk ? "OK" : "FALHOU").append("\n");
+        if (fsOk != null) detail.append("Cópia FS: ").append(fsOk ? "OK" : "FALHOU").append("\n");
+        if (smbOk != null) detail.append("Cópia SMB: ").append(smbOk ? "OK" : "FALHOU").append("\n");
+
+        Object arqRemoto = getObject(r, "getArquivoRemoto", "getNomeArquivoRemoto", "getRemoteFile");
+        Object arqLocal = getObject(r, "getArquivoLocal", "getLocalFile", "getPathLocal");
+        if (arqRemoto != null) detail.append("Arquivo remoto: ").append(arqRemoto).append("\n");
+        if (arqLocal != null) detail.append("Arquivo local: ").append(arqLocal).append("\n");
+
+        if (msgs != null && !msgs.isEmpty()) {
+            detail.append("\nDetalhes:\n");
+            for (String m : msgs) {
+                if (m == null) continue;
+                detail.append("- ").append(m).append("\n");
+            }
+        }
+
+        log.info("[TESTE-PRICE] Resultado interpretado - okGeral={} downloadOk={} fsOk={} smbOk={} msgs={}",
+                okGeral, downloadOk, fsOk, smbOk, (msgs != null ? msgs.size() : 0));
+
+        FacesMessage.Severity sev;
+        if (okGeral != null) {
+            sev = okGeral ? FacesMessage.SEVERITY_INFO : FacesMessage.SEVERITY_WARN;
+        } else {
+            boolean algumFalhou =
+                    (downloadOk != null && !downloadOk) ||
+                    (fsOk != null && !fsOk) ||
+                    (smbOk != null && !smbOk);
+            sev = algumFalhou ? FacesMessage.SEVERITY_WARN : FacesMessage.SEVERITY_INFO;
+        }
+
+        addMsg(sev, "Teste transferência PRICE", detail.toString().trim());
+    }
+
+    private Boolean getBoolean(Object target, String... getters) {
+        Object v = getObject(target, getters);
+        if (v instanceof Boolean) return (Boolean) v;
+        return null;
+    }
+
+    private Object getObject(Object target, String... getters) {
+        if (target == null) return null;
+        for (String g : getters) {
+            try {
+                Method m = target.getClass().getMethod(g);
+                return m.invoke(target);
+            } catch (Exception ignore) {
+                // tenta próximo
+            }
+        }
+        return null;
+    }
+
     private void addMsg(FacesMessage.Severity sev, String sum, String detail) {
         FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(sev, sum, detail));
     }
@@ -471,7 +673,7 @@ public class ArquivosPriceBean implements Serializable {
         return s == null || s.trim().isEmpty();
     }
 
-    // ✅ NOVO: valida/normaliza apenas o tipo selecionado, SEM apagar SMB/FS (para permitir fallback futuramente)
+    // valida/normaliza apenas o tipo selecionado, SEM apagar SMB/FS (para permitir fallback futuramente)
     private void validarENormalizarPorTipoDestino(ArquivosPrice p) {
         if (p == null || p.getTipoDestino() == null) {
             throw new IllegalArgumentException("Selecione o Tipo de Destino.");
@@ -479,7 +681,6 @@ public class ArquivosPriceBean implements Serializable {
 
         switch (p.getTipoDestino()) {
             case FS:
-                // FS montado (produção Linux): caminho é obrigatório
                 p.setCaminhoFsDestino(trimToNull(p.getCaminhoFsDestino()));
                 if (isBlank(p.getCaminhoFsDestino())) {
                     throw new IllegalArgumentException("Informe o Caminho FS destino.");
@@ -487,7 +688,6 @@ public class ArquivosPriceBean implements Serializable {
                 break;
 
             case SMB:
-                // SMB: servidor/compartilhamento/usuário são o mínimo
                 p.setSmbServidor(trimToNull(p.getSmbServidor()));
                 p.setSmbCompartilhamento(trimToNull(p.getSmbCompartilhamento()));
                 p.setSmbUsuario(trimToNull(p.getSmbUsuario()));
@@ -503,11 +703,9 @@ public class ArquivosPriceBean implements Serializable {
                 if (isBlank(p.getSmbUsuario())) {
                     throw new IllegalArgumentException("Para SMB, informe o Usuário.");
                 }
-                // senha pode ser obrigatória dependendo do ambiente; por enquanto não bloqueio
                 break;
 
             case SFTP:
-                // SFTP: host/usuário/dir são o mínimo; senha OU chave privada
                 p.setDestHost(trimToNull(p.getDestHost()));
                 p.setDestUsuario(trimToNull(p.getDestUsuario()));
                 p.setDestDirRemoto(trimToNull(p.getDestDirRemoto()));
@@ -528,7 +726,6 @@ public class ArquivosPriceBean implements Serializable {
                     throw new IllegalArgumentException("Para SFTP, informe o Dir Remoto.");
                 }
 
-                // exige autenticação mínima: senha OU chave
                 boolean semSenha = isBlank(p.getDestSenha());
                 boolean semChave = isBlank(p.getDestCaminhoChavePrivada());
                 if (semSenha && semChave) {
@@ -537,7 +734,6 @@ public class ArquivosPriceBean implements Serializable {
                 break;
 
             default:
-                // nada
                 break;
         }
     }
@@ -547,6 +743,8 @@ public class ArquivosPriceBean implements Serializable {
         String t = s.trim();
         return t.isEmpty() ? null : t;
     }
+
+    // Getters/Setters
 
     public ArquivosPrice getPrice() {
         return price;

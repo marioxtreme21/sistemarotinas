@@ -4,10 +4,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.IOException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 @Component
 public class PastaUploadUtil {
@@ -18,7 +20,14 @@ public class PastaUploadUtil {
     public static String PASTA_RELATORIOS;
     public static String PASTA_EMAIL_IMAGES;
 
+    // ✅ NOVO: rotinas alteradas / PRICE
+    public static String PASTA_ROTINAALTERADOS;
+    public static String PASTA_PRICE;
+
     public static final String URL_BASE_WEB = "/uploads";
+
+    private static final DateTimeFormatter DIA_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter HORA_FMT = DateTimeFormatter.ofPattern("HHmmss");
 
     public PastaUploadUtil(@Value("${app.upload.base-dir}") String baseDir) {
         // 🔧 Garante caminho absoluto e multiplataforma
@@ -27,6 +36,10 @@ public class PastaUploadUtil {
         PASTA_COMPROVANTES = PASTA_BASE + File.separator + "comprovantes";
         PASTA_RELATORIOS = PASTA_BASE + File.separator + "relatorios";
         PASTA_EMAIL_IMAGES = PASTA_BASE + File.separator + "email_images";
+
+        // ✅ NOVO
+        PASTA_ROTINAALTERADOS = PASTA_BASE + File.separator + "rotinaalterados";
+        PASTA_PRICE = PASTA_ROTINAALTERADOS + File.separator + "price";
 
         // 🔒 Verifica permissão de escrita
         if (!Files.isWritable(Paths.get(PASTA_BASE))) {
@@ -37,6 +50,10 @@ public class PastaUploadUtil {
         criarPastaSeNaoExistir(PASTA_COMPROVANTES);
         criarPastaSeNaoExistir(PASTA_RELATORIOS);
         criarPastaSeNaoExistir(PASTA_EMAIL_IMAGES);
+
+        // ✅ NOVO
+        criarPastaSeNaoExistir(PASTA_ROTINAALTERADOS);
+        criarPastaSeNaoExistir(PASTA_PRICE);
     }
 
     /**
@@ -52,23 +69,133 @@ public class PastaUploadUtil {
         }
     }
 
+    // =========================================================
+    // ✅ NOVO: helpers do PRICE (LJ{codLojaRms}/YYYY-MM-DD/)
+    // =========================================================
+
+    public static String prefixoLojaPrice(String codLojaRms) {
+        if (codLojaRms == null || codLojaRms.trim().isEmpty()) return "LJ";
+        return "LJ" + codLojaRms.trim();
+    }
+
+    public static Path pastaPriceBase() {
+        return Paths.get(PASTA_PRICE);
+    }
+
+    public static Path pastaPriceLojaBase(String codLojaRms) {
+        Path p = pastaPriceBase().resolve(prefixoLojaPrice(codLojaRms));
+        try {
+            Files.createDirectories(p);
+            return p;
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao criar pasta da loja PRICE: " + p, e);
+        }
+    }
+
+    public static Path pastaPriceLojaDia(String codLojaRms, LocalDate dia) {
+        String d = (dia != null ? dia.format(DIA_FMT) : LocalDate.now().format(DIA_FMT));
+        Path p = pastaPriceLojaBase(codLojaRms).resolve(d);
+        try {
+            Files.createDirectories(p);
+            return p;
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao criar pasta do dia PRICE: " + p, e);
+        }
+    }
+
     /**
-     * 🔥 Gera caminho físico para anexos.
+     * ✅ Se já existir o arquivo no dia, renomeia o existente com _HHmmss e devolve o path do "novo".
+     * Ex.: stella_update.i1 -> stella_update_104501.i1 (backup) e grava o novo como stella_update.i1
      */
+    public static Path prepararArquivoNoDia(Path pastaDia, String nomeArquivo) {
+        if (pastaDia == null) throw new IllegalArgumentException("pastaDia é obrigatória");
+        if (nomeArquivo == null || nomeArquivo.trim().isEmpty()) throw new IllegalArgumentException("nomeArquivo é obrigatório");
+
+        try {
+            Files.createDirectories(pastaDia);
+
+            Path destino = pastaDia.resolve(nomeArquivo.trim());
+            if (!Files.exists(destino)) return destino;
+
+            String base = nomeArquivo.trim();
+            String ext = "";
+            int idx = base.lastIndexOf('.');
+            if (idx > 0 && idx < base.length() - 1) {
+                ext = base.substring(idx);      // .i1
+                base = base.substring(0, idx);  // stella_update
+            }
+
+            String hora = LocalTime.now().format(HORA_FMT);
+            Path backup = pastaDia.resolve(base + "_" + hora + ext);
+
+            Files.move(destino, backup, StandardCopyOption.REPLACE_EXISTING);
+            return destino;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao preparar arquivo no dia para gravação: " + nomeArquivo, e);
+        }
+    }
+
+    /**
+     * ✅ Retenção por loja: apaga subpastas no padrão YYYY-MM-DD mais antigas que "diasRetencao".
+     * Mantém as mais recentes.
+     */
+    public static void limparPriceLojaPorRetencao(String codLojaRms, int diasRetencao) {
+        if (diasRetencao <= 0) return;
+
+        Path baseLoja = pastaPriceLojaBase(codLojaRms);
+        LocalDate limite = LocalDate.now().minusDays(diasRetencao);
+
+        try (DirectoryStream<Path> ds = Files.newDirectoryStream(baseLoja)) {
+            for (Path p : ds) {
+                if (!Files.isDirectory(p)) continue;
+
+                String nome = p.getFileName().toString();
+                LocalDate data;
+                try {
+                    data = LocalDate.parse(nome, DIA_FMT);
+                } catch (Exception ignore) {
+                    continue; // não é pasta do dia
+                }
+
+                if (data.isBefore(limite)) {
+                    deleteRecursively(p);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao aplicar retenção na pasta PRICE da loja " + codLojaRms, e);
+        }
+    }
+
+    private static void deleteRecursively(Path root) throws IOException {
+        if (root == null || !Files.exists(root)) return;
+
+        Files.walkFileTree(root, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.deleteIfExists(file);
+                return FileVisitResult.CONTINUE;
+            }
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.deleteIfExists(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    // =========================================================
+    // (código antigo permanece)
+    // =========================================================
+
     public static String gerarCaminhoAnexo(LocalDate data, Long chamadoId) {
         return gerarCaminhoGenerico(PASTA_ANEXOS, data, chamadoId);
     }
 
-    /**
-     * 🔥 Gera caminho físico para imagens inline.
-     */
     public static String gerarCaminhoImagemEmail(LocalDate data, Long chamadoId) {
         return gerarCaminhoGenerico(PASTA_EMAIL_IMAGES, data, chamadoId);
     }
 
-    /**
-     * 🔥 Método genérico para geração de caminho físico.
-     */
     private static String gerarCaminhoGenerico(String base, LocalDate data, Long chamadoId) {
         String path = String.join(File.separator,
                 base,
@@ -80,9 +207,6 @@ public class PastaUploadUtil {
         return path;
     }
 
-    /**
-     * 🔗 Gera URL pública para anexos.
-     */
     public static String gerarUrlPublicaAnexo(LocalDate data, Long chamadoId, String nomeArquivo) {
         validarNomeArquivo(nomeArquivo);
         return URL_BASE_WEB + "/anexos/" +
@@ -92,9 +216,6 @@ public class PastaUploadUtil {
                 chamadoId + "/" + nomeArquivo;
     }
 
-    /**
-     * 🔗 Gera URL pública para imagens inline.
-     */
     public static String gerarUrlPublicaImagemEmail(LocalDate data, Long chamadoId, String nomeArquivo) {
         validarNomeArquivo(nomeArquivo);
         return URL_BASE_WEB + "/email_images/" +
@@ -104,16 +225,10 @@ public class PastaUploadUtil {
                 chamadoId + "/" + nomeArquivo;
     }
 
-    /**
-     * 🗓️ Retorna a data atual.
-     */
     public static LocalDate dataHoje() {
         return LocalDate.now();
     }
 
-    /**
-     * 🔐 Validação para nome de arquivo.
-     */
     private static void validarNomeArquivo(String nomeArquivo) {
         if (nomeArquivo == null || nomeArquivo.isBlank()) {
             throw new IllegalArgumentException("Nome do arquivo não pode ser nulo ou vazio.");

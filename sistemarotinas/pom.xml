@@ -210,7 +210,7 @@
 			<version>7.0.3</version>
 		</dependency>
 
-        <!-- Guava Usado para controle de metricas de API -->
+		<!-- Guava Usado para controle de metricas de API -->
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
@@ -237,6 +237,13 @@
 			<artifactId>commons-net</artifactId>
 			<version>3.10.0</version>
 		</dependency>
+
+		<!-- https://mvnrepository.com/artifact/com.hierynomus/smbj -->
+<dependency>
+    <groupId>com.hierynomus</groupId>
+    <artifactId>smbj</artifactId>
+    <version>0.14.0</version>
+</dependency>
 
 
 	</dependencies>

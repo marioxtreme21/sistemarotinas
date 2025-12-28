@@ -83,7 +83,6 @@
 
                             <p:outputPanel rendered="#{arquivosPriceBean.pricePersistido and !arquivosPriceBean.editarDestSenha}">
                                 <h:panelGroup layout="block" style="display:flex;gap:8px;align-items:center;">
-                                    <!-- ✅ AJUSTE: redisplay="true" para exibir a máscara -->
                                     <p:password id="dpassMask"
                                                 value="********"
                                                 disabled="true"
@@ -169,7 +168,6 @@
 
                             <p:outputPanel rendered="#{arquivosPriceBean.pricePersistido and !arquivosPriceBean.editarSmbSenha}">
                                 <h:panelGroup layout="block" style="display:flex;gap:8px;align-items:center;">
-                                    <!-- ✅ AJUSTE: redisplay="true" para exibir a máscara -->
                                     <p:password id="smbPassMask"
                                                 value="********"
                                                 disabled="true"
@@ -224,12 +222,24 @@
 
                     </p:panelGrid>
 
+                    <!-- ✅ Mantido: botão Salvar como está -->
                     <p:commandButton value="Salvar"
                                      actionListener="#{arquivosPriceBean.salvar}"
                                      process="@form"
                                      update=":formCadastroArquivosPrice:cadastroWrapper :formCadastroArquivosPrice:growl :formTable:tableResult"
                                      icon="pi pi-save"
                                      styleClass="ui-button-primary" />
+
+                    <!-- ✅ NOVO: botão Testar (somente quando já estiver salvo) -->
+                    <p:commandButton value="Testar"
+                                     icon="pi pi-play"
+                                     styleClass="ui-button-secondary"
+                                     rendered="#{arquivosPriceBean.pricePersistido}"
+                                     actionListener="#{arquivosPriceBean.testarAtual}"
+                                     process="@this"
+                                     update=":formCadastroArquivosPrice:growl"
+                                     onclick="if(!confirm('Deseja executar o teste de transferência agora?')) return false;" />
+
                 </p:panel>
 
                 <p:panel id="panelPatternsPrice"
