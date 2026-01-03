@@ -5,7 +5,7 @@
 
     <!-- Diretório base dos logs -->
     <springProperty name="LOG_DIR" source="logging.file.path"
-        defaultValue="${catalina.base}/webapps/sistemaecommerce/logs" />
+        defaultValue="${catalina.base}/webapps/sistemarotinas/logs" />
 
     <property name="LOG_PATTERN"
         value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n" />
@@ -21,9 +21,9 @@
 
     <!-- Arquivo principal -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/sistemaecommerce.log</file>
+        <file>${LOG_DIR}/sistemarotinas.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/sistemaecommerce.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_DIR}/sistemarotinas.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
@@ -143,6 +143,18 @@
         </encoder>
     </appender>
 
+    <!-- ===================== NOVO: LOG DEDICADO ROTINA PRICE ===================== -->
+    <appender name="ROTINA_PRICE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/rotina-price.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/rotina-price.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <!-- ===================== ROOT & LOGGERS ===================== -->
 
     <root level="INFO">
@@ -202,6 +214,12 @@
     <logger name="REMOTE_CONN_TEST_FTP" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="REMOTE_CONN_TEST_FTP"/>
+    </logger>
+
+    <!-- ✅ Logger dedicado para a ROTINA PRICE (somente o que for logado com este nome) -->
+    <logger name="ROTINA_PRICE" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ROTINA_PRICE"/>
     </logger>
 
 </configuration>

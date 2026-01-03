@@ -479,14 +479,11 @@ public class ArquivosPriceBean implements Serializable {
 
             log.info("[TESTE-PRICE] Preparando chamada ao PriceTransferService - priceId={}", id);
 
-            // ✅ robusto: tenta assinaturas conhecidas, MAS:
-            // - se o método existir e falhar, propaga o erro real (não tenta aliases)
             Object result = invocarTesteNoService(cfg);
 
             long ms = (System.nanoTime() - t0) / 1_000_000;
             log.info("[TESTE-PRICE] Retorno do service em {} ms - priceId={}", ms, id);
 
-            // loga um “resumo” do resultado (sem depender de isOk())
             Boolean downloadOk = getBoolean(result, "isDownloadOk", "getDownloadOk");
             Boolean fsOk = getBoolean(result, "isFsOk", "getFsOk");
             Boolean smbOk = getBoolean(result, "isSmbOk", "getSmbOk");
@@ -520,31 +517,26 @@ public class ArquivosPriceBean implements Serializable {
         Long id = cfg.getPriceId();
         log.info("[TESTE-PRICE] invocarTesteNoService - tentativas por ID e/ou objeto - priceId={}", id);
 
-        // 1) testar(Long)  (assinatura principal)
         if (invokeIfExists(priceTransferService, "testar", new Class<?>[]{ Long.class }, new Object[]{ id })) {
             log.info("[TESTE-PRICE] Método usado: PriceTransferService.testar(Long) - priceId={}", id);
             return lastReturn;
         }
 
-        // 2) testarTransfer(Long)
         if (invokeIfExists(priceTransferService, "testarTransfer", new Class<?>[]{ Long.class }, new Object[]{ id })) {
             log.info("[TESTE-PRICE] Método usado: PriceTransferService.testarTransfer(Long) - priceId={}", id);
             return lastReturn;
         }
 
-        // 3) testarTransferencia(Long)
         if (invokeIfExists(priceTransferService, "testarTransferencia", new Class<?>[]{ Long.class }, new Object[]{ id })) {
             log.info("[TESTE-PRICE] Método usado: PriceTransferService.testarTransferencia(Long) - priceId={}", id);
             return lastReturn;
         }
 
-        // 4) testar(ArquivosPrice)
         if (invokeIfExists(priceTransferService, "testar", new Class<?>[]{ ArquivosPrice.class }, new Object[]{ cfg })) {
             log.info("[TESTE-PRICE] Método usado: PriceTransferService.testar(ArquivosPrice) - priceId={}", id);
             return lastReturn;
         }
 
-        // 5) testarTransfer(ArquivosPrice)
         if (invokeIfExists(priceTransferService, "testarTransfer", new Class<?>[]{ ArquivosPrice.class }, new Object[]{ cfg })) {
             log.info("[TESTE-PRICE] Método usado: PriceTransferService.testarTransfer(ArquivosPrice) - priceId={}", id);
             return lastReturn;
@@ -560,11 +552,6 @@ public class ArquivosPriceBean implements Serializable {
 
     private transient Object lastReturn;
 
-    /**
-     * - Se NÃO existir: retorna false (continua tentando)
-     * - Se EXISTIR e OK: retorna true
-     * - Se EXISTIR e der erro: lança a exceção REAL (não tenta aliases)
-     */
     private boolean invokeIfExists(Object target, String methodName, Class<?>[] paramTypes, Object[] args) throws Exception {
         try {
             Method m = target.getClass().getMethod(methodName, paramTypes);
@@ -599,7 +586,7 @@ public class ArquivosPriceBean implements Serializable {
             return;
         }
 
-        Boolean okGeral = getBoolean(r, "isOk", "getOk", "isSuccess", "getSuccess"); // se existir
+        Boolean okGeral = getBoolean(r, "isOk", "getOk", "isSuccess", "getSuccess");
         Boolean downloadOk = getBoolean(r, "isDownloadOk", "getDownloadOk");
         Boolean fsOk = getBoolean(r, "isFsOk", "getFsOk");
         Boolean smbOk = getBoolean(r, "isSmbOk", "getSmbOk");
@@ -674,10 +661,18 @@ public class ArquivosPriceBean implements Serializable {
     }
 
     // valida/normaliza apenas o tipo selecionado, SEM apagar SMB/FS (para permitir fallback futuramente)
+    // ✅ Agora também normaliza os 4 novos campos de MessageFiles, sem tornar obrigatório ainda.
     private void validarENormalizarPorTipoDestino(ArquivosPrice p) {
         if (p == null || p.getTipoDestino() == null) {
             throw new IllegalArgumentException("Selecione o Tipo de Destino.");
         }
+
+        // ✅ novos campos (independe do tipo de destino)
+        // (não valida obrigatório aqui — só prepara para cadastro correto)
+        p.setMsgCopyAtivo(p.getMsgCopyAtivo() != null ? p.getMsgCopyAtivo() : true);
+        p.setMsgFileNomeLocal(trimToNull(p.getMsgFileNomeLocal()));
+        p.setMsgSmbCompartilhamento(trimToNull(p.getMsgSmbCompartilhamento()));
+        p.setMsgSmbSubpasta(trimToNull(p.getMsgSmbSubpasta()));
 
         switch (p.getTipoDestino()) {
             case FS:

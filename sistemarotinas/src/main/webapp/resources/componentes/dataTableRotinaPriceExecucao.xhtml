@@ -1,0 +1,45 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:column headerText="ID" sortBy="#{e.execucaoId}" style="width:90px;">
+        <h:outputText value="#{e.execucaoId}" />
+    </p:column>
+
+    <p:column headerText="Origem" sortBy="#{e.origemExecucao}" style="width:140px;">
+        <h:outputText value="#{e.origemExecucao}" />
+    </p:column>
+
+    <p:column headerText="Status" sortBy="#{e.status}" style="width:140px;">
+        <h:outputText value="#{e.status}" />
+    </p:column>
+
+    <p:column headerText="Início" sortBy="#{e.inicioEm}" style="width:170px;">
+        <h:outputText value="#{e.inicioEm}" converter="localDateTimeConverter" />
+    </p:column>
+
+    <p:column headerText="Fim" sortBy="#{e.fimEm}" style="width:170px;">
+        <h:outputText value="#{e.fimEm}" converter="localDateTimeConverter" />
+    </p:column>
+
+    <p:column headerText="Duração (ms)" sortBy="#{e.tempoTotalMs}" style="width:130px;">
+        <h:outputText value="#{e.tempoTotalMs}" />
+    </p:column>
+
+    <p:column headerText="Resumo">
+        <h:outputText value="#{e.mensagemResumo}" />
+    </p:column>
+
+    <p:column headerText="Ações" style="white-space:nowrap;width:160px;">
+        <p:commandButton value="Detalhes"
+                         icon="pi pi-search"
+                         styleClass="ui-button-secondary"
+                         actionListener="#{rotinaPriceExecucaoBean.abrirDetalhe(e.execucaoId)}"
+                         process="@this"
+                         update=":formTable:dlgDetalhePrice"
+                         oncomplete="PF('dlgDetalhePrice').show()" />
+    </p:column>
+
+</ui:composition>

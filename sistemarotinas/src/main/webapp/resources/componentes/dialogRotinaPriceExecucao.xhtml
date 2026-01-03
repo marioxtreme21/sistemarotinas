@@ -1,0 +1,284 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <style type="text/css">
+        .dlgDetalhePrice.ui-dialog .ui-dialog-content{
+            overflow-y: auto !important;
+            overflow-x: auto !important;
+        }
+
+        /* evita quebrar letra por letra e ainda quebra palavras longas se precisar */
+        .wrapText{
+            white-space: pre-wrap;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        /* opcional: deixa as colunas mais “enxutas” visualmente */
+        .colCenter{
+            text-align: center;
+        }
+    </style>
+
+    <p:dialog id="dlgDetalhePrice"
+              widgetVar="dlgDetalhePrice"
+              header="Detalhes da Execução - PRICE"
+              modal="true"
+              resizable="true"
+              draggable="true"
+              responsive="true"
+              closeOnEscape="true"
+              appendTo="@(body)"
+              fitViewport="true"
+              blockScroll="true"
+              styleClass="dlgDetalhePrice"
+              style="width:92vw; max-width:1500px; height:90vh;"
+              contentStyle="max-height:82vh; overflow:auto;">
+
+        <p:outputPanel id="panelDetalhe">
+
+            <!-- ================= EXECUÇÃO ================= -->
+            <p:panel styleClass="panelPesquisa" header="Execução">
+                <p:panelGrid columns="4" cellpadding="6"
+                             columnClasses="label,value,label,value"
+                             style="width:100%;">
+
+                    <p:row>
+                        <p:column><h:outputText value="Execução ID:" /></p:column>
+                        <p:column><h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.execucaoId}" /></p:column>
+
+                        <p:column><h:outputText value="Tipo:" /></p:column>
+                        <p:column><h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.tipoRotina}" /></p:column>
+                    </p:row>
+
+                    <p:row>
+                        <p:column><h:outputText value="Origem:" /></p:column>
+                        <p:column><h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.origemExecucao}" /></p:column>
+
+                        <p:column><h:outputText value="Solicitante:" /></p:column>
+                        <p:column><h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.solicitante}" /></p:column>
+                    </p:row>
+
+                    <p:row>
+                        <p:column><h:outputText value="Status:" /></p:column>
+                        <p:column><h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.status}" /></p:column>
+
+                        <p:column><h:outputText value="Duração (ms):" /></p:column>
+                        <p:column><h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.tempoTotalMs}" /></p:column>
+                    </p:row>
+
+                    <p:row>
+                        <p:column><h:outputText value="Início:" /></p:column>
+                        <p:column>
+                            <h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.inicioEm}"
+                                          converter="localDateTimeConverter"/>
+                        </p:column>
+
+                        <p:column><h:outputText value="Fim:" /></p:column>
+                        <p:column>
+                            <h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.fimEm}"
+                                          converter="localDateTimeConverter"/>
+                        </p:column>
+                    </p:row>
+
+                    <p:row>
+                        <p:column><h:outputText value="Resumo:" /></p:column>
+                        <p:column colspan="3">
+                            <h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.mensagemResumo}"
+                                          styleClass="wrapText"/>
+                        </p:column>
+                    </p:row>
+
+                    <p:row>
+                        <p:column><h:outputText value="Erro Geral:" /></p:column>
+                        <p:column colspan="3">
+                            <h:outputText value="#{rotinaPriceExecucaoBean.execucaoSelecionada.erroGeral}"
+                                          styleClass="wrapText"/>
+                        </p:column>
+                    </p:row>
+
+                </p:panelGrid>
+            </p:panel>
+
+            <!-- ================= LOJAS / ARQUIVOS ================= -->
+            <p:panel styleClass="panelPesquisa" header="Lojas / Arquivos">
+
+                <p:dataTable id="tableLojas"
+                             value="#{rotinaPriceExecucaoBean.detalheLojas}"
+                             var="l"
+                             emptyMessage="Sem lojas nesta execução."
+                             rows="10"
+                             paginator="true"
+                             rowsPerPageTemplate="10,20,50"
+                             rowKey="#{l.execucaoLojaId}"
+                             rowExpandMode="single">
+
+                    <p:column style="width:36px;">
+                        <p:rowToggler/>
+                    </p:column>
+
+                    <p:column headerText="Loja" style="width:220px;">
+                        <h:outputText value="#{l.codLojaRms} - #{l.nomeLoja}" />
+                    </p:column>
+
+                    <p:column headerText="Status" style="width:110px;">
+                        <h:outputText value="#{l.status}" />
+                    </p:column>
+
+                    <p:column headerText="Início" style="width:155px;">
+                        <h:outputText value="#{l.inicioEm}" converter="localDateTimeConverter" />
+                    </p:column>
+
+                    <p:column headerText="Fim" style="width:155px;">
+                        <h:outputText value="#{l.fimEm}" converter="localDateTimeConverter" />
+                    </p:column>
+
+                    <p:column headerText="Mensagem" style="min-width:340px;">
+                        <h:outputText value="#{l.mensagem}" styleClass="wrapText"/>
+                    </p:column>
+
+                    <p:column headerText="Erro" style="min-width:340px;">
+                        <h:outputText value="#{l.erro}" styleClass="wrapText"/>
+                    </p:column>
+
+                    <!-- Expansão: arquivos da loja -->
+                    <p:rowExpansion>
+                        <p:panel header="Arquivos da loja" styleClass="panelPesquisa">
+
+                            <p:dataTable id="tableArquivos"
+                                         value="#{rotinaPriceExecucaoBean.arquivosPorLoja(l.execucaoLojaId)}"
+                                         var="a"
+                                         emptyMessage="Sem arquivos registrados."
+                                         rows="8"
+                                         paginator="true"
+                                         rowsPerPageTemplate="8,15,30"
+                                         scrollable="true"
+                                         scrollWidth="100%"
+                                         rowKey="#{a.execucaoArquivoId}"
+                                         rowExpandMode="single">
+
+                                <p:column style="width:36px;">
+                                    <p:rowToggler/>
+                                </p:column>
+
+                                <p:column headerText="Pattern" style="width:220px;">
+                                    <h:outputText value="#{a.patternEsperado}" />
+                                </p:column>
+
+                                <p:column headerText="Arquivo" style="width:240px;">
+                                    <h:outputText value="#{a.nomeArquivo}" styleClass="wrapText"/>
+                                </p:column>
+
+                                <p:column headerText="Obrig." style="width:70px;" styleClass="colCenter">
+                                    <h:outputText value="#{a.required ? 'Sim' : 'Não'}" />
+                                </p:column>
+
+                                <p:column headerText="Status final" style="width:110px;">
+                                    <h:outputText value="#{a.status}" />
+                                </p:column>
+
+                                <p:column headerText="Etapa final" style="width:240px;">
+                                    <h:outputText value="#{a.etapa}" />
+                                </p:column>
+
+                                <p:column headerText="Tempo (ms)" style="width:90px;" styleClass="colCenter">
+                                    <h:outputText value="#{a.tempoTotalMs}" />
+                                </p:column>
+
+                                <p:column headerText="Mensagem" style="min-width:320px;">
+                                    <h:outputText value="#{a.mensagem}" styleClass="wrapText"/>
+                                </p:column>
+
+                                <p:column headerText="Erro" style="min-width:320px;">
+                                    <h:outputText value="#{a.erro}" styleClass="wrapText"/>
+                                </p:column>
+
+                                <!-- Expansão: etapas do arquivo -->
+                                <p:rowExpansion>
+                                    <p:panel header="Etapas do arquivo" styleClass="panelPesquisa">
+
+                                        <p:dataTable id="tableEtapas"
+                                                     value="#{rotinaPriceExecucaoBean.etapasPorArquivo(a.execucaoArquivoId)}"
+                                                     var="t"
+                                                     emptyMessage="Sem etapas registradas."
+                                                     rows="10"
+                                                     paginator="true"
+                                                     rowsPerPageTemplate="10,20,50"
+                                                     scrollable="true"
+                                                     scrollWidth="100%"
+                                                     rowKey="#{t.etapaId}"
+                                                     style="table-layout:fixed; width:100%;">
+
+                                            <!-- ✅ ID bem menor -->
+                                            <p:column headerText="ID" style="width:60px;" styleClass="colCenter">
+                                                <h:outputText value="#{t.etapaId}" />
+                                            </p:column>
+
+                                            <!-- Etapa ocupa mais -->
+                                            <p:column headerText="Etapa" style="width:260px;">
+                                                <h:outputText value="#{t.etapa}" />
+                                            </p:column>
+
+                                            <p:column headerText="Status" style="width:110px;">
+                                                <h:outputText value="#{t.status}" />
+                                            </p:column>
+
+                                            <p:column headerText="Início" style="width:145px;">
+                                                <h:outputText value="#{t.inicioEm}" converter="localDateTimeConverter" />
+                                            </p:column>
+
+                                            <p:column headerText="Fim" style="width:145px;">
+                                                <h:outputText value="#{t.fimEm}" converter="localDateTimeConverter" />
+                                            </p:column>
+
+                                            <!-- ✅ Tempo menor -->
+                                            <p:column headerText="Tempo (ms)" style="width:90px;" styleClass="colCenter">
+                                                <h:outputText value="#{t.tempoTotalMs}" />
+                                            </p:column>
+
+                                            <!-- ✅ Origem/Destino bem maiores (evita quebrar em 1 letra) -->
+                                            <p:column headerText="Origem" style="width:320px;">
+                                                <h:outputText value="#{t.origem}" styleClass="wrapText"/>
+                                            </p:column>
+
+                                            <p:column headerText="Destino" style="width:260px;">
+                                                <h:outputText value="#{t.destino}" styleClass="wrapText"/>
+                                            </p:column>
+
+                                            <!-- ✅ Mensagem/Erro maiores -->
+                                            <p:column headerText="Mensagem" style="width:280px;">
+                                                <h:outputText value="#{t.mensagem}" styleClass="wrapText"/>
+                                            </p:column>
+
+                                            <p:column headerText="Erro" style="width:280px;">
+                                                <h:outputText value="#{t.erro}" styleClass="wrapText"/>
+                                            </p:column>
+
+                                        </p:dataTable>
+
+                                    </p:panel>
+                                </p:rowExpansion>
+
+                            </p:dataTable>
+
+                        </p:panel>
+                    </p:rowExpansion>
+
+                </p:dataTable>
+            </p:panel>
+
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+                <p:commandButton value="Fechar"
+                                 icon="pi pi-times"
+                                 type="button"
+                                 onclick="PF('dlgDetalhePrice').hide()"
+                                 styleClass="ui-button-secondary" />
+            </div>
+
+        </p:outputPanel>
+    </p:dialog>
+
+</ui:composition>

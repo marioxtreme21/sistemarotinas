@@ -38,32 +38,59 @@ public class DivergenciaPrecoCrmService {
 
     private static final String SQL = """
         SELECT
-          cfg.cod_loj AS loja,
-          e.codigo_produto,
-          e.codigo_ean,
-          p.descricao,
-          pcrm.preco  AS preco_crm,
-          pnorm.preco AS preco_normal
-        FROM (
-          SELECT
-            cod_loj,
-            MAX(CASE WHEN cod_niv % 10 = 1 THEN cod_niv END) AS niv_normal,
-            MAX(CASE WHEN cod_niv % 10 = 7 THEN cod_niv END) AS niv_crm
-          FROM cfg_carga_prc_loj
-          WHERE cod_loj = ?
-          GROUP BY cod_loj
-        ) AS cfg
-        JOIN nivel_preco_produto AS pcrm
-          ON pcrm.codigo_nivel = cfg.niv_crm
-        JOIN nivel_preco_produto AS pnorm
-          ON pnorm.codigo_nivel  = cfg.niv_normal
-         AND pnorm.codigo_produto = pcrm.codigo_produto
-        JOIN ean AS e
-          ON e.codigo_ean = pcrm.codigo_produto
-        JOIN produto AS p
-          ON p.codigo_produto = e.codigo_produto
-        WHERE pcrm.preco > pnorm.preco
-        ORDER BY e.codigo_produto
+  cfg.cod_loj AS loja,
+  e.codigo_produto,
+  e.codigo_ean,
+  p.descricao,
+  pcrm.preco  AS preco_crm,
+  pnorm.preco AS preco_normal
+FROM (
+  SELECT
+    cod_loj,
+    MAX(CASE WHEN cod_niv % 10 = 1 THEN cod_niv END) AS niv_normal,
+    MAX(CASE WHEN cod_niv % 10 = 7 THEN cod_niv END) AS niv_crm
+  FROM cfg_carga_prc_loj
+  WHERE cod_loj = ?           
+  GROUP BY cod_loj
+) AS cfg
+
+JOIN (
+  SELECT n1.codigo_nivel, n1.codigo_produto, n1.preco, n1.data_preco
+  FROM nivel_preco_produto n1
+  JOIN (
+    SELECT codigo_nivel, codigo_produto, MAX(data_preco) AS data_preco
+    FROM nivel_preco_produto
+    GROUP BY codigo_nivel, codigo_produto
+  ) mx
+    ON mx.codigo_nivel   = n1.codigo_nivel
+   AND mx.codigo_produto = n1.codigo_produto
+   AND mx.data_preco     = n1.data_preco
+) AS pcrm
+  ON pcrm.codigo_nivel = cfg.niv_crm
+
+JOIN (
+  SELECT n1.codigo_nivel, n1.codigo_produto, n1.preco, n1.data_preco
+  FROM nivel_preco_produto n1
+  JOIN (
+    SELECT codigo_nivel, codigo_produto, MAX(data_preco) AS data_preco
+    FROM nivel_preco_produto
+    GROUP BY codigo_nivel, codigo_produto
+  ) mx
+    ON mx.codigo_nivel   = n1.codigo_nivel
+   AND mx.codigo_produto = n1.codigo_produto
+   AND mx.data_preco     = n1.data_preco
+) AS pnorm
+  ON pnorm.codigo_nivel   = cfg.niv_normal
+ AND pnorm.codigo_produto = pcrm.codigo_produto
+
+JOIN ean AS e
+  ON e.codigo_ean = pcrm.codigo_produto
+
+JOIN produto AS p
+  ON p.codigo_produto = e.codigo_produto
+
+WHERE pcrm.preco > pnorm.preco
+ORDER BY e.codigo_produto
         """;
 
     public void executarManual(Loja lojaSelecionadaOuNullParaTodas) throws Exception {

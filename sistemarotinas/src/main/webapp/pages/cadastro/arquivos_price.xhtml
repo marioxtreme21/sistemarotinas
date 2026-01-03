@@ -202,6 +202,34 @@
 
                         </p:outputPanel>
 
+                  
+                        <p:outputLabel for="msgAtivo" value="Ativar cópia MessageFiles (.m1):"
+                                       rendered="#{arquivosPriceBean.price.tipoDestino eq 'SMB'}" />
+                        <p:selectBooleanCheckbox id="msgAtivo"
+                                                 value="#{arquivosPriceBean.price.msgCopyAtivo}"
+                                                 rendered="#{arquivosPriceBean.price.tipoDestino eq 'SMB'}" />
+
+                        <p:outputLabel for="msgNome" value="Nome do arquivo local (.m1):"
+                                       rendered="#{arquivosPriceBean.price.tipoDestino eq 'SMB'}" />
+                        <p:inputText id="msgNome"
+                                     value="#{arquivosPriceBean.price.msgFileNomeLocal}"
+                                     style="width:100%"
+                                     rendered="#{arquivosPriceBean.price.tipoDestino eq 'SMB'}" />
+
+                        <p:outputLabel for="msgShare" value="Compartilhamento (MessageFiles):"
+                                       rendered="#{arquivosPriceBean.price.tipoDestino eq 'SMB'}" />
+                        <p:inputText id="msgShare"
+                                     value="#{arquivosPriceBean.price.msgSmbCompartilhamento}"
+                                     style="width:100%"
+                                     rendered="#{arquivosPriceBean.price.tipoDestino eq 'SMB'}" />
+
+                        <p:outputLabel for="msgSub" value="Subpasta (MessageFiles):"
+                                       rendered="#{arquivosPriceBean.price.tipoDestino eq 'SMB'}" />
+                        <p:inputText id="msgSub"
+                                     value="#{arquivosPriceBean.price.msgSmbSubpasta}"
+                                     style="width:100%"
+                                     rendered="#{arquivosPriceBean.price.tipoDestino eq 'SMB'}" />
+
                         <p:outputLabel for="tz" value="Timezone:" />
                         <p:inputText id="tz" value="#{arquivosPriceBean.price.timezone}" style="width:100%" />
 
@@ -222,7 +250,6 @@
 
                     </p:panelGrid>
 
-                    <!-- ✅ Mantido: botão Salvar como está -->
                     <p:commandButton value="Salvar"
                                      actionListener="#{arquivosPriceBean.salvar}"
                                      process="@form"
@@ -230,7 +257,6 @@
                                      icon="pi pi-save"
                                      styleClass="ui-button-primary" />
 
-                    <!-- ✅ NOVO: botão Testar (somente quando já estiver salvo) -->
                     <p:commandButton value="Testar"
                                      icon="pi pi-play"
                                      styleClass="ui-button-secondary"

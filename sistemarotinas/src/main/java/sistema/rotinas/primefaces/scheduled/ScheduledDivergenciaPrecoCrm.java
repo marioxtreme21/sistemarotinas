@@ -24,7 +24,7 @@ public class ScheduledDivergenciaPrecoCrm {
     @Autowired
     private DivergenciaPrecoCrmService divergenciaPrecoCrmService;
 
-    // @Scheduled(cron = "0 00 06 * * *")
+    //@Scheduled(cron = "0 00 06 * * *")
     public void executar() {
         try {
             log.info("⏰ Iniciando rotina agendada: Divergência Preço CRM x Preço Normal (todas as lojas) - 06:00");

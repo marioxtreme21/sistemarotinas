@@ -1,0 +1,100 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:panel header="Execução Manual - Rotina PRICE" styleClass="panelPesquisa">
+
+        <p:panelGrid id="gridExecucao"
+                     columns="4"
+                     cellpadding="6"
+                     styleClass="panelPesquisa"
+                     columnClasses="label,value,label,value"
+                     style="width:100%; table-layout:fixed;">
+
+            <p:row>
+                <p:column style="width:170px; white-space:nowrap;">
+                    <p:outputLabel for="todas" value="Selecionar todas:" />
+                </p:column>
+
+                <p:column style="width:70px; white-space:nowrap;">
+                    <p:selectBooleanCheckbox id="todas"
+                                             value="#{rotinaPriceExecucaoBean.selecionarTodas}">
+                        <!-- ✅ mantém o comportamento e melhora o layout -->
+                        <p:ajax process="@this" update="gridExecucao" />
+                    </p:selectBooleanCheckbox>
+                </p:column>
+
+                <p:column style="width:60px; white-space:nowrap;">
+                    <p:outputLabel for="lojasSel" value="Lojas:" />
+                </p:column>
+
+                <p:column style="width:auto;">
+                    <p:selectCheckboxMenu id="lojasSel"
+                                          value="#{rotinaPriceExecucaoBean.lojaIdsSelecionadas}"
+                                          label="Selecione..."
+                                          filter="true"
+                                          filterMatchMode="contains"
+                                          style="width:100%;"
+                                          disabled="#{rotinaPriceExecucaoBean.selecionarTodas}">
+
+                        <f:selectItems value="#{rotinaPriceExecucaoBean.lojas}"
+                                       var="l"
+                                       itemValue="#{l.lojaId}"
+                                       itemLabel="#{l.codLojaRms} - #{l.nome}" />
+
+                        <f:converter converterId="jakarta.faces.Long" />
+
+                        <!-- ✅ Mantém o fix do “primeiro clique não executa” -->
+                        <p:ajax event="change" process="@this" update="btnExecutar" />
+                        <p:ajax event="toggleSelect" process="@this" update="btnExecutar" />
+                    </p:selectCheckboxMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column colspan="4" style="padding-top:8px;">
+
+                    <p:commandButton id="btnExecutar"
+                                     value="Executar"
+                                     icon="pi pi-play"
+                                     styleClass="ui-button-primary"
+                                     actionListener="#{rotinaPriceExecucaoBean.executar}"
+                                     process="@form"
+                                     update=":formPesquisa:growl :formTable:wrapperHistorico"
+                                     disabled="#{!rotinaPriceExecucaoBean.selecionarTodas and empty rotinaPriceExecucaoBean.lojaIdsSelecionadas}"
+                                     onclick="if(!confirm('Deseja executar a Rotina PRICE agora?')) return false;" />
+
+                    <p:spacer width="8"/>
+
+                    <p:commandButton value="Recarregar histórico"
+                                     icon="pi pi-refresh"
+                                     styleClass="ui-button-secondary"
+                                     actionListener="#{rotinaPriceExecucaoBean.recarregarHistorico}"
+                                     process="@this"
+                                     update=":formTable:wrapperHistorico :formPesquisa:growl" />
+
+                    <p:spacer width="8"/>
+
+                    <p:commandButton value="Limpar seleção"
+                                     icon="pi pi-times"
+                                     styleClass="ui-button-secondary"
+                                     actionListener="#{rotinaPriceExecucaoBean.limparSelecao}"
+                                     process="@this"
+                                     update="gridExecucao :formPesquisa:growl" />
+
+                    <p:spacer width="12"/>
+
+                    <h:panelGroup rendered="#{not empty rotinaPriceExecucaoBean.ultimaExecucaoId}">
+                        <h:outputText value="Última execução registrada (ID): #{rotinaPriceExecucaoBean.ultimaExecucaoId}"
+                                      style="font-weight:bold;color:#2f6f2f;" />
+                    </h:panelGroup>
+
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </p:panel>
+</ui:composition>

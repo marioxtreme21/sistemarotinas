@@ -103,7 +103,42 @@ public class ArquivosPrice implements Serializable {
 	@Column(name = "habilitado", nullable = false)
 	private Boolean habilitado = true;
 
+	// ==========================
+	// ✅ NOVOS CAMPOS (MensagemFiles / .m1)
+	// ==========================
+
+	/**
+	 * Ativa a cópia adicional do arquivo .m1 (MessageFiles) após o .i1. Default
+	 * true para manter o comportamento esperado.
+	 */
+	@Column(name = "msg_copy_ativo", nullable = false)
+	private Boolean msgCopyAtivo = true;
+
+	/**
+	 * Nome do arquivo local a ser copiado (ex.: stella_update.m1 /
+	 * piata_update.m1). Esse arquivo fica em uploads/rotinaalterados/price/LJxxx/
+	 * (ou dentro do dia, conforme sua rotina).
+	 */
+	@Column(name = "msg_file_nome_local", length = 255)
+	private String msgFileNomeLocal;
+
+	/**
+	 * Compartilhamento SMB de destino para MessageFiles (ex.: PFIFiles).
+	 * IP/host/usuário/senha serão reaproveitados do SMB principal já cadastrado.
+	 */
+	@Column(name = "msg_smb_compartilhamento", length = 255)
+	private String msgSmbCompartilhamento;
+
+	/**
+	 * Subpasta SMB de destino para MessageFiles (ex.: MessageFiles). Você comentou
+	 * que prefere salvar só "\\PFIFiles\\MessageFiles" separando share/subpasta:
+	 * aqui entra "MessageFiles".
+	 */
+	@Column(name = "msg_smb_subpasta", length = 255)
+	private String msgSmbSubpasta;
+
 	// Getters/Setters/equals/hashCode/toString
+
 	public Long getPriceId() {
 		return priceId;
 	}
@@ -302,6 +337,40 @@ public class ArquivosPrice implements Serializable {
 
 	public void setHabilitado(Boolean habilitado) {
 		this.habilitado = habilitado;
+	}
+
+	// ===== novos getters/setters =====
+
+	public Boolean getMsgCopyAtivo() {
+		return msgCopyAtivo;
+	}
+
+	public void setMsgCopyAtivo(Boolean msgCopyAtivo) {
+		this.msgCopyAtivo = msgCopyAtivo;
+	}
+
+	public String getMsgFileNomeLocal() {
+		return msgFileNomeLocal;
+	}
+
+	public void setMsgFileNomeLocal(String msgFileNomeLocal) {
+		this.msgFileNomeLocal = msgFileNomeLocal;
+	}
+
+	public String getMsgSmbCompartilhamento() {
+		return msgSmbCompartilhamento;
+	}
+
+	public void setMsgSmbCompartilhamento(String msgSmbCompartilhamento) {
+		this.msgSmbCompartilhamento = msgSmbCompartilhamento;
+	}
+
+	public String getMsgSmbSubpasta() {
+		return msgSmbSubpasta;
+	}
+
+	public void setMsgSmbSubpasta(String msgSmbSubpasta) {
+		this.msgSmbSubpasta = msgSmbSubpasta;
 	}
 
 	@Override
