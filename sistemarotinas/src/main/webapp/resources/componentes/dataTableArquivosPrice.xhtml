@@ -8,6 +8,7 @@
         <h:outputText value="#{cfg.loja.codLojaRms} - #{cfg.loja.nome}" />
     </p:column>
 
+    <!-- Subpasta remota (origem dentro do remoteConfig/baseDirRemoto) -->
     <p:column headerText="Subpasta Remota" sortBy="#{cfg.subpastaRemota}">
         <h:outputText value="#{cfg.subpastaRemota}" />
     </p:column>
@@ -16,17 +17,41 @@
         <h:outputText value="#{cfg.tipoDestino}" />
     </p:column>
 
+    <!-- Destino principal -->
     <p:column headerText="Destino (principal)">
-        <h:outputText
-            value="#{cfg.tipoDestino eq 'SFTP'
-                        ? cfg.destHost
-                        : (cfg.tipoDestino eq 'FS'
-                            ? cfg.caminhoFsDestino
-                            : cfg.smbServidor)}" />
+
+        <!-- FS -->
+        <h:outputText value="#{cfg.caminhoFsDestino}"
+                      rendered="#{cfg.tipoDestino eq 'FS'}" />
+
+        <!-- SMB: servidor\share\subpasta -->
+        <h:panelGroup rendered="#{cfg.tipoDestino eq 'SMB'}">
+            <h:outputText value="#{cfg.smbServidor}" />
+            <h:outputText value="\" />
+            <h:outputText value="#{cfg.smbCompartilhamento}" />
+            <h:outputText value="\" rendered="#{not empty cfg.smbSubpasta}" />
+            <h:outputText value="#{cfg.smbSubpasta}" rendered="#{not empty cfg.smbSubpasta}" />
+        </h:panelGroup>
+
+        <!-- SFTP: host:porta / dir -->
+        <h:panelGroup rendered="#{cfg.tipoDestino eq 'SFTP'}">
+            <h:outputText value="#{cfg.destHost}" />
+            <h:outputText value=":" />
+            <h:outputText value="#{cfg.destPort}" />
+            <h:outputText value=" / " />
+            <h:outputText value="#{cfg.destDirRemoto}" />
+        </h:panelGroup>
+
+        <!-- fallback -->
+        <h:outputText value="-" rendered="#{cfg.tipoDestino ne 'FS' and cfg.tipoDestino ne 'SMB' and cfg.tipoDestino ne 'SFTP'}" />
     </p:column>
 
-    <p:column headerText="Verificação" sortBy="#{cfg.verificacaoDiariaAtiva}">
-        <h:outputText value="#{cfg.verificacaoDiariaAtiva ? 'Ativa' : 'Inativa'}" />
+    <p:column headerText="Mover p/ processed" sortBy="#{cfg.moverRemotoAposCopia}">
+        <h:outputText value="#{cfg.moverRemotoAposCopia ? 'Sim' : 'Não'}" />
+    </p:column>
+
+    <p:column headerText="Habilitado" sortBy="#{cfg.habilitado}" style="width:110px;">
+        <h:outputText value="#{cfg.habilitado ? 'Sim' : 'Não'}" />
     </p:column>
 
     <p:column headerText="Ações" style="white-space:nowrap;">
@@ -35,19 +60,19 @@
                          icon="pi pi-pencil"
                          actionListener="#{arquivosPriceBean.prepararEditar(cfg)}"
                          process="@this"
-                         update=":formCadastroArquivosPrice"
+                         update=":formCadastroArquivosPrice:cadastroWrapper :formCadastroArquivosPrice:growl"
                          styleClass="ui-button-secondary" />
 
         <p:spacer width="6" />
 
-        <!-- ✅ NOVO: Testar (usa a linha selecionada) -->
         <p:commandButton value="Testar"
                          icon="pi pi-play"
+                         rendered="#{cfg.priceId ne null}"
                          actionListener="#{arquivosPriceBean.testar(cfg)}"
                          process="@this"
                          update=":formCadastroArquivosPrice:growl"
                          styleClass="ui-button-secondary"
-                         onclick="if(!confirm('Deseja executar o teste de transferência para esta loja?')) return false;" />
+                         onclick="if(!confirm('Deseja executar o teste de transferência PRICE para esta loja?')) return false;" />
 
         <p:spacer width="6" />
 
@@ -55,7 +80,7 @@
                          icon="pi pi-trash"
                          actionListener="#{arquivosPriceBean.excluir(cfg.priceId)}"
                          process="@this"
-                         update=":formTable :formCadastroArquivosPrice"
+                         update=":formTable:tableResult :formCadastroArquivosPrice:cadastroWrapper :formCadastroArquivosPrice:growl"
                          styleClass="ui-button-danger"
                          onclick="if(!confirm('Confirma a exclusão?')) return false;" />
     </p:column>

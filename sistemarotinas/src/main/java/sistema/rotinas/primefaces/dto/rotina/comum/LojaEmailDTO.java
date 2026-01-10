@@ -1,4 +1,4 @@
-package sistema.rotinas.primefaces.dto.rotina.price;
+package sistema.rotinas.primefaces.dto.rotina.comum;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;

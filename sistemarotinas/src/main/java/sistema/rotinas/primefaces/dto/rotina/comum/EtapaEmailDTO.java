@@ -1,22 +1,18 @@
-package sistema.rotinas.primefaces.dto.rotina.price;
+package sistema.rotinas.primefaces.dto.rotina.comum;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import sistema.rotinas.primefaces.enums.EtapaArquivoEnum;
 import sistema.rotinas.primefaces.enums.StatusExecucaoEnum;
 
-public class ArquivoEmailDTO {
+public class EtapaEmailDTO {
 
-	private Long execucaoArquivoId;
+	private Long etapaId;
+	private EtapaArquivoEnum etapa;
+	private StatusExecucaoEnum status;
 
-	private String patternEsperado;
-	private String nomeArquivo;
-	private Boolean required;
-
-	private StatusExecucaoEnum statusFinal;
-	private EtapaArquivoEnum etapaFinal;
-
+	private LocalDateTime inicioEm;
+	private LocalDateTime fimEm;
 	private Long tempoTotalMs;
 
 	private String origem;
@@ -25,58 +21,48 @@ public class ArquivoEmailDTO {
 	private String mensagem;
 	private String erro;
 
-	// ✅ NOVO
+	// ✅ NOVO (se quiser exibir por etapa depois)
 	private LocalDateTime lastModifiedOrigem;
 	private LocalDateTime lastModifiedDestino;
 
-	private List<EtapaEmailDTO> etapas;
-
-	public Long getExecucaoArquivoId() {
-		return execucaoArquivoId;
+	public Long getEtapaId() {
+		return etapaId;
 	}
 
-	public void setExecucaoArquivoId(Long execucaoArquivoId) {
-		this.execucaoArquivoId = execucaoArquivoId;
+	public void setEtapaId(Long etapaId) {
+		this.etapaId = etapaId;
 	}
 
-	public String getPatternEsperado() {
-		return patternEsperado;
+	public EtapaArquivoEnum getEtapa() {
+		return etapa;
 	}
 
-	public void setPatternEsperado(String patternEsperado) {
-		this.patternEsperado = patternEsperado;
+	public void setEtapa(EtapaArquivoEnum etapa) {
+		this.etapa = etapa;
 	}
 
-	public String getNomeArquivo() {
-		return nomeArquivo;
+	public StatusExecucaoEnum getStatus() {
+		return status;
 	}
 
-	public void setNomeArquivo(String nomeArquivo) {
-		this.nomeArquivo = nomeArquivo;
+	public void setStatus(StatusExecucaoEnum status) {
+		this.status = status;
 	}
 
-	public Boolean getRequired() {
-		return required;
+	public LocalDateTime getInicioEm() {
+		return inicioEm;
 	}
 
-	public void setRequired(Boolean required) {
-		this.required = required;
+	public void setInicioEm(LocalDateTime inicioEm) {
+		this.inicioEm = inicioEm;
 	}
 
-	public StatusExecucaoEnum getStatusFinal() {
-		return statusFinal;
+	public LocalDateTime getFimEm() {
+		return fimEm;
 	}
 
-	public void setStatusFinal(StatusExecucaoEnum statusFinal) {
-		this.statusFinal = statusFinal;
-	}
-
-	public EtapaArquivoEnum getEtapaFinal() {
-		return etapaFinal;
-	}
-
-	public void setEtapaFinal(EtapaArquivoEnum etapaFinal) {
-		this.etapaFinal = etapaFinal;
+	public void setFimEm(LocalDateTime fimEm) {
+		this.fimEm = fimEm;
 	}
 
 	public Long getTempoTotalMs() {
@@ -133,13 +119,5 @@ public class ArquivoEmailDTO {
 
 	public void setLastModifiedDestino(LocalDateTime lastModifiedDestino) {
 		this.lastModifiedDestino = lastModifiedDestino;
-	}
-
-	public List<EtapaEmailDTO> getEtapas() {
-		return etapas;
-	}
-
-	public void setEtapas(List<EtapaEmailDTO> etapas) {
-		this.etapas = etapas;
 	}
 }

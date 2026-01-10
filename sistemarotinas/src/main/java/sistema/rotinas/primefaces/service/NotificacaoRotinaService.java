@@ -4,17 +4,30 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import sistema.rotinas.primefaces.dto.rotina.price.*;
+import sistema.rotinas.primefaces.dto.rotina.comum.ArquivoEmailDTO;
+import sistema.rotinas.primefaces.dto.rotina.comum.EtapaEmailDTO;
+import sistema.rotinas.primefaces.dto.rotina.comum.LojaEmailDTO;
+import sistema.rotinas.primefaces.dto.rotina.price.RotinaPriceEmailDTO;
 import sistema.rotinas.primefaces.enums.StatusExecucaoEnum;
 import sistema.rotinas.primefaces.enums.TipoRotinaEnum;
-import sistema.rotinas.primefaces.model.rotina.*;
-import sistema.rotinas.primefaces.repository.*;
+import sistema.rotinas.primefaces.model.rotina.RotinaExecucao;
+import sistema.rotinas.primefaces.model.rotina.RotinaExecucaoArquivo;
+import sistema.rotinas.primefaces.model.rotina.RotinaExecucaoArquivoEtapa;
+import sistema.rotinas.primefaces.model.rotina.RotinaExecucaoLoja;
+import sistema.rotinas.primefaces.repository.RotinaExecucaoArquivoEtapaRepository;
+import sistema.rotinas.primefaces.repository.RotinaExecucaoArquivoRepository;
+import sistema.rotinas.primefaces.repository.RotinaExecucaoLojaRepository;
+import sistema.rotinas.primefaces.repository.RotinaExecucaoRepository;
 
 @Service
 public class NotificacaoRotinaService {
@@ -35,8 +48,13 @@ public class NotificacaoRotinaService {
     private RotinaExecucaoArquivoEtapaRepository etapaRepo;
 
     private static final List<String> DESTINATARIOS_NOTIFICACAO_ROTINA_PRICE =
-            //List.of("relatoriorotinasprice@hiperideal.com.br");
-            List.of("mario.emmanuel@hiperideal.com.br");
+            List.of("relatoriorotinasprice@hiperideal.com.br");
+            // List.of("mario.emmanuel@hiperideal.com.br");
+
+    // ✅ Ajuste: conferi o nome (removi o "ms" que parece typo). Se o seu for diferente, altere aqui.
+    private static final List<String> DESTINATARIOS_NOTIFICACAO_ROTINA_MGV =
+            List.of("relatoriorotinasmgv@hiperideal.com.br");
+            // List.of("mario.emmanuel@hiperideal.com.br");
 
     private static final DateTimeFormatter FMT_DATA_HORA =
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
@@ -49,15 +67,21 @@ public class NotificacaoRotinaService {
 
     /**
      * Mantido para compatibilidade (se algo do projeto já chama).
-     * Para PRICE, se tiver execucaoId, manda o e-mail completo.
+     * Para PRICE/MGV, se tiver execucaoId, manda o e-mail completo.
      */
     public void notificarExecucaoRotina(RotinaExecucao exec) {
         if (exec == null) return;
 
         try {
-            if (exec.getTipoRotina() == TipoRotinaEnum.PRICE && exec.getExecucaoId() != null) {
-                notificarFinalizacaoRotinaPrice(exec.getExecucaoId());
-                return;
+            if (exec.getExecucaoId() != null) {
+                if (exec.getTipoRotina() == TipoRotinaEnum.PRICE) {
+                    notificarFinalizacaoRotinaPrice(exec.getExecucaoId());
+                    return;
+                }
+                if (exec.getTipoRotina() == TipoRotinaEnum.MGV) {
+                    notificarFinalizacaoRotinaMgv(exec.getExecucaoId());
+                    return;
+                }
             }
         } catch (Exception ignore) {}
 
@@ -77,23 +101,37 @@ public class NotificacaoRotinaService {
                 + "<p style='color:#888;'>E-mail automático.</p>"
                 + "</div>";
 
-        emailService.enviarEmailSimples(DESTINATARIOS_NOTIFICACAO_ROTINA_PRICE, assunto, corpo);
+        emailService.enviarEmailSimples(resolveDestinatarios(exec.getTipoRotina()), assunto, corpo);
     }
 
     public void notificarFinalizacaoRotinaPrice(Long execucaoId) {
-        if (execucaoId == null) return;
+        notificarFinalizacaoPorTipo(execucaoId, TipoRotinaEnum.PRICE);
+    }
+
+    public void notificarFinalizacaoRotinaMgv(Long execucaoId) {
+        notificarFinalizacaoPorTipo(execucaoId, TipoRotinaEnum.MGV);
+    }
+
+    private void notificarFinalizacaoPorTipo(Long execucaoId, TipoRotinaEnum tipo) {
+        if (execucaoId == null || tipo == null) return;
 
         RotinaExecucao exec = execRepo.findById(execucaoId).orElse(null);
         if (exec == null) return;
 
-        if (exec.getTipoRotina() != TipoRotinaEnum.PRICE) return;
+        if (exec.getTipoRotina() != tipo) return;
 
+        // ✅ Mantendo reuso do DTO raiz por enquanto (igual você fez).
         RotinaPriceEmailDTO dto = montarDTO(execucaoId, exec);
 
-        String assunto = montarAssunto(dto);
-        String corpo = montarHtml(dto);
+        String assunto = montarAssunto(dto, tipo);
+        String corpo = montarHtml(dto, tipo);
 
-        emailService.enviarEmailSimples(DESTINATARIOS_NOTIFICACAO_ROTINA_PRICE, assunto, corpo);
+        emailService.enviarEmailSimples(resolveDestinatarios(tipo), assunto, corpo);
+    }
+
+    private List<String> resolveDestinatarios(TipoRotinaEnum tipo) {
+        if (tipo == TipoRotinaEnum.MGV) return DESTINATARIOS_NOTIFICACAO_ROTINA_MGV;
+        return DESTINATARIOS_NOTIFICACAO_ROTINA_PRICE;
     }
 
     // =========================
@@ -105,7 +143,8 @@ public class NotificacaoRotinaService {
         List<RotinaExecucaoLoja> lojas = execLojaRepo.findAll().stream()
                 .filter(l -> l != null && l.getExecucao() != null
                         && Objects.equals(execucaoId, l.getExecucao().getExecucaoId()))
-                .sorted(Comparator.comparing(RotinaExecucaoLoja::getCodLojaRms, Comparator.nullsLast(String::compareToIgnoreCase)))
+                .sorted(Comparator.comparing(RotinaExecucaoLoja::getCodLojaRms,
+                        Comparator.nullsLast(String::compareToIgnoreCase)))
                 .toList();
 
         List<Long> execLojaIds = lojas.stream()
@@ -119,9 +158,12 @@ public class NotificacaoRotinaService {
                         && a.getExecucaoLoja().getExecucaoLojaId() != null
                         && execLojaIds.contains(a.getExecucaoLoja().getExecucaoLojaId()))
                 .sorted(Comparator
-                        .comparing((RotinaExecucaoArquivo a) -> a.getExecucaoLoja() != null ? a.getExecucaoLoja().getExecucaoLojaId() : null,
+                        .comparing((RotinaExecucaoArquivo a) -> a.getExecucaoLoja() != null
+                                        ? a.getExecucaoLoja().getExecucaoLojaId()
+                                        : null,
                                 Comparator.nullsLast(Comparator.naturalOrder()))
-                        .thenComparing(RotinaExecucaoArquivo::getExecucaoArquivoId, Comparator.nullsLast(Comparator.naturalOrder())))
+                        .thenComparing(RotinaExecucaoArquivo::getExecucaoArquivoId,
+                                Comparator.nullsLast(Comparator.naturalOrder())))
                 .toList();
 
         Map<Long, List<RotinaExecucaoArquivo>> arquivosPorLoja = arquivos.stream()
@@ -158,9 +200,7 @@ public class NotificacaoRotinaService {
                 ad.setMensagem(a.getMensagem());
                 ad.setErro(a.getErro());
 
-                // ✅ NOVO (sem quebrar compatibilidade do DTO):
-                // tenta “injetar” campos adicionais se existirem no DTO; se não existirem, coloca na mensagem.
-                // (Esses dados são importantes para validar “arquivo do dia”.)
+                // campos adicionais (arquivo do dia)
                 LocalDateTime lmOrigem = safeGetLastModifiedOrigem(a);
                 LocalDateTime lmDestino = safeGetLastModifiedDestino(a);
                 Boolean atualizado = safeGetOrigemAtualizada(a);
@@ -171,14 +211,13 @@ public class NotificacaoRotinaService {
                      || safeInvokeSetter(ad, "setOrigemAtualizada", Boolean.class, atualizado);
 
                 if (!setouAlgo) {
-                    // fallback: agrega na mensagem (não remove nada que já existia)
                     String extra = montarLinhaInfoArquivo(lmOrigem, lmDestino, atualizado);
                     if (extra != null && !extra.isBlank()) {
                         ad.setMensagem(mergeMsg(ad.getMensagem(), extra));
                     }
                 }
 
-                // etapas (usa repo existente)
+                // etapas
                 List<RotinaExecucaoArquivoEtapa> etapas = (a.getExecucaoArquivoId() == null)
                         ? new ArrayList<>()
                         : etapaRepo.findByExecucaoArquivoExecucaoArquivoIdOrderByEtapaIdAsc(a.getExecucaoArquivoId());
@@ -261,8 +300,10 @@ public class NotificacaoRotinaService {
     // =========================
     // Assunto + HTML
     // =========================
-    private String montarAssunto(RotinaPriceEmailDTO dto) {
-        String data = dto.getInicioEm() != null ? dto.getInicioEm().toLocalDate().format(FMT_DATA) : LocalDate.now().format(FMT_DATA);
+    private String montarAssunto(RotinaPriceEmailDTO dto, TipoRotinaEnum tipo) {
+        String data = dto.getInicioEm() != null
+                ? dto.getInicioEm().toLocalDate().format(FMT_DATA)
+                : LocalDate.now().format(FMT_DATA);
 
         String tag;
         if (dto.getStatus() == StatusExecucaoEnum.SUCESSO) tag = "✅ [SUCESSO]";
@@ -272,10 +313,13 @@ public class NotificacaoRotinaService {
 
         int total = (dto.getTotalLojas() != null ? dto.getTotalLojas() : 0);
 
-        return tag + " Rotina Price - Lojas Hiperideal (" + total + ") - " + data;
+        String label = (tipo == TipoRotinaEnum.MGV) ? "MGV" : "Price";
+        return tag + " Rotina " + label + " - Lojas Hiperideal (" + total + ") - " + data;
     }
 
-    private String montarHtml(RotinaPriceEmailDTO dto) {
+    private String montarHtml(RotinaPriceEmailDTO dto, TipoRotinaEnum tipo) {
+        String titulo = (tipo == TipoRotinaEnum.MGV) ? "Notificação - Rotina MGV" : "Notificação - Rotina PRICE";
+
         StringBuilder sb = new StringBuilder();
         sb.append("<div style=\"font-family:Arial, Helvetica, sans-serif;font-size:13px;\">");
 
@@ -283,7 +327,7 @@ public class NotificacaoRotinaService {
         sb.append("<div style='display:flex;align-items:center;gap:12px;margin-bottom:10px;'>")
           .append("<img src='cid:logoHiperideal' alt='Hiperideal' height='38' style='display:block;'/>")
           .append("<div>")
-          .append("<div style='font-size:16px;font-weight:bold;'>Notificação - Rotina PRICE</div>")
+          .append("<div style='font-size:16px;font-weight:bold;'>").append(esc(titulo)).append("</div>")
           .append("<div style='color:#666;'>Execução concluída</div>")
           .append("</div>")
           .append("</div>");
@@ -339,7 +383,7 @@ public class NotificacaoRotinaService {
           .append("<th style='text-align:left;'>Status</th>")
           .append("<th style='text-align:left;'>Início</th>")
           .append("<th style='text-align:left;'>Fim</th>")
-          .append("<th style='text-align:left;'>Arquivos (nome / data)</th>") // ✅ NOVO
+          .append("<th style='text-align:left;'>Arquivos (nome / data)</th>")
           .append("<th style='text-align:left;'>Mensagem</th>")
           .append("<th style='text-align:left;'>Erro</th>")
           .append("</tr></thead><tbody>");
@@ -352,7 +396,7 @@ public class NotificacaoRotinaService {
                   .append("<td>").append(badge(l.getStatus())).append("</td>")
                   .append("<td>").append(esc(fmt(l.getInicioEm()))).append("</td>")
                   .append("<td>").append(esc(fmt(l.getFimEm()))).append("</td>")
-                  .append("<td>").append(renderResumoArquivosLoja(l)).append("</td>") // ✅ NOVO
+                  .append("<td>").append(renderResumoArquivosLoja(l)).append("</td>")
                   .append("<td>").append(esc(nz(l.getMensagem()))).append("</td>")
                   .append("<td>").append(esc(nz(l.getErro()))).append("</td>")
                   .append("</tr>");
@@ -368,7 +412,8 @@ public class NotificacaoRotinaService {
                 l.getStatus() == StatusExecucaoEnum.FALHA
                 || l.getStatus() == StatusExecucaoEnum.FALHA_PARCIAL
                 || (l.getArquivos() != null && l.getArquivos().stream().anyMatch(a ->
-                        a.getStatusFinal() == StatusExecucaoEnum.FALHA || a.getStatusFinal() == StatusExecucaoEnum.FALHA_PARCIAL)));
+                        a.getStatusFinal() == StatusExecucaoEnum.FALHA
+                        || a.getStatusFinal() == StatusExecucaoEnum.FALHA_PARCIAL)));
 
         if (!temProblema) {
             sb.append("<div style='color:#137333;font-weight:bold;'>Nenhuma falha/parcial encontrada 🎉</div>");
@@ -411,7 +456,6 @@ public class NotificacaoRotinaService {
                           .append("<td>").append(esc(nz(a.getErro()))).append("</td>")
                           .append("</tr>");
 
-                        // Etapas do arquivo problemático
                         if (a.getEtapas() != null && !a.getEtapas().isEmpty()) {
                             sb.append("<tr><td colspan='6'>")
                               .append("<div style='font-weight:bold;margin:6px 0;'>Etapas</div>")
@@ -454,19 +498,17 @@ public class NotificacaoRotinaService {
     }
 
     // =========================
-    // ✅ NOVO: resumo de arquivos na linha da loja
+    // Resumo arquivos na linha da loja
     // =========================
     private String renderResumoArquivosLoja(LojaEmailDTO l) {
         if (l == null || l.getArquivos() == null || l.getArquivos().isEmpty()) {
             return "<span style='color:#666;'>-</span>";
         }
 
-        // mostra todos, mas de forma compacta; (se quiser limitar, troque aqui)
         StringBuilder sb = new StringBuilder();
         sb.append("<div style='display:flex;flex-direction:column;gap:4px;'>");
 
         for (ArquivoEmailDTO a : l.getArquivos()) {
-            // tenta obter lastModified via getters (se existirem no DTO), senão tenta “extrair” de mensagem (fallback)
             LocalDateTime lmOrigem = safeGetDtoDateTime(a, "getLastModifiedOrigem");
             LocalDateTime lmDestino = safeGetDtoDateTime(a, "getLastModifiedDestino");
             Boolean atualizado = safeGetDtoBoolean(a, "getOrigemAtualizada");
@@ -479,20 +521,15 @@ public class NotificacaoRotinaService {
             String nome = nz(a.getNomeArquivo());
             String st = (a.getStatusFinal() != null ? a.getStatusFinal().name() : "-");
 
-            String badgeData = "";
-            if (dt != null) {
-                badgeData = " | <span style='color:#111;'><b>Data:</b> " + esc(dt) + "</span>";
-            } else {
-                badgeData = " | <span style='color:#666;'><b>Data:</b> -</span>";
-            }
+            String badgeData = (dt != null)
+                    ? " | <span style='color:#111;'><b>Data:</b> " + esc(dt) + "</span>"
+                    : " | <span style='color:#666;'><b>Data:</b> -</span>";
 
             String badgeAt = "";
             if (atualizado != null) {
-                if (Boolean.TRUE.equals(atualizado)) {
-                    badgeAt = " | <span style='color:#137333;font-weight:bold;'>ATUALIZADO</span>";
-                } else {
-                    badgeAt = " | <span style='color:#b91c1c;font-weight:bold;'>DESATUALIZADO</span>";
-                }
+                badgeAt = Boolean.TRUE.equals(atualizado)
+                        ? " | <span style='color:#137333;font-weight:bold;'>ATUALIZADO</span>"
+                        : " | <span style='color:#b91c1c;font-weight:bold;'>DESATUALIZADO</span>";
             }
 
             sb.append("<div style='white-space:nowrap;'>")
@@ -524,10 +561,10 @@ public class NotificacaoRotinaService {
         if (st == null) return "<span style='padding:2px 8px;border-radius:10px;background:#eee;color:#333;font-weight:bold;'>-</span>";
 
         String bg, fg, label;
-        if (st == StatusExecucaoEnum.SUCESSO) { bg="#e6f4ea"; fg="#137333"; label="SUCESSO"; }
-        else if (st == StatusExecucaoEnum.FALHA_PARCIAL) { bg="#fff4e5"; fg="#b45309"; label="FALHA_PARCIAL"; }
-        else if (st == StatusExecucaoEnum.FALHA) { bg="#fde8e8"; fg="#b91c1c"; label="FALHA"; }
-        else { bg="#eee"; fg="#333"; label=st.name(); }
+        if (st == StatusExecucaoEnum.SUCESSO) { bg = "#e6f4ea"; fg = "#137333"; label = "SUCESSO"; }
+        else if (st == StatusExecucaoEnum.FALHA_PARCIAL) { bg = "#fff4e5"; fg = "#b45309"; label = "FALHA_PARCIAL"; }
+        else if (st == StatusExecucaoEnum.FALHA) { bg = "#fde8e8"; fg = "#b91c1c"; label = "FALHA"; }
+        else { bg = "#eee"; fg = "#333"; label = st.name(); }
 
         return "<span style='padding:2px 8px;border-radius:10px;background:" + bg + ";color:" + fg + ";font-weight:bold;white-space:nowrap;'>"
                 + esc(label) + "</span>";
@@ -582,7 +619,7 @@ public class NotificacaoRotinaService {
     }
 
     // =========================
-    // ✅ NOVO: utilitários para incluir data/hora do arquivo sem quebrar DTO
+    // utilitários para incluir data/hora do arquivo sem quebrar DTO
     // =========================
     private static LocalDateTime safeGetLastModifiedOrigem(RotinaExecucaoArquivo a) {
         try { return a != null ? a.getLastModifiedOrigem() : null; } catch (Exception e) { return null; }

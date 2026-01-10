@@ -8,7 +8,7 @@ import sistema.rotinas.primefaces.model.ArquivosMgvPattern;
 
 public interface ArquivosMgvPatternRepository extends JpaRepository<ArquivosMgvPattern, Long> {
 
-	List<ArquivosMgvPattern> findByMgv_MgvIdOrderByPatternAsc(Long mgvId);
+    List<ArquivosMgvPattern> findByMgv_MgvIdOrderByPatternAsc(Long mgvId);
 
-	int countByMgv_MgvIdAndRequiredTrue(Long mgvId);
+    int countByMgv_MgvIdAndRequiredTrue(Long mgvId);
 }

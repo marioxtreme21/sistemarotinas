@@ -4,10 +4,6 @@
     xmlns:h="http://xmlns.jcp.org/jsf/html"
     xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <h:head>
-        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
-    </h:head>
-
     <p:panel header="Pesquisa - Arquivos PRICE" styleClass="panelPesquisa">
         <p:spacer />
 
@@ -16,7 +12,8 @@
             <p:row>
                 <p:outputLabel for="campoPesquisa" value="Campo:" />
                 <p:selectOneMenu id="campoPesquisa"
-                                 value="#{arquivosPriceBean.campoSelecionado}" style="width: 100%;">
+                                 value="#{arquivosPriceBean.campoSelecionado}"
+                                 style="width: 100%;">
                     <f:selectItem itemLabel="Selecione um campo" itemValue="" />
                     <f:selectItem itemLabel="Loja (RMS)" itemValue="loja.cod_loja_rms" />
                     <f:selectItem itemLabel="Subpasta Remota" itemValue="subpasta_remota" />
@@ -27,7 +24,8 @@
             <p:row>
                 <p:outputLabel for="condicaoPesquisa" value="Condição:" />
                 <p:selectOneMenu id="condicaoPesquisa"
-                                 value="#{arquivosPriceBean.condicaoSelecionada}" style="width: 100%;">
+                                 value="#{arquivosPriceBean.condicaoSelecionada}"
+                                 style="width: 100%;">
                     <f:selectItem itemLabel="Selecione uma condição" itemValue="" />
                     <f:selectItem itemLabel="Igual" itemValue="equal" />
                     <f:selectItem itemLabel="Contém" itemValue="contains" />
@@ -36,25 +34,36 @@
 
             <p:row>
                 <p:outputLabel for="valorPesquisa" value="Valor:" />
-                <p:inputText id="valorPesquisa" value="#{arquivosPriceBean.valorPesquisa}" style="width: 100%;" />
+                <p:inputText id="valorPesquisa"
+                             value="#{arquivosPriceBean.valorPesquisa}"
+                             style="width: 100%;" />
             </p:row>
 
             <p:row>
                 <p:outputLabel />
-                <p:commandButton value="Pesquisar" icon="pi pi-search"
-                                 actionListener="#{arquivosPriceBean.pesquisar}" update="@form"
-                                 ajax="false" immediate="false" process="@this,panelGridPesquisa"
-                                 styleClass="ui-button-primary" style="width: 100%;" />
+                <p:commandButton value="Pesquisar"
+                                 icon="pi pi-search"
+                                 actionListener="#{arquivosPriceBean.pesquisar}"
+                                 ajax="false"
+                                 immediate="false"
+                                 process="@this panelGridPesquisa"
+                                 styleClass="ui-button-primary"
+                                 style="width: 100%;" />
             </p:row>
 
             <p:row>
                 <p:outputLabel />
-                <p:commandButton value="Limpar Filtros" icon="pi pi-times"
-                                 actionListener="#{arquivosPriceBean.limparFiltros}" update="@form"
-                                 ajax="false" immediate="false" process="@this,panelGridPesquisa"
-                                 styleClass="ui-button-secondary" style="width: 100%;" />
+                <p:commandButton value="Limpar Filtros"
+                                 icon="pi pi-times"
+                                 actionListener="#{arquivosPriceBean.limparFiltros}"
+                                 ajax="false"
+                                 immediate="false"
+                                 process="@this panelGridPesquisa"
+                                 styleClass="ui-button-secondary"
+                                 style="width: 100%;" />
             </p:row>
 
         </p:panelGrid>
     </p:panel>
+
 </ui:composition>

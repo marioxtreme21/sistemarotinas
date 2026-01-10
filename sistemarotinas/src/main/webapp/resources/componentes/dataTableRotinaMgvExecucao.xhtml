@@ -1,0 +1,63 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <!-- ID Execução -->
+    <p:column headerText="ID" sortBy="#{e.execucaoId}" style="width:90px; white-space:nowrap;">
+        <h:outputText value="#{e.execucaoId}" />
+    </p:column>
+
+    <!-- Status -->
+    <p:column headerText="Status" sortBy="#{e.status}" style="width:140px; white-space:nowrap;">
+        <h:outputText value="#{e.status}" />
+    </p:column>
+
+    <!-- Origem -->
+    <p:column headerText="Origem" sortBy="#{e.origemExecucao}" style="width:140px; white-space:nowrap;">
+        <h:outputText value="#{e.origemExecucao}" />
+    </p:column>
+
+    <!-- Solicitante -->
+    <p:column headerText="Solicitante" sortBy="#{e.solicitante}" style="min-width:200px;">
+        <h:outputText value="#{e.solicitante}" />
+    </p:column>
+
+    <!-- Início -->
+    <p:column headerText="Início" sortBy="#{e.inicioEm}" style="width:170px; white-space:nowrap;">
+        <h:outputText value="#{e.inicioEm}" converter="localDateTimeConverter" />
+    </p:column>
+
+    <!-- Fim -->
+    <p:column headerText="Fim" sortBy="#{e.fimEm}" style="width:170px; white-space:nowrap;">
+        <h:outputText value="#{e.fimEm}" converter="localDateTimeConverter" />
+    </p:column>
+
+    <!-- Resumo -->
+    <p:column headerText="Resumo" style="min-width:280px;">
+        <h:outputText value="#{e.mensagemResumo}" style="white-space:pre-wrap;" />
+    </p:column>
+
+    <!-- Ações -->
+    <p:column headerText="Ações" style="width:190px; white-space:nowrap;">
+
+        <p:commandButton value="Detalhe"
+                         icon="pi pi-search"
+                         styleClass="ui-button-secondary"
+                         process="@this"
+                         actionListener="#{rotinaMgvExecucaoBean.abrirDetalhe(e)}"
+                         update=":formTable:dlgDetalheMgv"
+                         oncomplete="PF('dlgDetalheMgv').show()" />
+
+        <p:spacer width="6" />
+
+        <p:commandButton value="Recarregar"
+                         icon="pi pi-refresh"
+                         styleClass="ui-button-secondary"
+                         process="@this"
+                         actionListener="#{rotinaMgvExecucaoBean.recarregarHistorico}"
+                         update=":formTable:wrapperHistorico :formPesquisa:growl" />
+    </p:column>
+
+</ui:composition>

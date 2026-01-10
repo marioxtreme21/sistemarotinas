@@ -1,39 +1,81 @@
 package sistema.rotinas.primefaces.scheduled;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import sistema.rotinas.primefaces.enums.OrigemExecucaoEnum;
+import sistema.rotinas.primefaces.service.RotinaMgvAutoSelectorService;
 import sistema.rotinas.primefaces.service.interfaces.IRotinaMgvRunnerService;
 
 @Component
 public class ScheduledRotinaMgv {
 
-    private static final Logger log = LoggerFactory.getLogger(ScheduledRotinaMgv.class);
+    private static final Logger LOG = LoggerFactory.getLogger("ROTINA_MGV");
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("HH:mm");
 
-    @Autowired
-    private IRotinaMgvRunnerService runner;
+    @Autowired private RotinaMgvAutoSelectorService autoSelectorService;
+    @Autowired private IRotinaMgvRunnerService runner;
 
-    @Value("${sistemarotinas.rotina.mgv.ativo:false}")
-    private boolean ativo;
+    // ===== 1ª tentativa do dia =====
+    @Scheduled(cron = "0 05 09 * * *")
+    public void executar0400() {
+        executarJanela("AUTO-04:00", false);
+    }
 
-    //@Scheduled(cron = "${sistemarotinas.rotina.mgv.cron:0 30 7 * * *}")
-    public void executar() {
-        if (!ativo) {
-            log.debug("[SCHED-MGV] Desativado (ativo=false).");
-            return;
-        }
+    // ===== Retries =====
+    @Scheduled(cron = "0 20 09 * * *")
+    public void executar1110() {
+        executarJanela("AUTO-11:10", true);
+    }
+
+    @Scheduled(cron = "0 16 10 * * *")
+    public void executar1210() {
+        executarJanela("AUTO-12:10", true);
+    }
+
+    @Scheduled(cron = "0 10 13 * * *")
+    public void executar1310() {
+        executarJanela("AUTO-13:10", true);
+    }
+
+    private void executarJanela(String tag, boolean retry) {
+        Long execucaoId = null;
+        long t0 = System.currentTimeMillis();
+
+        LOG.info("[SCHED][MGV][{}] Início do scheduler. retry={} agora={}",
+                tag, retry, LocalDateTime.now().format(FMT));
 
         try {
-            log.info("[SCHED-MGV] Disparando rotina MGV (todas as lojas).");
-            Long execucaoId = runner.executar(null, OrigemExecucaoEnum.SCHEDULER, "scheduler");
-            log.info("[SCHED-MGV] Execução registrada. execucaoId={}", execucaoId);
+            List<Long> lojaIds = autoSelectorService.selecionarLojasElegiveisHoje(retry, tag);
+
+            if (lojaIds == null || lojaIds.isEmpty()) {
+                LOG.info("[SCHED][MGV][{}] Nenhuma loja elegível para executar nesta janela. retry={}",
+                        tag, retry);
+                return;
+            }
+
+            LOG.info("[SCHED][MGV][{}] Executando runner para lojas={} retry={}",
+                    tag, lojaIds.size(), retry);
+
+            execucaoId = runner.executar(lojaIds, OrigemExecucaoEnum.AUTOMATICA, tag);
+
+            LOG.info("[SCHED][MGV][{}] Runner finalizado. execucaoId={}",
+                    tag, execucaoId);
+
         } catch (Exception e) {
-            log.error("[SCHED-MGV] Falha ao executar rotina MGV: {}", e.getMessage(), e);
+            LOG.error("[SCHED][MGV][{}] Falha inesperada no scheduler. execucaoId={} msg={}",
+                    tag, execucaoId, e.getMessage(), e);
+        } finally {
+            long ms = System.currentTimeMillis() - t0;
+            LOG.info("[SCHED][MGV][{}] Fim do scheduler. execucaoId={} tempoMs={}",
+                    tag, execucaoId, ms);
         }
     }
 }

@@ -155,6 +155,18 @@
         </encoder>
     </appender>
 
+    <!-- ===================== NOVO: LOG DEDICADO ROTINA MGV ===================== -->
+    <appender name="ROTINA_MGV" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/rotina-mgv.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/rotina-mgv.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <!-- ===================== ROOT & LOGGERS ===================== -->
 
     <root level="INFO">
@@ -220,6 +232,12 @@
     <logger name="ROTINA_PRICE" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="ROTINA_PRICE"/>
+    </logger>
+
+    <!-- ✅ Logger dedicado para a ROTINA MGV (somente o que for logado com este nome) -->
+    <logger name="ROTINA_MGV" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ROTINA_MGV"/>
     </logger>
 
 </configuration>

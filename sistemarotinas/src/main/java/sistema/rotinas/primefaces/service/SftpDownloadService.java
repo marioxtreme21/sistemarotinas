@@ -4,6 +4,7 @@ import com.jcraft.jsch.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import sistema.rotinas.primefaces.dto.SftpDownloadInfo;
 import sistema.rotinas.primefaces.model.LojaRemoteConfig;
 
 import java.io.OutputStream;
@@ -11,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Vector;
@@ -24,7 +26,23 @@ public class SftpDownloadService {
      */
     private static final Logger LOG = LoggerFactory.getLogger("ROTINA_PRICE");
 
+    // =========================================================
+    // ✅ MANTIDO: assinatura antiga (retorna apenas String)
+    // =========================================================
     public String baixarArquivoMaisRecenteQueCase(
+            LojaRemoteConfig cfg,
+            String remoteDir,
+            List<String> patterns,
+            Path destinoLocal
+    ) {
+        SftpDownloadInfo info = baixarArquivoMaisRecenteQueCaseInfo(cfg, remoteDir, patterns, destinoLocal);
+        return info != null ? info.nomeArquivo() : null;
+    }
+
+    // =========================================================
+    // ✅ NOVO: assinatura principal (retorna nome + mtime remoto)
+    // =========================================================
+    public SftpDownloadInfo baixarArquivoMaisRecenteQueCaseInfo(
             LojaRemoteConfig cfg,
             String remoteDir,
             List<String> patterns,
@@ -115,12 +133,124 @@ public class SftpDownloadService {
             long ms = System.currentTimeMillis() - ini;
             LOG.info("[SFTP] Fim OK | arquivo={} tempoTotalMs={}", nomeArquivo, ms);
 
-            return nomeArquivo;
+            return new SftpDownloadInfo(
+                    nomeArquivo,
+                    (mtimeSegundos > 0 ? (long) mtimeSegundos : null)
+            );
 
         } catch (Exception e) {
             long ms = System.currentTimeMillis() - ini;
             LOG.error("[SFTP] Falha | tempoTotalMs={} msg={}", ms, e.getMessage(), e);
             throw new RuntimeException("Falha ao baixar via SFTP: " + e.getMessage(), e);
+        } finally {
+            if (sftp != null) try { sftp.disconnect(); } catch (Exception ignore) {}
+            if (session != null) try { session.disconnect(); } catch (Exception ignore) {}
+        }
+    }
+
+    // =========================================================
+    // ✅ NOVO: Batch para MGV (1 conexão por loja; 1 arquivo por pattern)
+    // =========================================================
+    public List<SftpDownloadInfo> baixarArquivosMaisRecentesPorPattern(
+            LojaRemoteConfig cfg,
+            String remoteDir,
+            List<String> patterns,
+            Path destinoLocal
+    ) {
+        if (cfg == null) throw new IllegalArgumentException("Config remota é obrigatória.");
+        if (cfg.getProtocolo() != LojaRemoteConfig.Protocolo.SFTP) {
+            throw new IllegalArgumentException("Config remota não é SFTP.");
+        }
+        if (remoteDir == null || remoteDir.isBlank()) throw new IllegalArgumentException("remoteDir é obrigatório.");
+        if (patterns == null || patterns.isEmpty()) throw new IllegalArgumentException("Informe ao menos 1 pattern.");
+        if (destinoLocal == null) throw new IllegalArgumentException("destinoLocal é obrigatório.");
+
+        Session session = null;
+        ChannelSftp sftp = null;
+
+        String host = cfg.getHostRemoto();
+        Integer porta = (cfg.getPortaRemota() != null ? cfg.getPortaRemota() : 22);
+        String usuario = cfg.getUsuarioRemoto();
+
+        long ini = System.currentTimeMillis();
+
+        try {
+            LOG.info("[SFTP][BATCH] Início | host={} porta={} usuario={} remoteDir={} totalPatterns={} destinoLocal={}",
+                    host, porta, usuario, remoteDir, patterns.size(), destinoLocal);
+
+            JSch jsch = new JSch();
+
+            if (cfg.getCaminhoChavePrivada() != null && !cfg.getCaminhoChavePrivada().isBlank()) {
+                String keyPath = cfg.getCaminhoChavePrivada().trim();
+                LOG.info("[SFTP][BATCH] Usando chave privada | path={}", keyPath);
+                jsch.addIdentity(keyPath);
+            }
+
+            session = jsch.getSession(usuario, host, porta);
+            session.setConfig("StrictHostKeyChecking", "no");
+
+            if (cfg.getSenhaRemota() != null && !cfg.getSenhaRemota().isBlank()) {
+                session.setPassword(cfg.getSenhaRemota());
+                LOG.info("[SFTP][BATCH] Autenticação por senha habilitada (senha não exibida)");
+            }
+
+            int timeout = (cfg.getConnectTimeoutMs() != null ? cfg.getConnectTimeoutMs() : 15000);
+            session.connect(timeout);
+
+            Channel channel = session.openChannel("sftp");
+            channel.connect(timeout);
+            sftp = (ChannelSftp) channel;
+
+            Files.createDirectories(destinoLocal);
+
+            @SuppressWarnings("unchecked")
+            Vector<ChannelSftp.LsEntry> ls = sftp.ls(remoteDir);
+
+            List<SftpDownloadInfo> out = new ArrayList<>();
+
+            int idx = 0;
+            for (String pattern : patterns) {
+                idx++;
+                if (pattern == null || pattern.isBlank()) continue;
+
+                ChannelSftp.LsEntry escolhido = escolherEntryMaisRecente(ls, List.of(pattern));
+                if (escolhido == null) {
+                    LOG.warn("[SFTP][BATCH] Nenhum arquivo casou com pattern={} em {}", pattern, remoteDir);
+                    continue;
+                }
+
+                String nomeArquivo = escolhido.getFilename();
+                int mtimeSegundos = (escolhido.getAttrs() != null ? escolhido.getAttrs().getMTime() : 0);
+
+                Path localFile = destinoLocal.resolve(nomeArquivo);
+                String remotePath = remoteDir.endsWith("/") ? (remoteDir + nomeArquivo) : (remoteDir + "/" + nomeArquivo);
+
+                LOG.info("[SFTP][BATCH] ({}/{}) Baixando | pattern={} remoto={} -> {}",
+                        idx, patterns.size(), pattern, remotePath, localFile);
+
+                try (OutputStream os = Files.newOutputStream(localFile)) {
+                    sftp.get(remotePath, os);
+                }
+
+                if (mtimeSegundos > 0) {
+                    Files.setLastModifiedTime(localFile, FileTime.from(Instant.ofEpochSecond(mtimeSegundos)));
+                }
+
+                out.add(new SftpDownloadInfo(
+                        nomeArquivo,
+                        (mtimeSegundos > 0 ? (long) mtimeSegundos : null)
+                ));
+            }
+
+            long ms = System.currentTimeMillis() - ini;
+            LOG.info("[SFTP][BATCH] Fim OK | totalBaixados={} tempoTotalMs={}", out.size(), ms);
+
+            return out;
+
+        } catch (Exception e) {
+            long ms = System.currentTimeMillis() - ini;
+            LOG.error("[SFTP][BATCH] Falha | tempoTotalMs={} msg={}", ms, e.getMessage(), e);
+            throw new RuntimeException("Falha ao baixar batch via SFTP: " + e.getMessage(), e);
         } finally {
             if (sftp != null) try { sftp.disconnect(); } catch (Exception ignore) {}
             if (session != null) try { session.disconnect(); } catch (Exception ignore) {}

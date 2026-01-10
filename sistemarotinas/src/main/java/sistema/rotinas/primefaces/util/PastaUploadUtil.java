@@ -20,9 +20,14 @@ public class PastaUploadUtil {
     public static String PASTA_RELATORIOS;
     public static String PASTA_EMAIL_IMAGES;
 
-    // ✅ NOVO: rotinas alteradas / PRICE
+    // ✅ Rotinas alteradas
     public static String PASTA_ROTINAALTERADOS;
+
+    // ✅ PRICE
     public static String PASTA_PRICE;
+
+    // ✅ MGV
+    public static String PASTA_MGV;
 
     public static final String URL_BASE_WEB = "/uploads";
 
@@ -37,9 +42,12 @@ public class PastaUploadUtil {
         PASTA_RELATORIOS = PASTA_BASE + File.separator + "relatorios";
         PASTA_EMAIL_IMAGES = PASTA_BASE + File.separator + "email_images";
 
-        // ✅ NOVO
+        // ✅ Rotinas
         PASTA_ROTINAALTERADOS = PASTA_BASE + File.separator + "rotinaalterados";
+
+        // ✅ PRICE e MGV
         PASTA_PRICE = PASTA_ROTINAALTERADOS + File.separator + "price";
+        PASTA_MGV   = PASTA_ROTINAALTERADOS + File.separator + "mgv";
 
         // 🔒 Verifica permissão de escrita
         if (!Files.isWritable(Paths.get(PASTA_BASE))) {
@@ -51,9 +59,12 @@ public class PastaUploadUtil {
         criarPastaSeNaoExistir(PASTA_RELATORIOS);
         criarPastaSeNaoExistir(PASTA_EMAIL_IMAGES);
 
-        // ✅ NOVO
+        // ✅ Rotinas
         criarPastaSeNaoExistir(PASTA_ROTINAALTERADOS);
+
+        // ✅ PRICE e MGV
         criarPastaSeNaoExistir(PASTA_PRICE);
+        criarPastaSeNaoExistir(PASTA_MGV);
     }
 
     /**
@@ -70,7 +81,7 @@ public class PastaUploadUtil {
     }
 
     // =========================================================
-    // ✅ NOVO: helpers do PRICE (LJ{codLojaRms}/YYYY-MM-DD/)
+    // ✅ PRICE (LJ{codLojaRms}/YYYY-MM-DD/)
     // =========================================================
 
     public static String prefixoLojaPrice(String codLojaRms) {
@@ -105,7 +116,6 @@ public class PastaUploadUtil {
 
     /**
      * ✅ Se já existir o arquivo no dia, renomeia o existente com _HHmmss e devolve o path do "novo".
-     * Ex.: stella_update.i1 -> stella_update_104501.i1 (backup) e grava o novo como stella_update.i1
      */
     public static Path prepararArquivoNoDia(Path pastaDia, String nomeArquivo) {
         if (pastaDia == null) throw new IllegalArgumentException("pastaDia é obrigatória");
@@ -121,8 +131,8 @@ public class PastaUploadUtil {
             String ext = "";
             int idx = base.lastIndexOf('.');
             if (idx > 0 && idx < base.length() - 1) {
-                ext = base.substring(idx);      // .i1
-                base = base.substring(0, idx);  // stella_update
+                ext = base.substring(idx);
+                base = base.substring(0, idx);
             }
 
             String hora = LocalTime.now().format(HORA_FMT);
@@ -138,7 +148,6 @@ public class PastaUploadUtil {
 
     /**
      * ✅ Retenção por loja: apaga subpastas no padrão YYYY-MM-DD mais antigas que "diasRetencao".
-     * Mantém as mais recentes.
      */
     public static void limparPriceLojaPorRetencao(String codLojaRms, int diasRetencao) {
         if (diasRetencao <= 0) return;
@@ -155,7 +164,7 @@ public class PastaUploadUtil {
                 try {
                     data = LocalDate.parse(nome, DIA_FMT);
                 } catch (Exception ignore) {
-                    continue; // não é pasta do dia
+                    continue;
                 }
 
                 if (data.isBefore(limite)) {
@@ -166,6 +175,75 @@ public class PastaUploadUtil {
             throw new RuntimeException("Erro ao aplicar retenção na pasta PRICE da loja " + codLojaRms, e);
         }
     }
+
+    // =========================================================
+    // ✅ MGV (LJ{codLojaRms}/YYYY-MM-DD/)
+    // (mesmo padrão do PRICE, apenas base diferente)
+    // =========================================================
+
+    public static String prefixoLojaMgv(String codLojaRms) {
+        if (codLojaRms == null || codLojaRms.trim().isEmpty()) return "LJ";
+        return "LJ" + codLojaRms.trim();
+    }
+
+    public static Path pastaMgvBase() {
+        return Paths.get(PASTA_MGV);
+    }
+
+    public static Path pastaMgvLojaBase(String codLojaRms) {
+        Path p = pastaMgvBase().resolve(prefixoLojaMgv(codLojaRms));
+        try {
+            Files.createDirectories(p);
+            return p;
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao criar pasta da loja MGV: " + p, e);
+        }
+    }
+
+    public static Path pastaMgvLojaDia(String codLojaRms, LocalDate dia) {
+        String d = (dia != null ? dia.format(DIA_FMT) : LocalDate.now().format(DIA_FMT));
+        Path p = pastaMgvLojaBase(codLojaRms).resolve(d);
+        try {
+            Files.createDirectories(p);
+            return p;
+        } catch (IOException e) {
+            throw new RuntimeException("Erro ao criar pasta do dia MGV: " + p, e);
+        }
+    }
+
+    /**
+     * ✅ Retenção por loja MGV: apaga subpastas no padrão YYYY-MM-DD mais antigas que "diasRetencao".
+     */
+    public static void limparMgvLojaPorRetencao(String codLojaRms, int diasRetencao) {
+        if (diasRetencao <= 0) return;
+
+        Path baseLoja = pastaMgvLojaBase(codLojaRms);
+        LocalDate limite = LocalDate.now().minusDays(diasRetencao);
+
+        try (DirectoryStream<Path> ds = Files.newDirectoryStream(baseLoja)) {
+            for (Path p : ds) {
+                if (!Files.isDirectory(p)) continue;
+
+                String nome = p.getFileName().toString();
+                LocalDate data;
+                try {
+                    data = LocalDate.parse(nome, DIA_FMT);
+                } catch (Exception ignore) {
+                    continue;
+                }
+
+                if (data.isBefore(limite)) {
+                    deleteRecursively(p);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao aplicar retenção na pasta MGV da loja " + codLojaRms, e);
+        }
+    }
+
+    // =========================================================
+    // Helpers internos
+    // =========================================================
 
     private static void deleteRecursively(Path root) throws IOException {
         if (root == null || !Files.exists(root)) return;

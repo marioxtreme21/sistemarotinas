@@ -4,38 +4,80 @@
     xmlns:h="http://xmlns.jcp.org/jsf/html"
     xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <p:panelGrid id="gridAddPattern" columns="4" columnClasses="label,value,label,value" cellpadding="8">
-        <p:outputLabel for="patt" value="Pattern:" />
-        <p:inputText id="patt" value="#{arquivosMgvBean.novoPattern.pattern}" />
+    <!-- Aviso visual quando ainda não salvou a configuração MGV -->
+    <h:panelGroup rendered="#{!arquivosMgvBean.mgvPersistido}">
+        <h:outputText
+            value="⚠ Salve a configuração MGV antes de adicionar patterns."
+            style="display:block;margin:6px 0 10px 0;color:#a94442;font-weight:bold;" />
+    </h:panelGroup>
 
-        <p:outputLabel for="req" value="Obrigatório:" />
-        <p:selectBooleanCheckbox id="req" value="#{arquivosMgvBean.novoPattern.required}" />
+    <p:panelGrid id="gridAddPattern"
+                 columns="4"
+                 columnClasses="label,value,label,value"
+                 cellpadding="8">
 
-        <p:outputLabel />
-        <p:commandButton value="Adicionar Pattern" icon="pi pi-plus"
-                         actionListener="#{arquivosMgvBean.adicionarPattern}"
-                         update="patternsTable"
-                         styleClass="ui-button-success"/>
+        <!-- Linha 1 -->
+        <p:row>
+            <p:column>
+                <p:outputLabel for="patt" value="Pattern:" />
+            </p:column>
+            <p:column>
+                <p:inputText id="patt"
+                             value="#{arquivosMgvBean.novoPattern.pattern}"
+                             disabled="#{!arquivosMgvBean.mgvPersistido}"
+                             style="width: 260px;" />
+            </p:column>
+
+            <p:column>
+                <p:outputLabel for="req" value="Obrigatório:" />
+            </p:column>
+            <p:column>
+                <p:selectBooleanCheckbox id="req"
+                                         value="#{arquivosMgvBean.novoPattern.required}"
+                                         disabled="#{!arquivosMgvBean.mgvPersistido}" />
+            </p:column>
+        </p:row>
+
+        <!-- Linha 2 (botão em largura total) -->
+        <p:row>
+            <p:column colspan="4" style="padding-top:6px;">
+                <p:commandButton value="Adicionar Pattern"
+                                 icon="pi pi-plus"
+                                 actionListener="#{arquivosMgvBean.adicionarPattern}"
+                                 process="gridAddPattern"
+                                 update="gridAddPattern patternsTable growl"
+                                 disabled="#{!arquivosMgvBean.mgvPersistido}"
+                                 styleClass="ui-button-success" />
+            </p:column>
+        </p:row>
+
     </p:panelGrid>
 
     <p:dataTable id="patternsTable"
-                 value="#{arquivosMgvBean.patternsDaLoja}" var="pt"
+                 value="#{arquivosMgvBean.patternsDaLoja}"
+                 var="pt"
                  emptyMessage="Nenhum pattern cadastrado."
-                 rows="5" paginator="true" rowsPerPageTemplate="5,10">
+                 rows="5"
+                 paginator="true"
+                 rowsPerPageTemplate="5,10">
 
         <p:column headerText="Pattern">
             <h:outputText value="#{pt.pattern}" />
         </p:column>
 
-        <p:column headerText="Obrigatório">
+        <p:column headerText="Obrigatório" style="width:120px;">
             <h:outputText value="#{pt.required ? 'Sim' : 'Não'}" />
         </p:column>
 
-        <p:column headerText="Ações">
-            <p:commandButton value="Remover" icon="pi pi-trash"
+        <p:column headerText="Ações" style="width:140px;">
+            <p:commandButton value="Remover"
+                             icon="pi pi-trash"
                              onclick="return confirm('Remover pattern?')"
                              actionListener="#{arquivosMgvBean.removerPattern(pt.patternId)}"
-                             update="patternsTable" />
+                             process="@this"
+                             update="patternsTable growl" />
         </p:column>
+
     </p:dataTable>
+
 </ui:composition>

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import sistema.rotinas.primefaces.dto.PriceTestResult;
+import sistema.rotinas.primefaces.dto.SftpDownloadInfo;
 import sistema.rotinas.primefaces.model.ArquivosPrice;
 import sistema.rotinas.primefaces.model.ArquivosPricePattern;
 import sistema.rotinas.primefaces.model.Loja;
@@ -150,11 +151,24 @@ public class PriceTransferService {
         Path arquivoLocal;
 
         try {
-            arquivoRemoto = sftpDownloadService.baixarArquivoMaisRecenteQueCase(rc, remoteDir, patterns, pastaDia);
+            // ✅ NOVO: baixa e já traz o mtime remoto (sem precisar reconectar depois)
+            SftpDownloadInfo info = sftpDownloadService.baixarArquivoMaisRecenteQueCaseInfo(rc, remoteDir, patterns, pastaDia);
+
+            arquivoRemoto = (info != null ? info.nomeArquivo() : null);
+            if (arquivoRemoto == null || arquivoRemoto.isBlank()) {
+                throw new IllegalArgumentException("Download retornou sem nome de arquivo.");
+            }
+
             r.setArquivoRemoto(arquivoRemoto);
 
             arquivoLocal = pastaDia.resolve(arquivoRemoto);
             r.setArquivoLocal(arquivoLocal);
+
+            // ✅ se vier mtime do remoto, já preenche o DTO do resultado
+            if (info.mtimeEpochSeconds() != null) {
+                LocalDateTime lm = LocalDateTime.ofInstant(Instant.ofEpochSecond(info.mtimeEpochSeconds()), zone);
+                r.setLastModifiedRemoto(lm);
+            }
 
             r.setSftpOk(true);
             r.setDownloadOk(true);
@@ -165,7 +179,6 @@ public class PriceTransferService {
                     cfg.getPriceId(), cod, arquivoRemoto, arquivoLocal);
 
             if (!Files.exists(arquivoLocal)) {
-                // raro: download informou nome, mas arquivo não está lá
                 r.setDownloadOk(false);
                 r.addMsg("⚠ Download retornou OK mas arquivo local não foi encontrado: " + arquivoLocal);
                 LOG.warn("Arquivo local não encontrado após download | priceId={} codLojaRms={} arquivoLocal={}",
@@ -189,7 +202,13 @@ public class PriceTransferService {
         // 2) lastModified + valida data
         // =========================
         try {
-            LocalDateTime lastModRemoto = tentarObterLastModifiedRemoto(rc, remoteDir, arquivoRemoto, zone);
+            // ✅ primeiro tenta usar o que já veio do download (sem reconectar)
+            LocalDateTime lastModRemoto = r.getLastModifiedRemoto();
+
+            // se não veio do download, tenta via métodos opcionais (pode reconectar)
+            if (lastModRemoto == null) {
+                lastModRemoto = tentarObterLastModifiedRemoto(rc, remoteDir, arquivoRemoto, zone);
+            }
 
             // fallback: se não conseguir remoto, tenta pegar do arquivo local baixado
             if (lastModRemoto == null) {

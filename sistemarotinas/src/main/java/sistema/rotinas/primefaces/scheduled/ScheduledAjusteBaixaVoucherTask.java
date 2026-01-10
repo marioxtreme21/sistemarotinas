@@ -30,7 +30,7 @@ public class ScheduledAjusteBaixaVoucherTask {
      * Cron: segundo, minuto, hora, diaMes, mes, diaSemana
      * 0 0/10 * * * * => no minuto 0, 10, 20, 30, 40 e 50 de toda hora.
      */
-    //@Scheduled(cron = "0 0/10 * * * *", zone = "America/Sao_Paulo")
+    @Scheduled(cron = "0 0/10 * * * *", zone = "America/Sao_Paulo")
     public void executarBaixaVoucherAutomatica() {
 
         LocalDate hoje = LocalDate.now(ZoneId.of("America/Sao_Paulo"));

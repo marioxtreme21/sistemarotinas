@@ -13,7 +13,6 @@
 
     <ui:define name="content">
 
-        <!-- Filtros de pesquisa -->
         <h:form id="formPesquisa">
             <ui:include src="/resources/componentes/pesquisaArquivosMgv.xhtml" />
         </h:form>
@@ -23,98 +22,167 @@
 
             <p:commandButton value="Novo Cadastro"
                              actionListener="#{arquivosMgvBean.prepararNovoCadastro}"
-                             update="formCadastroArquivosMgv"
                              process="@this"
+                             update=":formCadastroArquivosMgv:cadastroWrapper :formCadastroArquivosMgv:growl"
                              icon="pi pi-plus"
                              styleClass="ui-button-success" />
 
-            <p:panel id="panelCadastroArquivosMgv"
-                     header="Cadastro MGV"
-                     styleClass="panelPesquisa"
-                     visible="#{arquivosMgvBean.mostrarFormulario}">
+            <p:outputPanel id="cadastroWrapper">
 
-                <p:panelGrid id="cadastroArquivosMgv"
-                             columns="2"
-                             cellpadding="10"
-                             styleClass="panelPesquisa"
-                             columnClasses="label,value">
+                <p:panel id="panelCadastroArquivosMgv"
+                         header="Cadastro MGV"
+                         styleClass="panelPesquisa"
+                         rendered="#{arquivosMgvBean.mostrarFormulario}">
 
-                    <p:outputLabel for="loja" value="Loja:" />
-                    <p:selectOneMenu id="loja"
-                                     value="#{arquivosMgvBean.mgv.loja}"
-                                     converter="lojaConverter" filter="true" style="width:100%">
-                        <f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
-                        <f:selectItems value="#{arquivosMgvBean.lojas}" var="l"
-                                       itemValue="#{l}" itemLabel="#{l.codLojaRms} - #{l.nome}" />
-                    </p:selectOneMenu>
+                    <p:panelGrid id="cadastroArquivosMgv"
+                                 columns="2"
+                                 cellpadding="10"
+                                 styleClass="panelPesquisa"
+                                 columnClasses="label,value">
 
-                    <p:outputLabel for="subpasta" value="Subpasta Remota:" />
-                    <p:inputText id="subpasta" value="#{arquivosMgvBean.mgv.subpastaRemota}" />
+                        <p:outputLabel for="loja" value="Loja:" />
+                        <p:selectOneMenu id="loja"
+                                         value="#{arquivosMgvBean.mgv.loja}"
+                                         converter="lojaConverter"
+                                         filter="true"
+                                         style="width:100%">
+                            <f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
+                            <f:selectItems value="#{arquivosMgvBean.lojas}" var="l"
+                                           itemValue="#{l}" itemLabel="#{l.codLojaRms} - #{l.nome}" />
+                        </p:selectOneMenu>
 
-                    <p:outputLabel for="tz" value="Timezone:" />
-                    <p:inputText id="tz" value="#{arquivosMgvBean.mgv.timezone}" />
+                        <p:outputLabel for="subpasta" value="Subpasta Remota:" />
+                        <p:inputText id="subpasta" value="#{arquivosMgvBean.mgv.subpastaRemota}" style="width:100%" />
 
-                    <p:outputLabel for="grace" value="Grace Minutes:" />
-                    <p:inputNumber id="grace" value="#{arquivosMgvBean.mgv.graceMinutes}" decimalPlaces="0" />
+                        <p:outputLabel for="tipoDest" value="Tipo de Destino:" />
+                        <p:selectOneMenu id="tipoDest" value="#{arquivosMgvBean.mgv.tipoDestino}" style="width:100%">
+                            <f:selectItem itemLabel="FS Montado" itemValue="FS"/>
+                            <f:selectItem itemLabel="SMB"        itemValue="SMB"/>
+                            <p:ajax event="change" process="@this" update="cadastroArquivosMgv" />
+                        </p:selectOneMenu>
 
-                    <p:outputLabel for="verif" value="Verificação Diária Ativa:" />
-                    <p:selectBooleanCheckbox id="verif" value="#{arquivosMgvBean.mgv.verificacaoDiariaAtiva}" />
+                        <!-- ===== DESTINO FS ===== -->
+                        <p:outputLabel for="fsDest" value="Caminho FS destino:"
+                                       rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'FS'}" />
+                        <p:inputText id="fsDest" value="#{arquivosMgvBean.mgv.caminhoFsDestino}" style="width:100%"
+                                     rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'FS'}" />
 
-                    <p:outputLabel for="mover" value="Mover no remoto após cópia:" />
-                    <p:selectBooleanCheckbox id="mover" value="#{arquivosMgvBean.mgv.moverRemotoAposCopia}" />
+                        <!-- ===== DESTINO SMB ===== -->
+                        <p:outputLabel for="smbSrv" value="SMB Servidor:"
+                                       rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
+                        <p:inputText id="smbSrv" value="#{arquivosMgvBean.mgv.smbServidor}" style="width:100%"
+                                     rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
 
-                    <p:outputLabel for="dirProc" value="Dir remoto processed/:" />
-                    <p:inputText id="dirProc" value="#{arquivosMgvBean.mgv.dirRemotoProcessed}" />
+                        <p:outputLabel for="smbShare" value="SMB Compartilhamento:"
+                                       rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
+                        <p:inputText id="smbShare" value="#{arquivosMgvBean.mgv.smbCompartilhamento}" style="width:100%"
+                                     rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
 
-                    <p:outputLabel for="fsUsar" value="Usar FS Montado:" />
-                    <p:selectBooleanCheckbox id="fsUsar" value="#{arquivosMgvBean.mgv.usarFsMontado}" />
+                        <p:outputLabel for="smbSub" value="SMB Subpasta:"
+                                       rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
+                        <p:inputText id="smbSub" value="#{arquivosMgvBean.mgv.smbSubpasta}" style="width:100%"
+                                     rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
 
-                    <p:outputLabel for="fsDest" value="Caminho FS destino:" />
-                    <p:inputText id="fsDest" value="#{arquivosMgvBean.mgv.caminhoFsDestino}" />
+                        <p:outputLabel for="smbDom" value="SMB Domínio:"
+                                       rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
+                        <p:inputText id="smbDom" value="#{arquivosMgvBean.mgv.smbDominio}" style="width:100%"
+                                     rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
 
-                    <p:outputLabel for="smbUsar" value="Usar SMB Direto (fallback):" />
-                    <p:selectBooleanCheckbox id="smbUsar" value="#{arquivosMgvBean.mgv.usarSmbDireto}" />
+                        <p:outputLabel for="smbUser" value="SMB Usuário:"
+                                       rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
+                        <p:inputText id="smbUser" value="#{arquivosMgvBean.mgv.smbUsuario}" style="width:100%"
+                                     rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
 
-                    <p:outputLabel for="smbSrv" value="SMB Servidor:" />
-                    <p:inputText id="smbSrv" value="#{arquivosMgvBean.mgv.smbServidor}" />
+                        <p:outputLabel value="SMB Senha:"
+                                       rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}" />
+                        <p:outputPanel rendered="#{arquivosMgvBean.mgv.tipoDestino eq 'SMB'}">
 
-                    <p:outputLabel for="smbShare" value="SMB Compartilhamento:" />
-                    <p:inputText id="smbShare" value="#{arquivosMgvBean.mgv.smbCompartilhamento}" />
+                            <p:outputPanel rendered="#{arquivosMgvBean.mgvPersistido and !arquivosMgvBean.editarSmbSenha}">
+                                <h:panelGroup layout="block" style="display:flex;gap:8px;align-items:center;">
+                                    <p:password id="smbPassMask"
+                                                value="********"
+                                                disabled="true"
+                                                redisplay="true"
+                                                feedback="false"
+                                                style="width:100%" />
+                                    <p:commandButton value="Alterar"
+                                                     icon="pi pi-pencil"
+                                                     process="@this"
+                                                     actionListener="#{arquivosMgvBean.habilitarEdicaoSmbSenha}"
+                                                     update="cadastroArquivosMgv growl"
+                                                     styleClass="ui-button-secondary" />
+                                </h:panelGroup>
+                            </p:outputPanel>
 
-                    <p:outputLabel for="smbSub" value="SMB Subpasta:" />
-                    <p:inputText id="smbSub" value="#{arquivosMgvBean.mgv.smbSubpasta}" />
+                            <p:outputPanel rendered="#{!arquivosMgvBean.mgvPersistido or arquivosMgvBean.editarSmbSenha}">
+                                <h:panelGroup layout="block" style="display:flex;gap:8px;align-items:center;">
+                                    <p:password id="smbPass"
+                                                value="#{arquivosMgvBean.mgv.smbSenha}"
+                                                feedback="false"
+                                                style="width:100%"
+                                                toggleMask="true" />
+                                    <p:commandButton value="Cancelar"
+                                                     icon="pi pi-times"
+                                                     process="@this"
+                                                     actionListener="#{arquivosMgvBean.cancelarEdicaoSmbSenha}"
+                                                     update="cadastroArquivosMgv"
+                                                     styleClass="ui-button-secondary"
+                                                     rendered="#{arquivosMgvBean.mgvPersistido}" />
+                                </h:panelGroup>
+                            </p:outputPanel>
 
-                    <p:outputLabel for="smbDom" value="SMB Domínio:" />
-                    <p:inputText id="smbDom" value="#{arquivosMgvBean.mgv.smbDominio}" />
+                        </p:outputPanel>
 
-                    <p:outputLabel for="smbUser" value="SMB Usuário:" />
-                    <p:inputText id="smbUser" value="#{arquivosMgvBean.mgv.smbUsuario}" />
+                        <!-- ===== CONTROLES PADRÃO ===== -->
+                        <p:outputLabel for="tz" value="Timezone:" />
+                        <p:inputText id="tz" value="#{arquivosMgvBean.mgv.timezone}" style="width:100%" />
 
-                    <p:outputLabel for="smbPass" value="SMB Senha:" />
-                    <p:password id="smbPass" value="#{arquivosMgvBean.mgv.smbSenha}" feedback="false" />
+                        <p:outputLabel for="grace" value="Grace Minutes:" />
+                        <p:inputNumber id="grace" value="#{arquivosMgvBean.mgv.graceMinutes}" decimalPlaces="0" />
 
-                    <p:outputLabel for="habil" value="Habilitado:" />
-                    <p:selectBooleanCheckbox id="habil" value="#{arquivosMgvBean.mgv.habilitado}" />
-                </p:panelGrid>
+                        <p:outputLabel for="verif" value="Verificação Diária Ativa:" />
+                        <p:selectBooleanCheckbox id="verif" value="#{arquivosMgvBean.mgv.verificacaoDiariaAtiva}" />
 
-                <p:commandButton value="Salvar"
-                                 actionListener="#{arquivosMgvBean.salvar}"
-                                 update="growl formCadastroArquivosMgv formTable"
-                                 icon="pi pi-save"
-                                 styleClass="ui-button-primary" />
-            </p:panel>
+                        <p:outputLabel for="mover" value="Mover no remoto após cópia:" />
+                        <p:selectBooleanCheckbox id="mover" value="#{arquivosMgvBean.mgv.moverRemotoAposCopia}" />
 
-            <!-- Patterns -->
-            <p:panel id="panelPatternsMgv"
-                     header="Patterns (arquivos esperados no MGV)"
-                     styleClass="panelPesquisa"
-                     visible="#{arquivosMgvBean.mostrarFormulario}">
-                <ui:include src="/resources/componentes/dataTableArquivosMgvPatterns.xhtml" />
-            </p:panel>
+                        <p:outputLabel for="dirProc" value="Dir remoto processed/:" />
+                        <p:inputText id="dirProc" value="#{arquivosMgvBean.mgv.dirRemotoProcessed}" style="width:100%" />
+
+                        <p:outputLabel for="habil" value="Habilitado:" />
+                        <p:selectBooleanCheckbox id="habil" value="#{arquivosMgvBean.mgv.habilitado}" />
+
+                    </p:panelGrid>
+
+                    <p:commandButton value="Salvar"
+                                     actionListener="#{arquivosMgvBean.salvar}"
+                                     process="@form"
+                                     update=":formCadastroArquivosMgv:cadastroWrapper :formCadastroArquivosMgv:growl :formTable:tableResult"
+                                     icon="pi pi-save"
+                                     styleClass="ui-button-primary" />
+
+                    <p:commandButton value="Testar"
+                                     icon="pi pi-play"
+                                     styleClass="ui-button-secondary"
+                                     rendered="#{arquivosMgvBean.mgvPersistido}"
+                                     actionListener="#{arquivosMgvBean.testarAtual}"
+                                     process="@this"
+                                     update=":formCadastroArquivosMgv:growl"
+                                     onclick="if(!confirm('Deseja executar o teste de transferência agora?')) return false;" />
+
+                </p:panel>
+
+                <p:panel id="panelPatternsMgv"
+                         header="Patterns (arquivo(s) esperado(s) no MGV)"
+                         styleClass="panelPesquisa"
+                         rendered="#{arquivosMgvBean.mostrarFormulario}">
+                    <ui:include src="/resources/componentes/dataTableArquivosMgvPatterns.xhtml" />
+                </p:panel>
+
+            </p:outputPanel>
 
         </h:form>
 
-        <!-- Tabela -->
         <h:form id="formTable">
             <p:dataTable id="tableResult"
                          value="#{arquivosMgvBean.lista}"

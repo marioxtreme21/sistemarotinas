@@ -23,7 +23,7 @@ public class ScheduledRotinaBebidaAlcoolicaSelfTask {
      * Cron: segundo, minuto, hora, diaMes, mes, diaSemana
      * 0 0/30 * * * *  => no minuto 0 e 30 de toda hora.
      */
-    //@Scheduled(cron = "0 0/15 * * * *", zone = "America/Sao_Paulo")
+    @Scheduled(cron = "0 0/15 * * * *", zone = "America/Sao_Paulo")
     public void executarRotinaAutomaticamente() {
         log.info("[Scheduler][BebidasAlcoolicasSelf] Início da execução automática (a cada 30 min).");
         try {

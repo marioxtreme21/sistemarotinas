@@ -2,7 +2,6 @@ package sistema.rotinas.primefaces.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -10,6 +9,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import sistema.rotinas.primefaces.service.CustomUserDetailsService;
 
@@ -18,8 +18,13 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
 
-    public SecurityConfig(CustomUserDetailsService customUserDetailsService) {
+    // ✅ filtro simples por API KEY para /api/tv/**
+    private final TvApiKeyFilter tvApiKeyFilter;
+
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService,
+                          TvApiKeyFilter tvApiKeyFilter) {
         this.customUserDetailsService = customUserDetailsService;
+        this.tvApiKeyFilter = tvApiKeyFilter;
     }
 
     @Bean
@@ -32,6 +37,11 @@ public class SecurityConfig {
             .securityContext(securityContext -> securityContext
                 .requireExplicitSave(false)
             )
+
+            // ✅ aplica a proteção por chave ANTES do chain padrão
+            // (não altera login/sessões do sistema)
+            .addFilterBefore(tvApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+
             .authorizeHttpRequests(authorize -> authorize
                 // Recursos estáticos (PrimeFaces, CSS, JS, imagens etc.)
                 .requestMatchers("/resources/**", "/javax.faces.resource/**", "/jakarta.faces.resource/**").permitAll()
@@ -46,7 +56,12 @@ public class SecurityConfig {
                     "/api/notifications/**",
                     "/api/notifications/error/**",
                     "/api/telaprodutos/player/videos/**",
-                    "/api/telaprodutos/player/images/**"
+                    "/api/telaprodutos/player/images/**",
+
+                    // ✅ TV App (cards)
+                    // continua "permitAll" no Spring Security,
+                    // mas o TvApiKeyFilter bloqueia sem chave
+                    "/api/tv/**"
                 ).permitAll()
 
                 // Páginas públicas

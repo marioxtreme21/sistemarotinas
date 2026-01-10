@@ -16,7 +16,6 @@
                  columnClasses="label,value,label,value"
                  cellpadding="8">
 
-        <!-- Linha 1 -->
         <p:row>
             <p:column>
                 <p:outputLabel for="patt" value="Pattern:" />
@@ -38,14 +37,15 @@
             </p:column>
         </p:row>
 
-        <!-- Linha 2 (botão em largura total) -->
         <p:row>
             <p:column colspan="4" style="padding-top:6px;">
                 <p:commandButton value="Adicionar Pattern"
                                  icon="pi pi-plus"
                                  actionListener="#{arquivosPriceBean.adicionarPattern}"
-                                 process="gridAddPattern"
-                                 update="gridAddPattern patternsTable growl"
+                                 process="@this gridAddPattern"
+                                 update=":formCadastroArquivosPrice:gridAddPattern
+                                         :formCadastroArquivosPrice:patternsTable
+                                         :formCadastroArquivosPrice:growl"
                                  disabled="#{!arquivosPriceBean.pricePersistido}"
                                  styleClass="ui-button-success" />
             </p:column>
@@ -75,7 +75,8 @@
                              onclick="return confirm('Remover pattern?')"
                              actionListener="#{arquivosPriceBean.removerPattern(pt.patternId)}"
                              process="@this"
-                             update="patternsTable growl" />
+                             update=":formCadastroArquivosPrice:patternsTable
+                                     :formCadastroArquivosPrice:growl" />
         </p:column>
 
     </p:dataTable>

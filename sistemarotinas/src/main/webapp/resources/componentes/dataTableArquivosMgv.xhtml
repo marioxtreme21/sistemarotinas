@@ -12,27 +12,48 @@
         <h:outputText value="#{cfg.subpastaRemota}" />
     </p:column>
 
-    <p:column headerText="FS Destino" sortBy="#{cfg.caminhoFsDestino}">
-        <h:outputText value="#{cfg.caminhoFsDestino}" />
+    <p:column headerText="Tipo Destino" sortBy="#{cfg.tipoDestino}">
+        <h:outputText value="#{cfg.tipoDestino}" />
     </p:column>
 
-    <p:column headerText="SMB (Servidor/Share/Subpasta)">
-        <h:outputText value="#{cfg.smbServidor}/#{cfg.smbCompartilhamento}/#{cfg.smbSubpasta}" />
+    <p:column headerText="Destino (principal)">
+        <h:outputText
+            value="#{cfg.tipoDestino eq 'FS'
+                        ? cfg.caminhoFsDestino
+                        : cfg.smbServidor}" />
     </p:column>
 
-    <p:column headerText="Verificação">
+    <p:column headerText="Verificação" sortBy="#{cfg.verificacaoDiariaAtiva}">
         <h:outputText value="#{cfg.verificacaoDiariaAtiva ? 'Ativa' : 'Inativa'}" />
     </p:column>
 
-    <p:column headerText="Ações">
+    <p:column headerText="Ações" style="white-space:nowrap;">
+
         <p:commandButton value="Editar"
                          icon="pi pi-pencil"
-                         action="#{arquivosMgvBean.prepararEditar(cfg)}"
+                         actionListener="#{arquivosMgvBean.prepararEditar(cfg)}"
                          process="@this"
-                         update=":formCadastroArquivosMgv" />
+                         update=":formCadastroArquivosMgv"
+                         styleClass="ui-button-secondary" />
+
+        <p:spacer width="6" />
+
+        <p:commandButton value="Testar"
+                         icon="pi pi-play"
+                         actionListener="#{arquivosMgvBean.testar(cfg)}"
+                         process="@this"
+                         update=":formCadastroArquivosMgv:growl"
+                         styleClass="ui-button-secondary"
+                         onclick="if(!confirm('Deseja executar o teste de transferência para esta loja?')) return false;" />
+
+        <p:spacer width="6" />
+
         <p:commandButton value="Excluir"
-                         action="#{arquivosMgvBean.excluir(cfg.mgvId)}"
+                         icon="pi pi-trash"
+                         actionListener="#{arquivosMgvBean.excluir(cfg.mgvId)}"
+                         process="@this"
                          update=":formTable :formCadastroArquivosMgv"
+                         styleClass="ui-button-danger"
                          onclick="if(!confirm('Confirma a exclusão?')) return false;" />
     </p:column>
 
