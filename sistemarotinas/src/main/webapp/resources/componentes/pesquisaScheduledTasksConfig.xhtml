@@ -1,0 +1,118 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:outputPanel id="pesquisaWrapper">
+
+        <p:panel header="Pesquisa - Tasks Agendadas" styleClass="panelPesquisa">
+
+            <p:panelGrid columns="2"
+                         cellpadding="10"
+                         styleClass="panelPesquisa"
+                         columnClasses="label,value">
+
+                <p:outputLabel value="Rotina:" for="rotina" />
+                <p:selectOneMenu id="rotina"
+                                 value="#{scheduledTaskConfigBean.filtroRotina}"
+                                 style="width:100%"
+                                 disabled="#{scheduledTaskConfigBean.semRotinasCadastradas}">
+
+                    <!-- Sempre existe o ALL -->
+                    <f:selectItem itemLabel="(Todas)" itemValue="ALL"/>
+
+                    <!-- ✅ Só aparece quando realmente não há rotinas -->
+                    <f:selectItem itemLabel="(Nenhuma rotina cadastrada)"
+                                  itemValue="__NONE__"
+                                  rendered="#{scheduledTaskConfigBean.semRotinasCadastradas}" />
+
+                    <!-- ✅ Só renderiza a lista real quando há rotinas -->
+                    <f:selectItems value="#{scheduledTaskConfigBean.rotinasDisponiveis}"
+                                   var="r"
+                                   itemLabel="#{r}"
+                                   itemValue="#{r}"
+                                   rendered="#{not scheduledTaskConfigBean.semRotinasCadastradas}" />
+
+                    <p:ajax event="change"
+                            listener="#{scheduledTaskConfigBean.recarregar}"
+                            process="@this"
+                            update=":frmSched:tableResult
+                                    :frmSched:cadastroWrapper
+                                    :frmSched:pnlPreview
+                                    :frmSched:growl"/>
+                </p:selectOneMenu>
+
+                <p:outputLabel value="Owner:" for="ownerFiltro" />
+                <p:selectOneMenu id="ownerFiltro"
+                                 value="#{scheduledTaskConfigBean.filtroOwner}"
+                                 style="width:100%">
+                    <f:selectItem itemLabel="(Todos)" itemValue=""/>
+                    <f:selectItem itemLabel="PROD" itemValue="PROD"/>
+                    <f:selectItem itemLabel="DEV" itemValue="DEV"/>
+                    <f:selectItem itemLabel="ALL" itemValue="ALL"/>
+
+                    <p:ajax event="change"
+                            listener="#{scheduledTaskConfigBean.recarregar}"
+                            process="@this"
+                            update=":frmSched:tableResult
+                                    :frmSched:cadastroWrapper
+                                    :frmSched:pnlPreview
+                                    :frmSched:growl"/>
+                </p:selectOneMenu>
+
+                <p:outputLabel value="Somente ativas:" for="somenteAtivas" />
+                <p:selectBooleanCheckbox id="somenteAtivas"
+                                         value="#{scheduledTaskConfigBean.somenteAtivas}">
+                    <p:ajax event="change"
+                            listener="#{scheduledTaskConfigBean.recarregar}"
+                            process="@this"
+                            update=":frmSched:tableResult
+                                    :frmSched:cadastroWrapper
+                                    :frmSched:pnlPreview
+                                    :frmSched:growl"/>
+                </p:selectBooleanCheckbox>
+
+                <p:outputLabel value="Texto (key/descrição):" for="texto" />
+                <p:inputText id="texto"
+                             value="#{scheduledTaskConfigBean.filtroTexto}"
+                             style="width:100%">
+                    <p:ajax event="keyup"
+                            delay="400"
+                            listener="#{scheduledTaskConfigBean.recarregar}"
+                            process="@this"
+                            update=":frmSched:tableResult :frmSched:growl"/>
+                </p:inputText>
+
+            </p:panelGrid>
+
+            <p:commandButton id="btnPesquisar"
+                             value="Pesquisar"
+                             icon="pi pi-search"
+                             actionListener="#{scheduledTaskConfigBean.recarregar}"
+                             process=":frmSched:pesquisaWrapper"
+                             resetValues="true"
+                             update=":frmSched:tableResult
+                                     :frmSched:cadastroWrapper
+                                     :frmSched:pnlPreview
+                                     :frmSched:growl" />
+
+            <p:spacer width="8"/>
+
+            <p:commandButton id="btnLimpar"
+                             value="Limpar Filtros"
+                             icon="pi pi-filter-slash"
+                             styleClass="ui-button-secondary"
+                             actionListener="#{scheduledTaskConfigBean.limparFiltros}"
+                             process="@this"
+                             resetValues="true"
+                             update=":frmSched:pesquisaWrapper
+                                     :frmSched:tableResult
+                                     :frmSched:cadastroWrapper
+                                     :frmSched:pnlPreview
+                                     :frmSched:growl" />
+
+        </p:panel>
+
+    </p:outputPanel>
+</ui:composition>

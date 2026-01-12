@@ -1,0 +1,246 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Tasks Agendadas</ui:define>
+
+    <ui:define name="content">
+
+        <!-- ATENÇÃO:
+             Deve existir APENAS UM h:form na VIEW.
+             Se o seu layout.xhtml já tiver h:form envolvendo o content,
+             remova ESTE h:form e ajuste os IDs para o form do layout. -->
+
+        <h:form id="frmSched">
+
+            <p:growl id="growl" showDetail="true" life="4000"/>
+
+            <!-- ===================== -->
+            <!-- PESQUISA / FILTROS     -->
+            <!-- ===================== -->
+            <p:outputPanel id="pnlPesquisa">
+                <ui:include src="/resources/componentes/pesquisaScheduledTasksConfig.xhtml"/>
+            </p:outputPanel>
+
+            <!-- ===================== -->
+            <!-- CADASTRO / EDIÇÃO      -->
+            <!-- ===================== -->
+
+            <p:commandButton id="btnNovo"
+                             value="Novo Cadastro"
+                             icon="pi pi-plus"
+                             styleClass="ui-button-success"
+                             actionListener="#{scheduledTaskConfigBean.prepararNovoCadastro}"
+                             process="@this"
+                             update=":frmSched:cadastroWrapper
+                                     :frmSched:pnlPreview
+                                     :frmSched:growl"/>
+
+            <p:outputPanel id="cadastroWrapper">
+
+                <p:panel header="Cadastro / Edição"
+                         styleClass="panelPesquisa"
+                         rendered="#{not empty scheduledTaskConfigBean.editando}">
+
+                    <p:panelGrid columns="2" cellpadding="10"
+                                 styleClass="panelPesquisa"
+                                 columnClasses="label,value">
+
+                        <!-- Handler disponível (SPRING) -->
+                        <p:outputLabel value="Handler (Task Key):" for="handlerKey"/>
+                        <p:selectOneMenu id="handlerKey"
+                                         value="#{scheduledTaskConfigBean.handlerSelecionado}"
+                                         style="width:100%">
+                            <f:selectItem itemLabel="Selecione..." itemValue="#{null}"/>
+                            <f:selectItems value="#{scheduledTaskConfigBean.handlersDisponiveis}"
+                                           var="hk"
+                                           itemLabel="#{hk}"
+                                           itemValue="#{hk}"/>
+                            <p:ajax event="change"
+                                    listener="#{scheduledTaskConfigBean.onHandlerSelecionado}"
+                                    process="@this"
+                                    update=":frmSched:cadastroWrapper
+                                            :frmSched:pnlPreview
+                                            :frmSched:growl"/>
+                        </p:selectOneMenu>
+
+                        <!-- taskKey (somente leitura) -->
+                        <p:outputLabel value="Task Key (salva no banco):"/>
+                        <h:outputText value="#{scheduledTaskConfigBean.editando.taskKey}"/>
+
+                        <p:outputLabel value="Descrição:" for="desc"/>
+                        <p:inputText id="desc"
+                                     value="#{scheduledTaskConfigBean.editando.descricao}"
+                                     style="width:100%"/>
+
+                        <p:outputLabel value="Owner:" for="owner"/>
+                        <p:selectOneMenu id="owner"
+                                         value="#{scheduledTaskConfigBean.editando.owner}"
+                                         style="width:100%">
+                            <f:selectItem itemLabel="PROD" itemValue="PROD"/>
+                            <f:selectItem itemLabel="DEV" itemValue="DEV"/>
+                            <f:selectItem itemLabel="ALL" itemValue="ALL"/>
+                        </p:selectOneMenu>
+
+                        <p:outputLabel value="Timezone:" for="tz"/>
+                        <p:inputText id="tz"
+                                     value="#{scheduledTaskConfigBean.editando.zoneId}"
+                                     style="width:100%">
+                            <p:ajax event="blur"
+                                    listener="#{scheduledTaskConfigBean.previewNextRuns}"
+                                    process="@this"
+                                    update=":frmSched:pnlPreview"/>
+                        </p:inputText>
+
+                        <p:outputLabel value="Cron:" for="cron"/>
+                        <p:inputText id="cron"
+                                     value="#{scheduledTaskConfigBean.editando.cronExpr}"
+                                     style="width:100%">
+                            <p:ajax event="blur"
+                                    listener="#{scheduledTaskConfigBean.previewNextRuns}"
+                                    process="@this"
+                                    update=":frmSched:pnlPreview"/>
+                        </p:inputText>
+
+                        <p:outputLabel value="Ativa:" for="enabled"/>
+                        <p:selectBooleanCheckbox id="enabled"
+                                                 value="#{scheduledTaskConfigBean.editando.enabled}"/>
+
+                        <p:outputLabel value="Params JSON:" for="json"/>
+                        <p:inputTextarea id="json"
+                                         value="#{scheduledTaskConfigBean.editando.paramsJson}"
+                                         rows="6"
+                                         autoResize="false"
+                                         style="width:100%"/>
+
+                    </p:panelGrid>
+
+                    <p:commandButton id="btnSalvar"
+                                     value="Salvar"
+                                     icon="pi pi-save"
+                                     actionListener="#{scheduledTaskConfigBean.salvar}"
+                                     process=":frmSched:cadastroWrapper"
+                                     update=":frmSched:tableResult
+                                             :frmSched:cadastroWrapper
+                                             :frmSched:pnlPreview
+                                             :frmSched:growl
+                                             :frmSched:pnlPesquisa"/>
+
+                    <p:commandButton id="btnValidarJson"
+                                     value="Validar JSON"
+                                     icon="pi pi-check"
+                                     styleClass="ui-button-secondary"
+                                     actionListener="#{scheduledTaskConfigBean.validarJson}"
+                                     process=":frmSched:cadastroWrapper"
+                                     update=":frmSched:growl"/>
+
+                    <p:commandButton id="btnExecutarAgora"
+                                     value="Executar Agora"
+                                     icon="pi pi-play"
+                                     styleClass="ui-button-secondary"
+                                     rendered="#{scheduledTaskConfigBean.editando.id ne null}"
+                                     actionListener="#{scheduledTaskConfigBean.executarAgora}"
+                                     process="@this"
+                                     update=":frmSched:tableResult
+                                             :frmSched:growl"/>
+
+                    <p:commandButton id="btnFechar"
+                                     value="Fechar"
+                                     icon="pi pi-times"
+                                     styleClass="ui-button-secondary"
+                                     actionListener="#{scheduledTaskConfigBean.fecharEdicao}"
+                                     process="@this"
+                                     update=":frmSched:cadastroWrapper
+                                             :frmSched:pnlPreview"/>
+                </p:panel>
+
+                <!-- Preview -->
+                <p:panel id="pnlPreview"
+                         header="Próximas execuções (preview)"
+                         styleClass="panelPesquisa"
+                         rendered="#{not empty scheduledTaskConfigBean.editando}">
+
+                    <ui:repeat value="#{scheduledTaskConfigBean.proximasExecucoes}" var="d">
+                        <h:outputText value="#{d}"/><br/>
+                    </ui:repeat>
+
+                </p:panel>
+
+                <!-- Dialog Erro -->
+                <p:dialog id="dlgErro" widgetVar="dlgErro"
+                          header="Detalhe do erro" modal="true" width="800">
+                    <h:outputText value="#{scheduledTaskConfigBean.erroSelecionado}" escape="false"/>
+                </p:dialog>
+
+            </p:outputPanel>
+
+            <!-- ===================== -->
+            <!-- AÇÕES EM LOTE          -->
+            <!-- ===================== -->
+            <p:panel id="pnlAcoesLote"
+                     header="Ações em lote"
+                     styleClass="panelPesquisa">
+
+                <p:commandButton value="Selecionar todas (visíveis)"
+                                 icon="pi pi-check-square"
+                                 styleClass="ui-button-secondary"
+                                 actionListener="#{scheduledTaskConfigBean.selecionarTodasVisiveis}"
+                                 process="@this"
+                                 update=":frmSched:tableResult :frmSched:growl"/>
+
+                <p:spacer width="8"/>
+
+                <p:commandButton value="Limpar seleção"
+                                 icon="pi pi-times"
+                                 styleClass="ui-button-secondary"
+                                 actionListener="#{scheduledTaskConfigBean.limparSelecao}"
+                                 process="@this"
+                                 update=":frmSched:tableResult :frmSched:growl"/>
+
+                <p:spacer width="16"/>
+
+                <p:commandButton value="Ativar selecionadas"
+                                 icon="pi pi-play"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{scheduledTaskConfigBean.ativarSelecionadas}"
+                                 process="@this"
+                                 update=":frmSched:tableResult :frmSched:growl :frmSched:pnlPesquisa"/>
+
+                <p:spacer width="8"/>
+
+                <p:commandButton value="Desativar selecionadas"
+                                 icon="pi pi-ban"
+                                 styleClass="ui-button-danger"
+                                 actionListener="#{scheduledTaskConfigBean.desativarSelecionadas}"
+                                 process="@this"
+                                 update=":frmSched:tableResult :frmSched:growl :frmSched:pnlPesquisa"/>
+            </p:panel>
+
+            <!-- ===================== -->
+            <!-- TABELA                 -->
+            <!-- ===================== -->
+            <p:dataTable id="tableResult"
+                         value="#{scheduledTaskConfigBean.tasks}"
+                         var="t"
+                         emptyMessage="Não há registros para exibir."
+                         paginator="true"
+                         rows="10"
+                         rowsPerPageTemplate="10,20,50"
+                         selection="#{scheduledTaskConfigBean.selecionadas}"
+                         rowKey="#{t.id}"
+                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+
+                <!-- ✅ NECESSÁRIO para seleção múltipla funcionar -->
+                <p:column selectionMode="multiple" style="width:40px;text-align:center"/>
+
+                <ui:include src="/resources/componentes/dataTableScheduledTasksConfig.xhtml"/>
+
+            </p:dataTable>
+
+        </h:form>
+
+    </ui:define>
+</ui:composition>

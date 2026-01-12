@@ -46,6 +46,12 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
      */
     private static final Logger LOG = LoggerFactory.getLogger("ROTINA_PRICE");
 
+    /**
+     * ✅ Limite seguro para gravar erro no banco (evita Data truncation).
+     * Ajuste se sua coluna for maior/menor.
+     */
+    private static final int DB_ERR_MAX = 2000;
+
     @Autowired private IRotinaExecucaoService execucaoService;
     @Autowired private ILojaService lojaService;
     @Autowired private IArquivosPriceService arquivosPriceService;
@@ -133,7 +139,6 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
 
         } catch (Exception e) {
 
-            // ✅ stack completa no log + salva stack (truncada) no banco (campo "erro"/detalhe)
             LOG.error("[PRICE][RUNNER] Falha geral. execucaoId={} msg={}", execucaoId, e.getMessage(), e);
 
             execucaoService.finalizarExecucao(execucaoId, StatusExecucaoEnum.FALHA,
@@ -170,7 +175,6 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
         try {
             ArquivosPrice cfg = obterCfgPriceDaLoja(loja);
 
-            // ⚠️ deve ser raro agora (já filtramos antes), mas mantém proteção
             if (cfg == null || cfg.getPriceId() == null) {
                 LOG.warn("[PRICE][LOJA] Configuração PRICE ausente (inesperado). execucaoId={} execucaoLojaId={} lojaId={} codLojaRms={}",
                         execucaoId, execucaoLojaId, safeLojaId(loja), safeCodLoja(loja));
@@ -211,9 +215,6 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
 
         } catch (Exception e) {
 
-            // ✅ aqui entra o LazyInitializationException e agora:
-            // - loga stack completa no rotina-price.log
-            // - salva stack completa (truncada) no campo "erro" do banco (para e-mail/histórico)
             LOG.error("[PRICE][LOJA] Falha. execucaoId={} execucaoLojaId={} lojaId={} codLojaRms={} msg={}",
                     execucaoId,
                     execucaoLojaId,
@@ -328,7 +329,6 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
         boolean sftpOk = getBoolean(result, "isSftpOk", "getSftpOk");
         boolean downloadOk = getBoolean(result, "isDownloadOk", "getDownloadOk");
 
-        // flags de destino só contam se “usado/configurado”
         boolean fsUsado = cfg.getCaminhoFsDestino() != null && !cfg.getCaminhoFsDestino().isBlank();
 
         boolean smbUsado =
@@ -358,7 +358,6 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
             statusPrincipal = falhaDestino ? StatusExecucaoEnum.FALHA_PARCIAL : StatusExecucaoEnum.SUCESSO;
         }
 
-        // ✅ LOG de resumo do resultado (ajuda muito quando o console fica gigante)
         LOG.info("[PRICE][RESULT] sftpOk={} downloadOk={} fsUsado={} fsOk={} smbUsado={} smbOk={} lastModRemoto={} atualizado={} remoto={} local={} statusPrincipal={}",
                 sftpOk, downloadOk, fsUsado, fsOk, smbUsado, smbOk,
                 lastModRemoto, atualizado,
@@ -394,16 +393,25 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
 
         List<String> mensagens = getStringList(result, "getMensagens", "getMessages", "getMsgs");
 
-        // ✅ loga mensagens do transfer (no arquivo rotina-price.log)
         if (mensagens != null && !mensagens.isEmpty()) {
             LOG.info("[PRICE][RESULT] mensagens({}): {}", mensagens.size(), mensagens);
         } else {
             LOG.info("[PRICE][RESULT] mensagens(0)");
         }
 
+        // =========================
+        // ✅ MSG estruturado (se o DTO tiver)
+        // =========================
+        String msgStatus = getString(result, "getMsgStatus");
+        String msgOrigem = getString(result, "getMsgOrigem");
+        String msgDestino = getString(result, "getMsgDestino");
+        String msgDetalhe = getString(result, "getMsgDetalhe");
+        boolean temMsgEstruturado = (msgStatus != null && !msgStatus.isBlank());
+
+        // fallback legado (mensagens)
         boolean msgOk = mensagens.stream().anyMatch(m -> m != null && m.startsWith("MSG OK"));
         boolean msgFalhou = mensagens.stream().anyMatch(m -> m != null && m.startsWith("MSG FALHOU"));
-        boolean msgDesativado = mensagens.stream().anyMatch(m -> m != null && m.contains("msgCopyAtivo=false"));
+        boolean msgDesativado = mensagens.stream().anyMatch(m -> m != null && (m.contains("msgCopyAtivo=false") || m.contains("cópia desativada")));
         boolean msgPulado = mensagens.stream().anyMatch(m -> m != null && m.startsWith("MSG:"));
 
         for (RotinaExecucaoArquivo ra : regs) {
@@ -420,34 +428,60 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
             if (isM1) {
                 StatusExecucaoEnum stMsg;
                 String msgInfo;
+                String erroMsg = null;
 
-                if (msgDesativado) {
-                    stMsg = StatusExecucaoEnum.SUCESSO;
-                    msgInfo = "MSG desativado (msgCopyAtivo=false).";
-                } else if (msgFalhou) {
-                    stMsg = StatusExecucaoEnum.FALHA_PARCIAL;
-                    msgInfo = "MSG falhou (ver mensagens).";
-                } else if (msgOk) {
-                    stMsg = StatusExecucaoEnum.SUCESSO;
-                    msgInfo = "MSG OK.";
-                } else if (msgPulado) {
-                    stMsg = StatusExecucaoEnum.FALHA_PARCIAL;
-                    msgInfo = "MSG pulado (config incompleta ou arquivo ausente).";
+                if (temMsgEstruturado) {
+
+                    // preenche origem/destino do registro
+                    if (msgOrigem != null && !msgOrigem.isBlank()) ra.setOrigem(msgOrigem);
+                    if (msgDestino != null && !msgDestino.isBlank()) ra.setDestino(msgDestino);
+
+                    if ("OK".equalsIgnoreCase(msgStatus) || "DESATIVADO".equalsIgnoreCase(msgStatus)) {
+                        stMsg = StatusExecucaoEnum.SUCESSO;
+                        msgInfo = "MSG " + msgStatus + (msgDetalhe != null && !msgDetalhe.isBlank() ? (": " + msgDetalhe) : ".");
+                    } else if ("PULADO".equalsIgnoreCase(msgStatus)) {
+                        stMsg = StatusExecucaoEnum.FALHA_PARCIAL;
+                        msgInfo = "MSG PULADO" + (msgDetalhe != null && !msgDetalhe.isBlank() ? (": " + msgDetalhe) : ".");
+                    } else if ("FALHOU".equalsIgnoreCase(msgStatus)) {
+                        stMsg = StatusExecucaoEnum.FALHA_PARCIAL;
+                        msgInfo = "MSG FALHOU" + (msgDetalhe != null && !msgDetalhe.isBlank() ? (": " + msgDetalhe) : ".");
+                        erroMsg = msgDetalhe;
+                    } else {
+                        stMsg = StatusExecucaoEnum.FALHA_PARCIAL;
+                        msgInfo = "MSG INDEFINIDO" + (msgDetalhe != null && !msgDetalhe.isBlank() ? (": " + msgDetalhe) : ".");
+                    }
+
                 } else {
-                    stMsg = StatusExecucaoEnum.FALHA_PARCIAL;
-                    msgInfo = "MSG: sem confirmação explícita (ver logs).";
+                    // ✅ fallback antigo (não remove nada do que funcionava)
+                    if (msgDesativado) {
+                        stMsg = StatusExecucaoEnum.SUCESSO;
+                        msgInfo = "MSG desativado (msgCopyAtivo=false).";
+                    } else if (msgFalhou) {
+                        stMsg = StatusExecucaoEnum.FALHA_PARCIAL;
+                        msgInfo = "MSG falhou (ver mensagens).";
+                    } else if (msgOk) {
+                        stMsg = StatusExecucaoEnum.SUCESSO;
+                        msgInfo = "MSG OK.";
+                    } else if (msgPulado) {
+                        stMsg = StatusExecucaoEnum.FALHA_PARCIAL;
+                        msgInfo = "MSG pulado (config incompleta ou arquivo ausente).";
+                    } else {
+                        stMsg = StatusExecucaoEnum.FALHA_PARCIAL;
+                        msgInfo = "MSG: sem confirmação explícita (ver logs).";
+                    }
                 }
 
+                ra.setEtapa(EtapaArquivoEnum.COPIA_MESSAGEFILES_PRICE_LOJA);
                 ra.setStatus(stMsg);
                 ra.setMensagem(mergeMsg(ra.getMensagem(), msgInfo));
 
                 salvarEtapa(ra,
                         EtapaArquivoEnum.COPIA_MESSAGEFILES_PRICE_LOJA,
                         stMsg,
-                        null,
-                        null,
+                        (temMsgEstruturado ? msgOrigem : null),
+                        (temMsgEstruturado ? msgDestino : null),
                         msgInfo,
-                        (msgFalhou ? "Falha no MSG (ver logs)" : null),
+                        erroMsg,
                         null,
                         null,
                         null,
@@ -602,11 +636,12 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
             e.setLastModifiedDestino(lmDestino);
 
             e.setMensagem(mensagem);
-            e.setErro(erro);
+
+            // ✅ evita Data truncation no banco
+            e.setErro(erro != null ? trunc(erro, DB_ERR_MAX) : null);
 
             etapaRepo.save(e);
         } catch (Exception ex) {
-            // etapa é detalhe: não derruba execução
             LOG.debug("[PRICE][ETAPA] Falha ao salvar etapa (ignorada). execucaoArquivoId={} etapa={} msg={}",
                     (ra != null ? ra.getExecucaoArquivoId() : null),
                     etapa,
@@ -623,6 +658,11 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
     private boolean getBoolean(Object target, String... getters) {
         Object v = getObject(target, getters);
         return (v instanceof Boolean) ? (Boolean) v : false;
+    }
+
+    private String getString(Object target, String... getters) {
+        Object v = getObject(target, getters);
+        return (v != null ? String.valueOf(v) : null);
     }
 
     private Object getObject(Object target, String... getters) {
@@ -738,8 +778,6 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
     private ArquivosPrice obterCfgPriceDaLoja(Loja loja) {
         if (loja == null || loja.getLojaId() == null) return null;
 
-        // ⚠️ mantive sua implementação atual (findAll + stream) para não mudar comportamento agora.
-        // Depois a gente troca por repository.findByLoja_LojaId(lojaId) (bem mais performático).
         List<ArquivosPrice> all = arquivosPriceService.findAll();
         if (all == null) return null;
 
@@ -769,8 +807,15 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
         try { return (l != null ? l.getNome() : null); } catch (Exception e) { return null; }
     }
 
+    private static String trunc(String s, int max) {
+        if (s == null) return null;
+        if (max <= 0) return "";
+        if (s.length() <= max) return s;
+        return s.substring(0, Math.max(0, max - 20)) + "\n... (truncado)";
+    }
+
     /**
-     * ✅ Stack trace completa para persistir no banco (trunca para não estourar campo)
+     * ✅ Stack trace completa para persistir no banco (truncada)
      */
     private static String stackTrace(Throwable t) {
         if (t == null) return null;
@@ -779,15 +824,9 @@ public class RotinaPriceRunnerService implements IRotinaPriceRunnerService {
             PrintWriter pw = new PrintWriter(sw);
             t.printStackTrace(pw);
             pw.flush();
-            String s = sw.toString();
-
-            // ajuste o limite conforme o tamanho do seu campo no banco
-            if (s.length() > 3500) {
-                s = s.substring(0, 3500) + "\n... (truncado)";
-            }
-            return s;
+            return trunc(sw.toString(), DB_ERR_MAX);
         } catch (Exception e) {
-            return String.valueOf(t.getMessage());
+            return trunc(String.valueOf(t.getMessage()), DB_ERR_MAX);
         }
     }
 }

@@ -50,20 +50,12 @@ public class MgvTransferService {
     @Autowired private IArquivosMgvPatternService patternService;
     @Autowired private IArquivosMgvService arquivosMgvService;
 
-    /**
-     * ✅ Assinatura principal: testar por ID
-     * ✅ Importante para Scheduler: mantém sessão aberta para resolver lazy (Loja/RemoteConfig)
-     */
     @Transactional(readOnly = true)
     public MgvTestResult testar(Long mgvId) {
-        if (mgvId == null) {
-            throw new IllegalArgumentException("Informe o ID do cadastro MGV para testar.");
-        }
+        if (mgvId == null) throw new IllegalArgumentException("Informe o ID do cadastro MGV para testar.");
 
         ArquivosMgv cfg = arquivosMgvService.findById(mgvId);
-        if (cfg == null) {
-            throw new IllegalArgumentException("Cadastro MGV não encontrado (id=" + mgvId + ").");
-        }
+        if (cfg == null) throw new IllegalArgumentException("Cadastro MGV não encontrado (id=" + mgvId + ").");
 
         return testar(cfg);
     }
@@ -71,10 +63,15 @@ public class MgvTransferService {
     /**
      * ✅ Baixa do SFTP para:
      * /uploads/rotinaalterados/mgv/LJ{cod}/YYYY-MM-DD/
-     * e copia para SMB/FS conforme tipoDestino (ou conforme configurado).
      *
      * ✅ MGV: múltiplos arquivos (1 por pattern).
-     * ✅ NÃO renomeia (sem _2, _3). Sobrescreve normal.
+     * ✅ NÃO renomeia. Sobrescreve normal.
+     *
+     * ✅ Ajustes alinhados ao PRICE:
+     * - Usa mtime remoto vindo do download (sem reconectar) + fallback local
+     * - FS/SMB por arquivo sem derrubar lote
+     * - statusGeral + detalheGeral
+     * - preenche MgvTestResult.ArquivoInfo (origem/destino + status FS/SMB)
      */
     @Transactional(readOnly = true)
     public MgvTestResult testar(ArquivosMgv cfg) {
@@ -126,6 +123,8 @@ public class MgvTransferService {
             r.addMsg("FALHA: não consegui preparar pasta do dia: " + e.getMessage());
             r.setSftpOk(false);
             r.setDownloadOk(false);
+            r.setStatusGeral("FALHOU");
+            r.setDetalheGeral("Falha ao preparar pasta do dia.");
             return r;
         }
 
@@ -140,48 +139,70 @@ public class MgvTransferService {
         LOG.debug("Patterns detalhe | mgvId={} codLojaRms={} patterns={}", cfg.getMgvId(), cod, patterns);
 
         // =========================
-        // 1) DOWNLOAD SFTP (1 por pattern)
+        // 1) DOWNLOAD SFTP (batch com fallback)
         // =========================
-        List<String> arquivosRemotos;
-        List<Path> arquivosLocais;
         List<SftpDownloadInfo> infosDownload;
-
         try {
             DownloadBatch batch = baixarBatchSftp(rc, remoteDir, patterns, pastaDia);
 
-            arquivosRemotos = batch.arquivosRemotos;
-            arquivosLocais = batch.arquivosLocais;
-            infosDownload = batch.infos;
+            List<String> arquivosRemotos = (batch != null && batch.arquivosRemotos != null) ? batch.arquivosRemotos : new ArrayList<>();
+            List<Path> arquivosLocais  = (batch != null && batch.arquivosLocais  != null) ? batch.arquivosLocais  : new ArrayList<>();
+            infosDownload = (batch != null && batch.infos != null) ? batch.infos : new ArrayList<>();
 
             r.setArquivosRemotos(arquivosRemotos);
             r.setArquivosLocais(arquivosLocais);
 
             r.setSftpOk(true);
-            r.setDownloadOk(true);
 
-            r.addMsg("Download OK: " + (arquivosRemotos != null ? arquivosRemotos.size() : 0) + " arquivo(s)");
-
-            LOG.info("Download OK | mgvId={} codLojaRms={} totalArquivos={}",
-                    cfg.getMgvId(), cod, (arquivosRemotos != null ? arquivosRemotos.size() : 0));
-
-            if (arquivosLocais == null || arquivosLocais.isEmpty()) {
+            if (arquivosRemotos.isEmpty()) {
                 r.setDownloadOk(false);
-                r.addMsg("⚠ Download retornou OK mas não trouxe arquivos locais.");
-                LOG.warn("Sem arquivos locais após download | mgvId={} codLojaRms={}", cfg.getMgvId(), cod);
+                r.setStatusGeral("FALHOU");
+                r.setDetalheGeral("Download retornou vazio.");
+                r.addMsg("FALHA: nenhum arquivo retornado no download.");
+                LOG.warn("Download retornou vazio | mgvId={} codLojaRms={}", cfg.getMgvId(), cod);
                 return r;
             }
 
+            // valida existência local
             boolean algumInexistente = arquivosLocais.stream().anyMatch(p -> p == null || !Files.exists(p));
             if (algumInexistente) {
                 r.setDownloadOk(false);
                 r.addMsg("⚠ Alguns arquivos baixados não foram encontrados localmente (ver logs).");
                 LOG.warn("Alguns arquivos locais não encontrados após download | mgvId={} codLojaRms={}", cfg.getMgvId(), cod);
+            } else {
+                r.setDownloadOk(true);
             }
+
+            int esperados = patterns.size();
+            int baixados = arquivosRemotos.size();
+            if (baixados < esperados) {
+                r.addMsg("⚠ Download parcial: baixados=" + baixados + " de esperados=" + esperados);
+                LOG.warn("Download parcial | mgvId={} codLojaRms={} baixados={} esperados={}",
+                        cfg.getMgvId(), cod, baixados, esperados);
+            } else {
+                r.addMsg("Download OK: " + baixados + " arquivo(s)");
+            }
+
+            // preenche origem/destino por arquivo
+            for (int i = 0; i < arquivosRemotos.size(); i++) {
+                String nome = arquivosRemotos.get(i);
+                Path local = (i < arquivosLocais.size() ? arquivosLocais.get(i) : null);
+
+                MgvTestResult.ArquivoInfo ai = r.getOrCreateArquivoInfo(nome);
+                if (ai != null) {
+                    ai.setOrigemRemota(remoteDir + (remoteDir.endsWith("/") ? "" : "/") + nome);
+                    ai.setDestinoLocal(local != null ? String.valueOf(local) : null);
+                }
+            }
+
+            LOG.info("Download concluído | mgvId={} codLojaRms={} baixados={} esperados={} downloadOk={}",
+                    cfg.getMgvId(), cod, r.getArquivosRemotos().size(), patterns.size(), r.isDownloadOk());
 
         } catch (Exception e) {
             r.setSftpOk(false);
             r.setDownloadOk(false);
-
+            r.setStatusGeral("FALHOU");
+            r.setDetalheGeral("Falha no download SFTP.");
             r.addMsg("FALHA no download SFTP: " + e.getMessage());
 
             LOG.error("Falha no download SFTP | mgvId={} codLojaRms={} remoteHost={} remoteDir={} msg={}",
@@ -193,87 +214,53 @@ public class MgvTransferService {
         // =========================
         // 2) lastModified + valida data (por arquivo)
         // =========================
+        int desatualizados = 0;
+        int semLastModified = 0;
+
         try {
-            if (infosDownload != null && !infosDownload.isEmpty()) {
+            // preferencial: mtime que veio do download
+            for (SftpDownloadInfo inf : infosDownload) {
+                if (inf == null || inf.nomeArquivo() == null || inf.nomeArquivo().isBlank()) continue;
 
-                // ✅ usa mtime vindo do download (sem reconectar)
-                for (SftpDownloadInfo inf : infosDownload) {
-                    if (inf == null || inf.nomeArquivo() == null) continue;
+                String nome = inf.nomeArquivo();
+                MgvTestResult.ArquivoInfo ai = r.getOrCreateArquivoInfo(nome);
 
-                    LocalDateTime lastMod = null;
-                    if (inf.mtimeEpochSeconds() != null) {
-                        lastMod = LocalDateTime.ofInstant(Instant.ofEpochSecond(inf.mtimeEpochSeconds()), zone);
-                    }
+                LocalDateTime lastMod = null;
 
-                    if (lastMod != null) {
-                        boolean okData = lastMod.toLocalDate().isEqual(hoje);
-                        r.addArquivoInfo(inf.nomeArquivo(), lastMod, okData);
-
-                        String fmt = lastMod.format(FMT);
-                        if (okData) {
-                            r.addMsg("Data OK: " + inf.nomeArquivo() + " | " + fmt);
-                            LOG.info("Data OK | mgvId={} codLojaRms={} arquivo={} lastModified={}",
-                                    cfg.getMgvId(), cod, inf.nomeArquivo(), fmt);
-                        } else {
-                            r.addMsg("⚠ DESATUALIZADO: " + inf.nomeArquivo() + " | " + fmt + " | Execução: " + hoje);
-                            LOG.warn("Arquivo desatualizado | mgvId={} codLojaRms={} arquivo={} lastModified={} execucao={}",
-                                    cfg.getMgvId(), cod, inf.nomeArquivo(), fmt, hoje);
-                        }
-                    } else {
-                        // fallback local (sem derrubar)
-                        Path local = (arquivosLocais != null ? arquivosLocais.stream()
-                                .filter(p -> p != null && p.getFileName() != null && p.getFileName().toString().equalsIgnoreCase(inf.nomeArquivo()))
-                                .findFirst().orElse(null) : null);
-
-                        LocalDateTime lmLocal = tentarObterLastModifiedLocal(local, zone);
-                        if (lmLocal != null) {
-                            boolean okData = lmLocal.toLocalDate().isEqual(hoje);
-                            r.addArquivoInfo(inf.nomeArquivo(), lmLocal, okData);
-                            r.addMsg((okData ? "Data OK (local): " : "⚠ DESATUALIZADO (local): ") + inf.nomeArquivo() + " | " + lmLocal.format(FMT));
-                        } else {
-                            r.addArquivoInfo(inf.nomeArquivo(), null, null);
-                            r.addMsg("⚠ Sem lastModified: " + inf.nomeArquivo());
-                            LOG.warn("Sem lastModified p/ arquivo | mgvId={} codLojaRms={} arquivo={}",
-                                    cfg.getMgvId(), cod, inf.nomeArquivo());
-                        }
-                    }
+                if (inf.mtimeEpochSeconds() != null) {
+                    lastMod = LocalDateTime.ofInstant(Instant.ofEpochSecond(inf.mtimeEpochSeconds()), zone);
                 }
 
-            } else if (arquivosRemotos != null && !arquivosRemotos.isEmpty()) {
-
-                // fallback antigo (mantido): tenta remoto/local (pode reconectar dependendo do método)
-                for (int i = 0; i < arquivosRemotos.size(); i++) {
-                    String nomeRemoto = arquivosRemotos.get(i);
-                    Path local = (arquivosLocais != null && i < arquivosLocais.size() ? arquivosLocais.get(i) : null);
-
-                    LocalDateTime lastMod = tentarObterLastModifiedRemoto(rc, remoteDir, nomeRemoto, zone);
-                    if (lastMod == null) {
-                        lastMod = tentarObterLastModifiedLocal(local, zone);
-                    }
-
-                    if (lastMod != null) {
-                        boolean okData = lastMod.toLocalDate().isEqual(hoje);
-                        r.addArquivoInfo(nomeRemoto, lastMod, okData);
-
-                        String fmt = lastMod.format(FMT);
-                        if (okData) {
-                            r.addMsg("Data OK: " + nomeRemoto + " | " + fmt);
-                            LOG.info("Data OK | mgvId={} codLojaRms={} arquivo={} lastModified={}",
-                                    cfg.getMgvId(), cod, nomeRemoto, fmt);
-                        } else {
-                            r.addMsg("⚠ DESATUALIZADO: " + nomeRemoto + " | " + fmt + " | Execução: " + hoje);
-                            LOG.warn("Arquivo desatualizado | mgvId={} codLojaRms={} arquivo={} lastModified={} execucao={}",
-                                    cfg.getMgvId(), cod, nomeRemoto, fmt, hoje);
-                        }
-                    } else {
-                        r.addMsg("⚠ Sem lastModified: " + nomeRemoto);
-                        LOG.warn("Sem lastModified p/ arquivo | mgvId={} codLojaRms={} arquivo={}",
-                                cfg.getMgvId(), cod, nomeRemoto);
-                    }
+                // fallback local
+                if (lastMod == null) {
+                    Path local = localizarLocalPorNome(nome, r.getArquivosLocais());
+                    lastMod = tentarObterLastModifiedLocal(local, zone);
                 }
 
-            } else {
-                r.addMsg("⚠ Sem arquivos para validar lastModified.");
+                if (ai != null) ai.setLastModified(lastMod);
+
+                if (lastMod != null) {
+                    boolean okData = lastMod.toLocalDate().isEqual(hoje);
+                    if (ai != null) ai.setAtualizado(okData);
+
+                    String fmt = lastMod.format(FMT);
+                    if (okData) {
+                        r.addMsg("Data OK: " + nome + " | " + fmt);
+                        LOG.info("Data OK | mgvId={} codLojaRms={} arquivo={} lastModified={}",
+                                cfg.getMgvId(), cod, nome, fmt);
+                    } else {
+                        desatualizados++;
+                        r.addMsg("⚠ DESATUALIZADO: " + nome + " | " + fmt + " | Execução: " + hoje);
+                        LOG.warn("Arquivo desatualizado | mgvId={} codLojaRms={} arquivo={} lastModified={} execucao={}",
+                                cfg.getMgvId(), cod, nome, fmt, hoje);
+                    }
+                } else {
+                    semLastModified++;
+                    if (ai != null) ai.setAtualizado(null);
+                    r.addMsg("⚠ Sem lastModified: " + nome);
+                    LOG.warn("Sem lastModified p/ arquivo | mgvId={} codLojaRms={} arquivo={}",
+                            cfg.getMgvId(), cod, nome);
+                }
             }
 
         } catch (Exception e) {
@@ -283,59 +270,107 @@ public class MgvTransferService {
         }
 
         // =========================
-        // 3) FS copy (se configurado) - copia TODOS
+        // 3) FS copy (se configurado) - copia TODOS (por arquivo)
         // =========================
-        if (cfg.getCaminhoFsDestino() != null && !cfg.getCaminhoFsDestino().isBlank()) {
-            try {
-                LOG.info("FS copy start | mgvId={} codLojaRms={} destinoFs={} totalArquivos={}",
-                        cfg.getMgvId(), cod, cfg.getCaminhoFsDestino(), safeSize(arquivosLocais));
+        boolean fsConfigurado = cfg.getCaminhoFsDestino() != null && !cfg.getCaminhoFsDestino().isBlank();
+        int fsCopiados = 0;
+        int fsFalhas = 0;
 
-                int copiados = 0;
-                if (arquivosLocais != null) {
-                    for (Path p : arquivosLocais) {
-                        if (p == null || !Files.exists(p)) continue;
+        if (fsConfigurado) {
+            LOG.info("FS copy start | mgvId={} codLojaRms={} destinoFs={} totalArquivos={}",
+                    cfg.getMgvId(), cod, cfg.getCaminhoFsDestino(), safeSize(r.getArquivosLocais()));
+
+            if (r.getArquivosLocais() != null) {
+                for (Path p : r.getArquivosLocais()) {
+                    if (p == null) continue;
+
+                    String nome = (p.getFileName() != null ? p.getFileName().toString() : p.toString());
+                    MgvTestResult.ArquivoInfo ai = r.getOrCreateArquivoInfo(nome);
+
+                    if (!Files.exists(p)) {
+                        fsFalhas++;
+                        if (ai != null) {
+                            ai.setFsStatus("FALHOU");
+                            ai.setDetalhe(merge(ai.getDetalhe(), "FS: arquivo local não existe."));
+                        }
+                        continue;
+                    }
+
+                    try {
                         fsCopyService.copiarParaFs(p, cfg.getCaminhoFsDestino());
-                        copiados++;
+                        fsCopiados++;
+                        if (ai != null) ai.setFsStatus("OK");
+                    } catch (Exception ex) {
+                        fsFalhas++;
+                        if (ai != null) {
+                            ai.setFsStatus("FALHOU");
+                            ai.setDetalhe(merge(ai.getDetalhe(), "FS falhou: " + ex.getMessage()));
+                        }
+                        LOG.warn("FS falhou por arquivo | mgvId={} codLojaRms={} arquivo={} destinoFs={} msg={}",
+                                cfg.getMgvId(), cod, p, cfg.getCaminhoFsDestino(), ex.getMessage());
                     }
                 }
-
-                r.setFsOk(true);
-                r.addMsg("FS OK: " + cfg.getCaminhoFsDestino() + " | copiados=" + copiados);
-
-                LOG.info("FS OK | mgvId={} codLojaRms={} destinoFs={} copiados={}",
-                        cfg.getMgvId(), cod, cfg.getCaminhoFsDestino(), copiados);
-
-            } catch (Exception e) {
-                r.setFsOk(false);
-                r.addMsg("FS FALHOU: " + e.getMessage());
-
-                LOG.warn("FS FALHOU | mgvId={} codLojaRms={} destinoFs={} msg={}",
-                        cfg.getMgvId(), cod, cfg.getCaminhoFsDestino(), e.getMessage(), e);
             }
+
+            boolean fsOk = (fsFalhas == 0 && fsCopiados > 0);
+            r.setFsOk(fsOk);
+
+            if (fsOk) {
+                r.addMsg("FS OK: " + cfg.getCaminhoFsDestino() + " | copiados=" + fsCopiados);
+                LOG.info("FS OK | mgvId={} codLojaRms={} destinoFs={} copiados={}",
+                        cfg.getMgvId(), cod, cfg.getCaminhoFsDestino(), fsCopiados);
+            } else {
+                r.addMsg("⚠ FS parcial/falhou: destino=" + cfg.getCaminhoFsDestino() + " | copiados=" + fsCopiados + " | falhas=" + fsFalhas);
+                LOG.warn("FS parcial/falhou | mgvId={} codLojaRms={} destinoFs={} copiados={} falhas={}",
+                        cfg.getMgvId(), cod, cfg.getCaminhoFsDestino(), fsCopiados, fsFalhas);
+            }
+
         } else {
             r.addMsg("FS: não configurado (pulado).");
-            LOG.debug("FS pulado (não configurado) | mgvId={} codLojaRms={}", cfg.getMgvId(), cod);
+            r.setFsOk(false); // mantém semântico: não usado
+            if (r.getArquivosRemotos() != null) {
+                for (String nome : r.getArquivosRemotos()) {
+                    MgvTestResult.ArquivoInfo ai = r.getOrCreateArquivoInfo(nome);
+                    if (ai != null && ai.getFsStatus() == null) ai.setFsStatus("PULADO");
+                }
+            }
         }
 
         // =========================
-        // 4) SMB copy (se configurado) - copia TODOS
+        // 4) SMB copy (se configurado) - copia TODOS (por arquivo)
         // =========================
-        boolean smbTemMinimo =
+        boolean smbConfigurado =
                 cfg.getSmbServidor() != null && !cfg.getSmbServidor().isBlank() &&
                 cfg.getSmbCompartilhamento() != null && !cfg.getSmbCompartilhamento().isBlank() &&
                 cfg.getSmbUsuario() != null && !cfg.getSmbUsuario().isBlank();
 
-        if (smbTemMinimo) {
-            try {
-                String share = cfg.getSmbServidor() + "\\" + cfg.getSmbCompartilhamento();
+        int smbCopiados = 0;
+        int smbFalhas = 0;
 
-                LOG.info("SMB copy start | mgvId={} codLojaRms={} share={} subpasta={} totalArquivos={}",
-                        cfg.getMgvId(), cod, share, nz(cfg.getSmbSubpasta()), safeSize(arquivosLocais));
+        if (smbConfigurado) {
 
-                int copiados = 0;
-                if (arquivosLocais != null) {
-                    for (Path p : arquivosLocais) {
-                        if (p == null || !Files.exists(p)) continue;
+            String share = cfg.getSmbServidor() + "\\" + cfg.getSmbCompartilhamento();
+
+            LOG.info("SMB copy start | mgvId={} codLojaRms={} share={} subpasta={} totalArquivos={}",
+                    cfg.getMgvId(), cod, share, nz(cfg.getSmbSubpasta()), safeSize(r.getArquivosLocais()));
+
+            if (r.getArquivosLocais() != null) {
+                for (Path p : r.getArquivosLocais()) {
+                    if (p == null) continue;
+
+                    String nome = (p.getFileName() != null ? p.getFileName().toString() : p.toString());
+                    MgvTestResult.ArquivoInfo ai = r.getOrCreateArquivoInfo(nome);
+
+                    if (!Files.exists(p)) {
+                        smbFalhas++;
+                        if (ai != null) {
+                            ai.setSmbStatus("FALHOU");
+                            ai.setDetalhe(merge(ai.getDetalhe(), "SMB: arquivo local não existe."));
+                        }
+                        continue;
+                    }
+
+                    try {
                         smbCopyService.copiarParaSmb(
                                 p,
                                 cfg.getSmbServidor(),
@@ -345,42 +380,78 @@ public class MgvTransferService {
                                 cfg.getSmbUsuario(),
                                 cfg.getSmbSenha()
                         );
-                        copiados++;
+                        smbCopiados++;
+                        if (ai != null) ai.setSmbStatus("OK");
+                    } catch (Exception ex) {
+                        smbFalhas++;
+                        if (ai != null) {
+                            ai.setSmbStatus("FALHOU");
+                            ai.setDetalhe(merge(ai.getDetalhe(), "SMB falhou: " + ex.getMessage()));
+                        }
+                        LOG.warn("SMB falhou por arquivo | mgvId={} codLojaRms={} arquivo={} share={} msg={}",
+                                cfg.getMgvId(), cod, p, share, ex.getMessage());
                     }
                 }
-
-                r.setSmbOk(true);
-                r.addMsg("SMB OK: " + share + " | copiados=" + copiados);
-
-                LOG.info("SMB OK | mgvId={} codLojaRms={} share={} copiados={}",
-                        cfg.getMgvId(), cod, share, copiados);
-
-            } catch (Exception e) {
-                r.setSmbOk(false);
-                r.addMsg("SMB FALHOU: " + e.getMessage());
-
-                LOG.warn("SMB FALHOU | mgvId={} codLojaRms={} servidor={} share={} msg={}",
-                        cfg.getMgvId(),
-                        cod,
-                        nz(cfg.getSmbServidor()),
-                        nz(cfg.getSmbCompartilhamento()),
-                        e.getMessage(),
-                        e);
             }
+
+            boolean smbOk = (smbFalhas == 0 && smbCopiados > 0);
+            r.setSmbOk(smbOk);
+
+            if (smbOk) {
+                r.addMsg("SMB OK: " + share + " | copiados=" + smbCopiados);
+                LOG.info("SMB OK | mgvId={} codLojaRms={} share={} copiados={}",
+                        cfg.getMgvId(), cod, share, smbCopiados);
+            } else {
+                r.addMsg("⚠ SMB parcial/falhou: share=" + share + " | copiados=" + smbCopiados + " | falhas=" + smbFalhas);
+                LOG.warn("SMB parcial/falhou | mgvId={} codLojaRms={} share={} copiados={} falhas={}",
+                        cfg.getMgvId(), cod, share, smbCopiados, smbFalhas);
+            }
+
         } else {
             r.addMsg("SMB: não configurado (pulado).");
-            LOG.debug("SMB pulado (não configurado) | mgvId={} codLojaRms={}", cfg.getMgvId(), cod);
+            r.setSmbOk(false);
+            if (r.getArquivosRemotos() != null) {
+                for (String nome : r.getArquivosRemotos()) {
+                    MgvTestResult.ArquivoInfo ai = r.getOrCreateArquivoInfo(nome);
+                    if (ai != null && ai.getSmbStatus() == null) ai.setSmbStatus("PULADO");
+                }
+            }
         }
 
+        // =========================
+        // 5) Status geral
+        // =========================
+        String statusGeral = calcularStatusGeral(
+                r,
+                patterns.size(),
+                desatualizados,
+                semLastModified,
+                fsConfigurado,
+                smbConfigurado
+        );
+
+        r.setStatusGeral(statusGeral);
+
+        String detalhe = "baixados=" + safeSize(r.getArquivosRemotos())
+                + " | esperados=" + patterns.size()
+                + " | desatualizados=" + desatualizados
+                + " | semLastModified=" + semLastModified
+                + (fsConfigurado ? (" | fsOk=" + r.isFsOk() + " copiados=" + fsCopiados + " falhas=" + fsFalhas) : " | fs=pulado")
+                + (smbConfigurado ? (" | smbOk=" + r.isSmbOk() + " copiados=" + smbCopiados + " falhas=" + smbFalhas) : " | smb=pulado");
+
+        r.setDetalheGeral(detalhe);
+
         long elapsed = System.currentTimeMillis() - t0;
-        LOG.info("MGV transfer end | mgvId={} codLojaRms={} sftpOk={} downloadOk={} fsOk={} smbOk={} tempoMs={}",
+        LOG.info("MGV transfer end | mgvId={} codLojaRms={} statusGeral={} sftpOk={} downloadOk={} fsOk={} smbOk={} tempoMs={} detalhe={}",
                 cfg.getMgvId(),
                 cod,
+                statusGeral,
                 r.isSftpOk(),
                 r.isDownloadOk(),
                 r.isFsOk(),
                 r.isSmbOk(),
-                elapsed
+                elapsed,
+                detalhe
         );
 
         r.addMsg("Tempo total: " + fmtDuracaoMs(elapsed));
@@ -403,6 +474,7 @@ public class MgvTransferService {
         final List<String> arquivosRemotos;
         final List<Path> arquivosLocais;
         final List<SftpDownloadInfo> infos;
+
         DownloadBatch(List<String> arquivosRemotos, List<Path> arquivosLocais, List<SftpDownloadInfo> infos) {
             this.arquivosRemotos = arquivosRemotos;
             this.arquivosLocais = arquivosLocais;
@@ -414,21 +486,28 @@ public class MgvTransferService {
      * ✅ AJUSTE:
      * - Tenta o batch novo (1 conexão por loja):
      *   sftpDownloadService.baixarArquivosMaisRecentesPorPattern(...)
-     * - Se falhar por qualquer motivo, cai no seu fallback antigo (1 conexão por pattern).
+     * - Se falhar, cai no fallback por pattern.
      */
     private DownloadBatch baixarBatchSftp(LojaRemoteConfig rc, String remoteDir, List<String> patterns, Path pastaDia) throws Exception {
 
-        // 1) ✅ batch novo (1 conexão por loja)
+        // 1) batch novo (1 conexão por loja)
         try {
             List<SftpDownloadInfo> infos = sftpDownloadService.baixarArquivosMaisRecentesPorPattern(rc, remoteDir, patterns, pastaDia);
-            List<String> nomes = infos.stream().map(SftpDownloadInfo::nomeArquivo).toList();
+            if (infos == null) infos = new ArrayList<>();
+
+            List<String> nomes = infos.stream()
+                    .filter(x -> x != null && x.nomeArquivo() != null && !x.nomeArquivo().isBlank())
+                    .map(SftpDownloadInfo::nomeArquivo)
+                    .toList();
+
             List<Path> locais = nomes.stream().map(pastaDia::resolve).toList();
             return new DownloadBatch(nomes, locais, infos);
+
         } catch (Exception e) {
             LOG.warn("Batch novo falhou; usando fallback por pattern (1 conexão por pattern). msg={}", e.getMessage());
         }
 
-        // 2) fallback antigo: 1 por pattern (SEM renomear)
+        // 2) fallback: 1 por pattern
         List<String> remotos = new ArrayList<>();
         List<Path> locais = new ArrayList<>();
         List<SftpDownloadInfo> infosOut = new ArrayList<>();
@@ -437,13 +516,16 @@ public class MgvTransferService {
         for (String pattern : patterns) {
             idx++;
 
-            // usa o método novo (info), mas conexão é por pattern nesse fallback
             SftpDownloadInfo info = sftpDownloadService.baixarArquivoMaisRecenteQueCaseInfo(
                     rc, remoteDir, List.of(pattern), pastaDia
             );
 
             String nomeRemoto = (info != null ? info.nomeArquivo() : null);
-            if (nomeRemoto == null) continue;
+            if (nomeRemoto == null || nomeRemoto.isBlank()) {
+                LOG.debug("Fallback download por pattern: nenhum arquivo | {} / {} | pattern={}",
+                        idx, patterns.size(), pattern);
+                continue;
+            }
 
             Path local = pastaDia.resolve(nomeRemoto);
 
@@ -461,9 +543,7 @@ public class MgvTransferService {
     private ZoneId resolveZone(ArquivosMgv cfg) {
         try {
             String tz = (cfg != null ? cfg.getTimezone() : null);
-            if (tz != null && !tz.isBlank()) {
-                return ZoneId.of(tz.trim());
-            }
+            if (tz != null && !tz.isBlank()) return ZoneId.of(tz.trim());
         } catch (Exception ignore) { }
         return ZoneId.systemDefault();
     }
@@ -480,55 +560,33 @@ public class MgvTransferService {
         }
     }
 
-    /**
-     * Tenta obter lastModified do remoto via métodos opcionais no SftpDownloadService.
-     * Se não existir método compatível, retorna null (e o fluxo faz fallback no local).
-     */
-    private LocalDateTime tentarObterLastModifiedRemoto(LojaRemoteConfig rc, String remoteDir, String nomeArquivo, ZoneId zone) {
-        Object v = null;
-
-        // tentativas (3 args)
-        v = tryInvokeSftp("obterLastModifiedRemoto", new Class<?>[]{LojaRemoteConfig.class, String.class, String.class}, new Object[]{rc, remoteDir, nomeArquivo});
-        if (v == null) v = tryInvokeSftp("getLastModifiedRemoto",   new Class<?>[]{LojaRemoteConfig.class, String.class, String.class}, new Object[]{rc, remoteDir, nomeArquivo});
-        if (v == null) v = tryInvokeSftp("remoteLastModified",      new Class<?>[]{LojaRemoteConfig.class, String.class, String.class}, new Object[]{rc, remoteDir, nomeArquivo});
-
-        // tentativas (2 args) com fullPath
-        String full = (remoteDir != null ? remoteDir : "") + (remoteDir != null && remoteDir.endsWith("/") ? "" : "/") + nomeArquivo;
-        if (v == null) v = tryInvokeSftp("obterLastModifiedRemoto", new Class<?>[]{LojaRemoteConfig.class, String.class}, new Object[]{rc, full});
-        if (v == null) v = tryInvokeSftp("getLastModifiedRemoto",   new Class<?>[]{LojaRemoteConfig.class, String.class}, new Object[]{rc, full});
-        if (v == null) v = tryInvokeSftp("statLastModified",        new Class<?>[]{LojaRemoteConfig.class, String.class}, new Object[]{rc, full});
-
-        LocalDateTime out = converterParaLocalDateTime(v, zone);
-        if (out != null) {
-            LOG.debug("LastModified remoto obtido | remoteHost={} remoteFile={} lastModified={}",
-                    safeHost(rc), full, out.format(FMT));
+    private static Path localizarLocalPorNome(String nomeArquivo, List<Path> locais) {
+        if (nomeArquivo == null || locais == null || locais.isEmpty()) return null;
+        for (Path p : locais) {
+            try {
+                if (p != null && p.getFileName() != null && p.getFileName().toString().equalsIgnoreCase(nomeArquivo)) {
+                    return p;
+                }
+            } catch (Exception ignore) { }
         }
-        return out;
-    }
-
-    private Object tryInvokeSftp(String method, Class<?>[] paramTypes, Object[] args) {
-        try {
-            var m = sftpDownloadService.getClass().getMethod(method, paramTypes);
-            return m.invoke(sftpDownloadService, args);
-        } catch (NoSuchMethodException nsme) {
-            return null;
-        } catch (Exception e) {
-            LOG.debug("Falha ao chamar {} | msg={}", method, e.getMessage());
-            return null;
-        }
-    }
-
-    private LocalDateTime converterParaLocalDateTime(Object v, ZoneId zone) {
-        if (v == null) return null;
-
-        try {
-            if (v instanceof LocalDateTime ldt) return ldt;
-            if (v instanceof Date d) return LocalDateTime.ofInstant(d.toInstant(), zone);
-            if (v instanceof Instant i) return LocalDateTime.ofInstant(i, zone);
-            if (v instanceof Long epochMillis) return LocalDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), zone);
-        } catch (Exception ignore) { }
-
         return null;
+    }
+
+    private static String calcularStatusGeral(MgvTestResult r,
+                                             int totalEsperado,
+                                             int desatualizados,
+                                             int semLastModified,
+                                             boolean fsConfigurado,
+                                             boolean smbConfigurado) {
+        if (r == null) return "INDEFINIDO";
+        if (!r.isDownloadOk()) return "FALHOU";
+
+        boolean parcialPorQtd = (safeSize(r.getArquivosRemotos()) < totalEsperado);
+        boolean parcialPorValidacao = (desatualizados > 0) || (semLastModified > 0);
+        boolean parcialPorDestino = (fsConfigurado && !r.isFsOk()) || (smbConfigurado && !r.isSmbOk());
+
+        if (parcialPorQtd || parcialPorValidacao || parcialPorDestino) return "FALHA_PARCIAL";
+        return "OK";
     }
 
     private String juntarRemoto(String base, String sub) {
@@ -546,6 +604,12 @@ public class MgvTransferService {
     // =========================
     // Helpers pequenos p/ log
     // =========================
+    private static String merge(String a, String b) {
+        if (a == null || a.isBlank()) return b;
+        if (b == null || b.isBlank()) return a;
+        return a + " | " + b;
+    }
+
     private static String nz(String v) {
         return (v == null || v.isBlank()) ? "-" : v;
     }

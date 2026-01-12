@@ -350,6 +350,11 @@ public class PriceTransferService {
         try {
             boolean msgAtivo = Boolean.TRUE.equals(cfg.getMsgCopyAtivo());
             if (!msgAtivo) {
+                // ✅ estruturado
+                r.setMsgStatus("DESATIVADO");
+                r.setMsgDetalhe("msgCopyAtivo=false");
+
+                // mantém comportamento antigo
                 r.addMsg("MSG: cópia desativada (msgCopyAtivo=false).");
                 LOG.debug("MSG pulado (desativado) | priceId={} codLojaRms={}", cfg.getPriceId(), safeCod(cfg));
                 return;
@@ -360,16 +365,25 @@ public class PriceTransferService {
             String msgSub = cfg.getMsgSmbSubpasta();
 
             if (msgNome == null || msgNome.isBlank()) {
+                r.setMsgStatus("PULADO");
+                r.setMsgDetalhe("msgFileNomeLocal não informado");
+
                 r.addMsg("MSG: msgFileNomeLocal não informado (pulado).");
                 LOG.warn("MSG pulado (nome local vazio) | priceId={} codLojaRms={}", cfg.getPriceId(), safeCod(cfg));
                 return;
             }
             if (msgShare == null || msgShare.isBlank()) {
+                r.setMsgStatus("PULADO");
+                r.setMsgDetalhe("msgSmbCompartilhamento não informado");
+
                 r.addMsg("MSG: msgSmbCompartilhamento não informado (pulado).");
                 LOG.warn("MSG pulado (share vazio) | priceId={} codLojaRms={}", cfg.getPriceId(), safeCod(cfg));
                 return;
             }
             if (msgSub == null || msgSub.isBlank()) {
+                r.setMsgStatus("PULADO");
+                r.setMsgDetalhe("msgSmbSubpasta não informado");
+
                 r.addMsg("MSG: msgSmbSubpasta não informado (pulado).");
                 LOG.warn("MSG pulado (subpasta vazia) | priceId={} codLojaRms={}", cfg.getPriceId(), safeCod(cfg));
                 return;
@@ -378,13 +392,21 @@ public class PriceTransferService {
             // pastaDia = .../LJ102/YYYY-MM-DD  -> base = .../LJ102
             Path pastaLojaBase = (pastaDia != null ? pastaDia.getParent() : null);
             if (pastaLojaBase == null) {
+                r.setMsgStatus("PULADO");
+                r.setMsgDetalhe("pasta base da loja não determinada");
+
                 r.addMsg("MSG: não consegui determinar a pasta base da loja (pulado).");
                 LOG.warn("MSG pulado (pastaLojaBase null) | priceId={} codLojaRms={}", cfg.getPriceId(), safeCod(cfg));
                 return;
             }
 
             Path arquivoMsgLocal = pastaLojaBase.resolve(msgNome);
+            r.setMsgOrigem(String.valueOf(arquivoMsgLocal));
+
             if (!Files.exists(arquivoMsgLocal)) {
+                r.setMsgStatus("PULADO");
+                r.setMsgDetalhe("arquivo não encontrado");
+
                 r.addMsg("MSG: arquivo não encontrado em " + arquivoMsgLocal + " (pulado).");
                 LOG.warn("MSG arquivo não encontrado | priceId={} codLojaRms={} arquivoMsgLocal={}",
                         cfg.getPriceId(), safeCod(cfg), arquivoMsgLocal);
@@ -396,11 +418,17 @@ public class PriceTransferService {
                     cfg.getSmbUsuario() != null && !cfg.getSmbUsuario().isBlank();
 
             if (!smbMinimoCredenciais) {
+                r.setMsgStatus("PULADO");
+                r.setMsgDetalhe("SMB sem credenciais mínimas (Servidor/Usuário)");
+
                 r.addMsg("MSG: SMB sem credenciais mínimas (Servidor/Usuário). Não foi possível copiar.");
                 LOG.warn("MSG SMB sem credenciais mínimas | priceId={} codLojaRms={} servidor={} usuario={}",
                         cfg.getPriceId(), safeCod(cfg), nz(cfg.getSmbServidor()), nz(cfg.getSmbUsuario()));
                 return;
             }
+
+            String destino = "\\\\" + cfg.getSmbServidor() + "\\" + msgShare + "\\" + msgSub;
+            r.setMsgDestino(destino);
 
             LOG.info("MSG copy start | priceId={} codLojaRms={} servidor={} share={} subpasta={} arquivoLocal={}",
                     cfg.getPriceId(),
@@ -422,12 +450,23 @@ public class PriceTransferService {
             );
 
             long elapsed = System.currentTimeMillis() - t0;
+
+            // ✅ estruturado
+            r.setMsgStatus("OK");
+            r.setMsgDetalhe("copiado em " + elapsed + "ms");
+
+            // mantém comportamento antigo
             r.addMsg("MSG OK: \\\\" + cfg.getSmbServidor() + "\\" + msgShare + "\\" + msgSub + " <- " + msgNome);
 
             LOG.info("MSG OK | priceId={} codLojaRms={} destino=\\\\{}\\{}\\{} tempoMs={}",
                     cfg.getPriceId(), safeCod(cfg), cfg.getSmbServidor(), msgShare, msgSub, elapsed);
 
         } catch (Exception e) {
+            // ✅ estruturado
+            r.setMsgStatus("FALHOU");
+            r.setMsgDetalhe(e.getMessage());
+
+            // mantém comportamento antigo
             r.addMsg("MSG FALHOU: " + e.getMessage());
             LOG.warn("MSG FALHOU | priceId={} codLojaRms={} msg={}",
                     cfg != null ? cfg.getPriceId() : null,

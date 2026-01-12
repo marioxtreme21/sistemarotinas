@@ -20,6 +20,15 @@ public class PriceTestResult {
 	private LocalDateTime lastModifiedRemoto;
 	private Boolean arquivoAtualizado; // true/false/null (não foi possível validar)
 
+	// =========================
+	// ✅ MSG (m1) - resultado estruturado (NÃO quebra compatibilidade)
+	// =========================
+	// Valores sugeridos: OK | FALHOU | PULADO | DESATIVADO | INDEFINIDO
+	private String msgStatus;
+	private String msgOrigem;  // caminho local do .m1
+	private String msgDestino; // \\server\share\subpasta
+	private String msgDetalhe; // motivo/erro curto
+
 	private final List<String> mensagens = new ArrayList<>();
 
 	public boolean isSftpOk() {
@@ -93,5 +102,45 @@ public class PriceTestResult {
 	public void addMsg(String msg) {
 		if (msg != null && !msg.isBlank())
 			mensagens.add(msg);
+	}
+
+	// =========================
+	// ✅ MSG getters/setters
+	// =========================
+	public String getMsgStatus() {
+		return msgStatus;
+	}
+
+	public void setMsgStatus(String msgStatus) {
+		this.msgStatus = msgStatus;
+	}
+
+	public String getMsgOrigem() {
+		return msgOrigem;
+	}
+
+	public void setMsgOrigem(String msgOrigem) {
+		this.msgOrigem = msgOrigem;
+	}
+
+	public String getMsgDestino() {
+		return msgDestino;
+	}
+
+	public void setMsgDestino(String msgDestino) {
+		this.msgDestino = msgDestino;
+	}
+
+	public String getMsgDetalhe() {
+		return msgDetalhe;
+	}
+
+	public void setMsgDetalhe(String msgDetalhe) {
+		this.msgDetalhe = msgDetalhe;
+	}
+
+	// conveniência (não atrapalha ninguém)
+	public boolean isMsgOk() {
+		return "OK".equalsIgnoreCase(msgStatus) || "DESATIVADO".equalsIgnoreCase(msgStatus);
 	}
 }

@@ -1,0 +1,74 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <!-- ✅ Coluna de seleção: deixe APENAS UMA na tela (aqui OU no datatable principal) -->
+    <p:column selectionMode="multiple" style="width:3rem;text-align:center" />
+
+    <p:column headerText="Key" sortBy="#{t.taskKey}">
+        <h:outputText value="#{t.taskKey}" />
+    </p:column>
+
+    <p:column headerText="Descrição" sortBy="#{t.descricao}">
+        <h:outputText value="#{t.descricao}" />
+    </p:column>
+
+    <p:column headerText="Owner" style="width:6rem" sortBy="#{t.owner}">
+        <h:outputText value="#{t.owner}" />
+    </p:column>
+
+    <p:column headerText="Ativa" style="width:6rem;text-align:center">
+        <p:toggleSwitch value="#{t.enabled}">
+            <p:ajax event="change"
+                    listener="#{scheduledTaskConfigBean.toggleEnabled(t)}"
+                    process="@this"
+                    update=":frmSched:tableResult
+                            :frmSched:cadastroWrapper
+                            :frmSched:pnlPreview
+                            :frmSched:growl"/>
+        </p:toggleSwitch>
+    </p:column>
+
+    <p:column headerText="Cron" sortBy="#{t.cronExpr}">
+        <h:outputText value="#{t.cronExpr}" />
+    </p:column>
+
+    <p:column headerText="TZ" style="width:11rem" sortBy="#{t.zoneId}">
+        <h:outputText value="#{t.zoneId}" />
+    </p:column>
+
+    <p:column headerText="Próxima" style="width:12rem" sortBy="#{t.nextRunAt}">
+        <h:outputText value="#{scheduledTaskConfigBean.fmtDt(t.nextRunAt)}" />
+    </p:column>
+
+    <p:column headerText="Última" style="width:12rem" sortBy="#{t.lastFinishedAt}">
+        <h:outputText value="#{scheduledTaskConfigBean.fmtDt(t.lastFinishedAt)}" />
+    </p:column>
+
+    <p:column headerText="Status" style="width:7rem">
+        <h:outputText value="#{t.lastStatus}" />
+    </p:column>
+
+    <p:column headerText="Erro" style="width:5rem;text-align:center">
+        <p:commandButton icon="pi pi-info-circle"
+                         title="Ver erro"
+                         actionListener="#{scheduledTaskConfigBean.verErro(t)}"
+                         oncomplete="PF('dlgErro').show()"
+                         process="@this"
+                         update=":frmSched:dlgErro"
+                         disabled="#{empty t.lastError}" />
+    </p:column>
+
+    <p:column headerText="Editar" style="width:7rem;text-align:center">
+        <p:commandButton value="Editar"
+                         icon="pi pi-pencil"
+                         actionListener="#{scheduledTaskConfigBean.editar(t)}"
+                         process="@this"
+                         update=":frmSched:cadastroWrapper
+                                 :frmSched:pnlPreview
+                                 :frmSched:growl" />
+    </p:column>
+
+</ui:composition>

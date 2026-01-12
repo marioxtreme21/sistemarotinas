@@ -22,9 +22,19 @@ import java.util.regex.Pattern;
 public class SftpDownloadService {
 
     /**
-     * ✅ Logger único da rotina PRICE (vai para o appender/arquivo da Rotina PRICE)
+     * ✅ Logs do download usado pelo PRICE (vai para appender da Rotina PRICE)
      */
-    private static final Logger LOG = LoggerFactory.getLogger("ROTINA_PRICE");
+    private static final Logger LOG_PRICE = LoggerFactory.getLogger("ROTINA_PRICE");
+
+    /**
+     * ✅ Logs do batch usado pelo MGV (vai para appender da Rotina MGV)
+     */
+    private static final Logger LOG_MGV = LoggerFactory.getLogger("ROTINA_MGV");
+
+    /**
+     * ✅ Logger genérico da classe (para logs técnicos que não devem ir para PRICE/MGV)
+     */
+    private static final Logger LOG = LoggerFactory.getLogger(SftpDownloadService.class);
 
     // =========================================================
     // ✅ MANTIDO: assinatura antiga (retorna apenas String)
@@ -40,7 +50,7 @@ public class SftpDownloadService {
     }
 
     // =========================================================
-    // ✅ NOVO: assinatura principal (retorna nome + mtime remoto)
+    // ✅ Assinatura principal (retorna nome + mtime remoto)
     // =========================================================
     public SftpDownloadInfo baixarArquivoMaisRecenteQueCaseInfo(
             LojaRemoteConfig cfg,
@@ -66,14 +76,14 @@ public class SftpDownloadService {
         long ini = System.currentTimeMillis();
 
         try {
-            LOG.info("[SFTP] Início download | host={} porta={} usuario={} remoteDir={} destinoLocal={}",
+            LOG_PRICE.info("[SFTP] Início download | host={} porta={} usuario={} remoteDir={} destinoLocal={}",
                     host, porta, usuario, remoteDir, destinoLocal);
 
             JSch jsch = new JSch();
 
             if (cfg.getCaminhoChavePrivada() != null && !cfg.getCaminhoChavePrivada().isBlank()) {
                 String keyPath = cfg.getCaminhoChavePrivada().trim();
-                LOG.info("[SFTP] Usando chave privada | path={}", keyPath);
+                LOG_PRICE.info("[SFTP] Usando chave privada | path={}", keyPath);
                 jsch.addIdentity(keyPath);
             }
 
@@ -82,9 +92,9 @@ public class SftpDownloadService {
 
             if (cfg.getSenhaRemota() != null && !cfg.getSenhaRemota().isBlank()) {
                 session.setPassword(cfg.getSenhaRemota());
-                LOG.info("[SFTP] Autenticação por senha habilitada (senha não exibida)");
+                LOG_PRICE.info("[SFTP] Autenticação por senha habilitada (senha não exibida)");
             } else {
-                LOG.info("[SFTP] Autenticação sem senha (provável chave)");
+                LOG_PRICE.info("[SFTP] Autenticação sem senha (provável chave)");
             }
 
             int timeout = (cfg.getConnectTimeoutMs() != null ? cfg.getConnectTimeoutMs() : 15000);
@@ -94,7 +104,7 @@ public class SftpDownloadService {
             channel.connect(timeout);
             sftp = (ChannelSftp) channel;
 
-            LOG.info("[SFTP] Conectado. Listando diretório remoto {}", remoteDir);
+            LOG_PRICE.info("[SFTP] Conectado. Listando diretório remoto {}", remoteDir);
 
             @SuppressWarnings("unchecked")
             Vector<ChannelSftp.LsEntry> ls = sftp.ls(remoteDir);
@@ -108,14 +118,14 @@ public class SftpDownloadService {
             int mtimeSegundos = (escolhido.getAttrs() != null ? escolhido.getAttrs().getMTime() : 0);
             Instant remoteInstant = (mtimeSegundos > 0 ? Instant.ofEpochSecond(mtimeSegundos) : null);
 
-            LOG.info("[SFTP] Arquivo escolhido={} mtimeRemoto={}", nomeArquivo, remoteInstant);
+            LOG_PRICE.info("[SFTP] Arquivo escolhido={} mtimeRemoto={}", nomeArquivo, remoteInstant);
 
             Files.createDirectories(destinoLocal);
 
             Path localFile = destinoLocal.resolve(nomeArquivo);
             String remotePath = remoteDir.endsWith("/") ? (remoteDir + nomeArquivo) : (remoteDir + "/" + nomeArquivo);
 
-            LOG.info("[SFTP] Baixando {} -> {}", remotePath, localFile);
+            LOG_PRICE.info("[SFTP] Baixando {} -> {}", remotePath, localFile);
 
             try (OutputStream os = Files.newOutputStream(localFile)) {
                 sftp.get(remotePath, os);
@@ -125,13 +135,13 @@ public class SftpDownloadService {
             if (mtimeSegundos > 0) {
                 FileTime ft = FileTime.from(Instant.ofEpochSecond(mtimeSegundos));
                 Files.setLastModifiedTime(localFile, ft);
-                LOG.info("[SFTP] LastModified preservado no arquivo local | {}", ft);
+                LOG_PRICE.info("[SFTP] LastModified preservado no arquivo local | {}", ft);
             } else {
-                LOG.warn("[SFTP] mtime remoto veio 0 (attrs.getMTime). Mantendo timestamp do download.");
+                LOG_PRICE.warn("[SFTP] mtime remoto veio 0 (attrs.getMTime). Mantendo timestamp do download.");
             }
 
             long ms = System.currentTimeMillis() - ini;
-            LOG.info("[SFTP] Fim OK | arquivo={} tempoTotalMs={}", nomeArquivo, ms);
+            LOG_PRICE.info("[SFTP] Fim OK | arquivo={} tempoTotalMs={}", nomeArquivo, ms);
 
             return new SftpDownloadInfo(
                     nomeArquivo,
@@ -140,7 +150,7 @@ public class SftpDownloadService {
 
         } catch (Exception e) {
             long ms = System.currentTimeMillis() - ini;
-            LOG.error("[SFTP] Falha | tempoTotalMs={} msg={}", ms, e.getMessage(), e);
+            LOG_PRICE.error("[SFTP] Falha | tempoTotalMs={} msg={}", ms, e.getMessage(), e);
             throw new RuntimeException("Falha ao baixar via SFTP: " + e.getMessage(), e);
         } finally {
             if (sftp != null) try { sftp.disconnect(); } catch (Exception ignore) {}
@@ -149,7 +159,7 @@ public class SftpDownloadService {
     }
 
     // =========================================================
-    // ✅ NOVO: Batch para MGV (1 conexão por loja; 1 arquivo por pattern)
+    // ✅ Batch para MGV (1 conexão por loja; 1 arquivo por pattern)
     // =========================================================
     public List<SftpDownloadInfo> baixarArquivosMaisRecentesPorPattern(
             LojaRemoteConfig cfg,
@@ -175,14 +185,14 @@ public class SftpDownloadService {
         long ini = System.currentTimeMillis();
 
         try {
-            LOG.info("[SFTP][BATCH] Início | host={} porta={} usuario={} remoteDir={} totalPatterns={} destinoLocal={}",
+            LOG_MGV.info("[SFTP][BATCH] Início | host={} porta={} usuario={} remoteDir={} totalPatterns={} destinoLocal={}",
                     host, porta, usuario, remoteDir, patterns.size(), destinoLocal);
 
             JSch jsch = new JSch();
 
             if (cfg.getCaminhoChavePrivada() != null && !cfg.getCaminhoChavePrivada().isBlank()) {
                 String keyPath = cfg.getCaminhoChavePrivada().trim();
-                LOG.info("[SFTP][BATCH] Usando chave privada | path={}", keyPath);
+                LOG_MGV.info("[SFTP][BATCH] Usando chave privada | path={}", keyPath);
                 jsch.addIdentity(keyPath);
             }
 
@@ -191,7 +201,7 @@ public class SftpDownloadService {
 
             if (cfg.getSenhaRemota() != null && !cfg.getSenhaRemota().isBlank()) {
                 session.setPassword(cfg.getSenhaRemota());
-                LOG.info("[SFTP][BATCH] Autenticação por senha habilitada (senha não exibida)");
+                LOG_MGV.info("[SFTP][BATCH] Autenticação por senha habilitada (senha não exibida)");
             }
 
             int timeout = (cfg.getConnectTimeoutMs() != null ? cfg.getConnectTimeoutMs() : 15000);
@@ -215,7 +225,7 @@ public class SftpDownloadService {
 
                 ChannelSftp.LsEntry escolhido = escolherEntryMaisRecente(ls, List.of(pattern));
                 if (escolhido == null) {
-                    LOG.warn("[SFTP][BATCH] Nenhum arquivo casou com pattern={} em {}", pattern, remoteDir);
+                    LOG_MGV.warn("[SFTP][BATCH] Nenhum arquivo casou com pattern={} em {}", pattern, remoteDir);
                     continue;
                 }
 
@@ -225,7 +235,7 @@ public class SftpDownloadService {
                 Path localFile = destinoLocal.resolve(nomeArquivo);
                 String remotePath = remoteDir.endsWith("/") ? (remoteDir + nomeArquivo) : (remoteDir + "/" + nomeArquivo);
 
-                LOG.info("[SFTP][BATCH] ({}/{}) Baixando | pattern={} remoto={} -> {}",
+                LOG_MGV.info("[SFTP][BATCH] ({}/{}) Baixando | pattern={} remoto={} -> {}",
                         idx, patterns.size(), pattern, remotePath, localFile);
 
                 try (OutputStream os = Files.newOutputStream(localFile)) {
@@ -243,13 +253,13 @@ public class SftpDownloadService {
             }
 
             long ms = System.currentTimeMillis() - ini;
-            LOG.info("[SFTP][BATCH] Fim OK | totalBaixados={} tempoTotalMs={}", out.size(), ms);
+            LOG_MGV.info("[SFTP][BATCH] Fim OK | totalBaixados={} tempoTotalMs={}", out.size(), ms);
 
             return out;
 
         } catch (Exception e) {
             long ms = System.currentTimeMillis() - ini;
-            LOG.error("[SFTP][BATCH] Falha | tempoTotalMs={} msg={}", ms, e.getMessage(), e);
+            LOG_MGV.error("[SFTP][BATCH] Falha | tempoTotalMs={} msg={}", ms, e.getMessage(), e);
             throw new RuntimeException("Falha ao baixar batch via SFTP: " + e.getMessage(), e);
         } finally {
             if (sftp != null) try { sftp.disconnect(); } catch (Exception ignore) {}
@@ -258,8 +268,7 @@ public class SftpDownloadService {
     }
 
     /**
-     * ✅ NOVO (opcional): retorna lastModified remoto em epochMillis (para o PriceTransferService consumir)
-     * Assinatura com 3 args (cfg, remoteDir, nomeArquivo)
+     * ✅ Opcional: retorna lastModified remoto em epochMillis
      */
     public Long getLastModifiedRemoto(LojaRemoteConfig cfg, String remoteDir, String nomeArquivo) {
         if (cfg == null) return null;
@@ -271,7 +280,7 @@ public class SftpDownloadService {
     }
 
     /**
-     * ✅ NOVO (opcional): retorna lastModified remoto em epochMillis (cfg + remoteFullPath)
+     * ✅ Opcional: retorna lastModified remoto em epochMillis (cfg + remoteFullPath)
      */
     public Long getLastModifiedRemoto(LojaRemoteConfig cfg, String remoteFullPath) {
         if (cfg == null) return null;

@@ -2,16 +2,21 @@ package sistema.rotinas.primefaces.service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,11 +189,10 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
                 return StatusExecucaoEnum.FALHA;
             }
 
-            LOG.info("[MGV][LOJA] Config encontrada. execucaoId={} execucaoLojaId={} mgvId={} tipoDestino={} moverRemotoAposCopia={} dirProcessed={}",
+            LOG.info("[MGV][LOJA] Config encontrada. execucaoId={} execucaoLojaId={} mgvId={} moverRemotoAposCopia={} dirProcessed={}",
                     execucaoId,
                     execucaoLojaId,
                     cfg.getMgvId(),
-                    (cfg.getTipoDestino() != null ? cfg.getTipoDestino().name() : null),
                     cfg.getMoverRemotoAposCopia(),
                     cfg.getDirRemotoProcessed());
 
@@ -308,42 +312,27 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
     }
 
     /**
-     * ✅ AJUSTE PRINCIPAL:
-     * Se o result for MgvTestResult, preenche por índice:
-     * - nome do arquivo (por arquivo)
-     * - lastModified (por arquivo)
-     * - origemAtualizada (por arquivo)
-     *
-     * Assim o e-mail deixa de mostrar "Data: -".
+     * ✅ AJUSTE:
+     * - Consome MgvTestResult tipado
+     * - Usa ArquivoInfo por arquivo (lastModified, atualizado, origem/destino e status FS/SMB por arquivo)
+     * - Grava etapas FS e SMB independentemente de "tipoDestino" (porque o transfer copia se estiver configurado)
      */
     private void preencherResultadoNosRegistros(List<RotinaExecucaoArquivo> regs,
                                                RotinaExecucao execucao,
                                                ArquivosMgv cfg,
                                                Object result) {
 
-        boolean remoteOk;
-        boolean downloadOk;
-        boolean fsOk;
-        boolean smbOk;
-
-        boolean destinoEhFs = (cfg.getTipoDestino() == ArquivosMgv.TipoDestino.FS);
-        boolean destinoEhSmb = (cfg.getTipoDestino() == ArquivosMgv.TipoDestino.SMB);
-
-        boolean fsConfigurado = cfg.getCaminhoFsDestino() != null && !cfg.getCaminhoFsDestino().isBlank();
-        boolean smbConfigurado =
-                cfg.getSmbServidor() != null && !cfg.getSmbServidor().isBlank() &&
-                cfg.getSmbCompartilhamento() != null && !cfg.getSmbCompartilhamento().isBlank() &&
-                cfg.getSmbUsuario() != null && !cfg.getSmbUsuario().isBlank();
-
-        // ✅ caso típico agora
+        // ✅ preferencial (novo)
         if (result instanceof MgvTestResult r) {
 
-            remoteOk = r.isSftpOk();
-            downloadOk = r.isDownloadOk();
-            fsOk = r.isFsOk();
-            smbOk = r.isSmbOk();
+            boolean remoteOk = r.isSftpOk();
+            boolean downloadOk = r.isDownloadOk();
 
-            StatusExecucaoEnum statusPrincipal = calcularStatusPrincipal(downloadOk, destinoEhFs, destinoEhSmb, fsConfigurado, smbConfigurado, fsOk, smbOk);
+            boolean fsUsado = cfg.getCaminhoFsDestino() != null && !cfg.getCaminhoFsDestino().isBlank();
+            boolean smbUsado =
+                    cfg.getSmbServidor() != null && !cfg.getSmbServidor().isBlank() &&
+                    cfg.getSmbCompartilhamento() != null && !cfg.getSmbCompartilhamento().isBlank() &&
+                    cfg.getSmbUsuario() != null && !cfg.getSmbUsuario().isBlank();
 
             LocalDate execDate = (execucao.getInicioEm() != null ? execucao.getInicioEm().toLocalDate() : LocalDate.now());
             LocalDateTime fim = LocalDateTime.now();
@@ -352,14 +341,17 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
             List<String> remotos = (r.getArquivosRemotos() != null ? r.getArquivosRemotos() : new ArrayList<>());
             List<Path> locais = (r.getArquivosLocais() != null ? r.getArquivosLocais() : new ArrayList<>());
 
-            LOG.info("[MGV][RESULT] (typed) remoteOk={} downloadOk={} tipoDestino={} fsCfg={} fsOk={} smbCfg={} smbOk={} totalInfos={} totalRemotos={} totalLocais={} statusPrincipal={}",
+            LOG.info("[MGV][RESULT] (typed) remoteOk={} downloadOk={} fsUsado={} smbUsado={} totalRegs={} totalInfos={} totalRemotos={} totalLocais={} statusGeral={} detalheGeral={}",
                     remoteOk, downloadOk,
-                    (cfg.getTipoDestino() != null ? cfg.getTipoDestino().name() : null),
-                    fsConfigurado, fsOk, smbConfigurado, smbOk,
+                    fsUsado, smbUsado,
+                    (regs != null ? regs.size() : 0),
                     infos.size(), remotos.size(), locais.size(),
-                    statusPrincipal);
+                    nz(r.getStatusGeral()),
+                    nz(r.getDetalheGeral()));
 
-            // ✅ Preenche 1:1 com os registros (patterns)
+            // controle para não reutilizar o mesmo info em mais de um registro
+            Set<Integer> infosUsados = new HashSet<>();
+
             for (int i = 0; i < regs.size(); i++) {
                 RotinaExecucaoArquivo ra = regs.get(i);
 
@@ -368,44 +360,53 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
                     ra.setTempoTotalMs(Duration.between(ra.getInicioEm(), fim).toMillis());
                 }
 
-                ra.setEtapa(EtapaArquivoEnum.VALIDACAO_ARQUIVOS);
-                ra.setStatus(statusPrincipal);
-
-                // tenta casar por índice: primeiro infos, depois listas
-                ArquivoInfo info = (i < infos.size() ? infos.get(i) : null);
+                // tenta casar ArquivoInfo pelo patternEsperado (glob/regex/equals) e, se não achar, usa por índice
+                ArquivoInfo info = escolherInfoParaRegistro(ra, infos, infosUsados, i);
 
                 String nomeArquivo = null;
-                LocalDateTime lastMod = null;
+                LocalDateTime lastModRemoto = null;
                 Boolean atualizado = null;
+
+                String origemRemota = null;
+                String destinoLocalStr = null;
+
+                String fsStatus = null;
+                String smbStatus = null;
+                String detalhe = null;
 
                 if (info != null) {
                     nomeArquivo = info.getNomeArquivo();
-                    lastMod = info.getLastModified();
+                    lastModRemoto = info.getLastModified();
                     atualizado = info.getAtualizado();
-                } else if (i < remotos.size()) {
+
+                    origemRemota = info.getOrigemRemota();
+                    destinoLocalStr = info.getDestinoLocal();
+
+                    fsStatus = info.getFsStatus();
+                    smbStatus = info.getSmbStatus();
+                    detalhe = info.getDetalhe();
+                }
+
+                // fallback por índice se ainda não tem nome
+                if ((nomeArquivo == null || nomeArquivo.isBlank()) && i < remotos.size()) {
                     nomeArquivo = remotos.get(i);
                 }
 
-                Path localPath = (i < locais.size() ? locais.get(i) : null);
-
-                // origem/destino/nome
-                if (nomeArquivo != null && !nomeArquivo.isBlank()) {
-                    ra.setOrigem(nomeArquivo);
-                    if (ra.getNomeArquivo() == null || ra.getNomeArquivo().isBlank()) {
-                        ra.setNomeArquivo(nomeArquivo);
-                    }
+                Path localPath = null;
+                // se veio destinoLocal no info, usa ele
+                if (destinoLocalStr != null && !destinoLocalStr.isBlank()) {
+                    try { localPath = Path.of(destinoLocalStr); } catch (Exception ignore) {}
+                }
+                // senão tenta por índice
+                if (localPath == null && i < locais.size()) {
+                    localPath = locais.get(i);
+                }
+                // senão tenta achar pelo nome
+                if (localPath == null && nomeArquivo != null) {
+                    localPath = localizarLocalPorNome(nomeArquivo, locais);
                 }
 
-                if (localPath != null) {
-                    ra.setDestino(String.valueOf(localPath));
-                    if ((ra.getNomeArquivo() == null || ra.getNomeArquivo().isBlank())) {
-                        ra.setNomeArquivo(localPath.getFileName().toString());
-                    }
-                }
-
-                // lastModified por arquivo (✅ crucial pro e-mail)
-                ra.setLastModifiedOrigem(lastMod);
-
+                // lastModified local + tamanho
                 LocalDateTime lastModLocal = null;
                 Long tamanhoLocal = null;
                 try {
@@ -416,12 +417,47 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
                     }
                 } catch (Exception ignore) {}
 
-                ra.setLastModifiedDestino(lastModLocal);
-
-                // atualizado por arquivo
-                if (atualizado == null && lastMod != null) {
-                    atualizado = lastMod.toLocalDate().isEqual(execDate);
+                // se atualizado veio null, tenta derivar do lastModRemoto
+                if (atualizado == null && lastModRemoto != null) {
+                    atualizado = lastModRemoto.toLocalDate().isEqual(execDate);
                 }
+
+                // status FS/SMB por arquivo (se vier do info)
+                boolean fsOkArquivo = statusOk(fsStatus);
+                boolean smbOkArquivo = statusOk(smbStatus);
+
+                // se não veio status por arquivo e o destino está configurado, cai no agregado
+                if (fsUsado && (fsStatus == null || fsStatus.isBlank())) {
+                    fsOkArquivo = r.isFsOk();
+                }
+                if (smbUsado && (smbStatus == null || smbStatus.isBlank())) {
+                    smbOkArquivo = r.isSmbOk();
+                }
+
+                StatusExecucaoEnum statusPrincipal = calcularStatusPrincipal(downloadOk, fsUsado, smbUsado, fsOkArquivo, smbOkArquivo);
+
+                // ======== Preenche registro base ========
+                ra.setEtapa(EtapaArquivoEnum.VALIDACAO_ARQUIVOS);
+                ra.setStatus(statusPrincipal);
+
+                if (nomeArquivo != null && !nomeArquivo.isBlank()) {
+                    // se o transfer te deu um caminho remoto completo, melhor
+                    ra.setOrigem(origemRemota != null && !origemRemota.isBlank() ? origemRemota : nomeArquivo);
+
+                    if (ra.getNomeArquivo() == null || ra.getNomeArquivo().isBlank()) {
+                        ra.setNomeArquivo(nomeArquivo);
+                    }
+                }
+
+                if (localPath != null) {
+                    ra.setDestino(String.valueOf(localPath));
+                    if (ra.getNomeArquivo() == null || ra.getNomeArquivo().isBlank()) {
+                        ra.setNomeArquivo(localPath.getFileName() != null ? localPath.getFileName().toString() : String.valueOf(localPath));
+                    }
+                }
+
+                ra.setLastModifiedOrigem(lastModRemoto);
+                ra.setLastModifiedDestino(lastModLocal);
                 ra.setOrigemAtualizada(atualizado);
 
                 if (Boolean.FALSE.equals(atualizado)) {
@@ -429,7 +465,11 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
                             "Arquivo desatualizado (lastModified remoto diferente do dia da execução)."));
                 }
 
-                // ===== Etapas detalhadas (mesma lógica p/ todos) =====
+                if (detalhe != null && !detalhe.isBlank()) {
+                    ra.setMensagem(mergeMsg(ra.getMensagem(), detalhe));
+                }
+
+                // ======== Etapas detalhadas ========
 
                 salvarEtapa(ra,
                         EtapaArquivoEnum.CONEXAO_REMOTA_SFTP_CONSINCO,
@@ -446,74 +486,75 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
                 salvarEtapa(ra,
                         EtapaArquivoEnum.DOWNLOAD_REMOTO_SFTP_CONSINCO,
                         downloadOk ? StatusExecucaoEnum.SUCESSO : StatusExecucaoEnum.FALHA,
-                        (nomeArquivo != null ? nomeArquivo : null),
+                        (origemRemota != null && !origemRemota.isBlank()) ? origemRemota : (nomeArquivo != null ? nomeArquivo : null),
                         (localPath != null ? String.valueOf(localPath) : null),
                         downloadOk ? "Download OK" : "Download falhou",
                         downloadOk ? null : "Download falhou",
                         null,
                         tamanhoLocal,
-                        lastMod,
+                        lastModRemoto,
                         lastModLocal);
 
-                if (destinoEhFs) {
-                    if (!fsConfigurado) {
-                        salvarEtapa(ra,
-                                EtapaArquivoEnum.COPIA_DESTINO_MGV_FS,
-                                StatusExecucaoEnum.FALHA,
-                                (localPath != null ? String.valueOf(localPath) : null),
-                                null,
-                                "Destino FS selecionado, mas Caminho FS não está configurado.",
-                                "Caminho FS destino vazio.",
-                                tamanhoLocal,
-                                null,
-                                lastModLocal,
-                                null);
-                    } else {
-                        salvarEtapa(ra,
-                                EtapaArquivoEnum.COPIA_DESTINO_MGV_FS,
-                                fsOk ? StatusExecucaoEnum.SUCESSO : StatusExecucaoEnum.FALHA,
-                                (localPath != null ? String.valueOf(localPath) : null),
-                                cfg.getCaminhoFsDestino(),
-                                fsOk ? "Cópia FS OK" : "Cópia FS falhou",
-                                fsOk ? null : "FS falhou",
-                                tamanhoLocal,
-                                null,
-                                lastModLocal,
-                                null);
-                    }
-                } else if (destinoEhSmb) {
-                    if (!smbConfigurado) {
-                        salvarEtapa(ra,
-                                EtapaArquivoEnum.COPIA_DESTINO_MGV_SMB,
-                                StatusExecucaoEnum.FALHA,
-                                (localPath != null ? String.valueOf(localPath) : null),
-                                null,
-                                "Destino SMB selecionado, mas configuração SMB está incompleta.",
-                                "SMB: servidor/compartilhamento/usuário obrigatórios.",
-                                tamanhoLocal,
-                                null,
-                                lastModLocal,
-                                null);
-                    } else {
-                        String smbDestino = "\\\\" + cfg.getSmbServidor() + "\\" + cfg.getSmbCompartilhamento();
-                        salvarEtapa(ra,
-                                EtapaArquivoEnum.COPIA_DESTINO_MGV_SMB,
-                                smbOk ? StatusExecucaoEnum.SUCESSO : StatusExecucaoEnum.FALHA,
-                                (localPath != null ? String.valueOf(localPath) : null),
-                                smbDestino,
-                                smbOk ? "Cópia SMB OK" : "Cópia SMB falhou",
-                                smbOk ? null : "SMB falhou",
-                                tamanhoLocal,
-                                null,
-                                lastModLocal,
-                                null);
-                    }
+                // FS
+                if (fsUsado) {
+                    salvarEtapa(ra,
+                            EtapaArquivoEnum.COPIA_DESTINO_MGV_FS,
+                            fsOkArquivo ? StatusExecucaoEnum.SUCESSO : StatusExecucaoEnum.FALHA,
+                            (localPath != null ? String.valueOf(localPath) : null),
+                            cfg.getCaminhoFsDestino(),
+                            fsOkArquivo ? "Cópia FS OK" : "Cópia FS falhou",
+                            fsOkArquivo ? null : (detalhe != null ? detalhe : "FS falhou"),
+                            tamanhoLocal,
+                            null,
+                            lastModLocal,
+                            null);
+                } else {
+                    salvarEtapa(ra,
+                            EtapaArquivoEnum.COPIA_DESTINO_MGV_FS,
+                            StatusExecucaoEnum.SUCESSO,
+                            (localPath != null ? String.valueOf(localPath) : null),
+                            null,
+                            "FS não configurado (pulado).",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null);
+                }
+
+                // SMB
+                if (smbUsado) {
+                    String smbDestino = "\\\\" + cfg.getSmbServidor() + "\\" + cfg.getSmbCompartilhamento();
+
+                    salvarEtapa(ra,
+                            EtapaArquivoEnum.COPIA_DESTINO_MGV_SMB,
+                            smbOkArquivo ? StatusExecucaoEnum.SUCESSO : StatusExecucaoEnum.FALHA,
+                            (localPath != null ? String.valueOf(localPath) : null),
+                            smbDestino,
+                            smbOkArquivo ? "Cópia SMB OK" : "Cópia SMB falhou",
+                            smbOkArquivo ? null : (detalhe != null ? detalhe : "SMB falhou"),
+                            tamanhoLocal,
+                            null,
+                            lastModLocal,
+                            null);
+                } else {
+                    salvarEtapa(ra,
+                            EtapaArquivoEnum.COPIA_DESTINO_MGV_SMB,
+                            StatusExecucaoEnum.SUCESSO,
+                            (localPath != null ? String.valueOf(localPath) : null),
+                            null,
+                            "SMB não configurado (pulado).",
+                            null,
+                            null,
+                            null,
+                            null,
+                            null);
                 }
 
                 salvarEtapa(ra,
                         EtapaArquivoEnum.VALIDACAO_ARQUIVOS,
                         statusPrincipal,
-                        (nomeArquivo != null ? nomeArquivo : null),
+                        (origemRemota != null && !origemRemota.isBlank()) ? origemRemota : (nomeArquivo != null ? nomeArquivo : null),
                         (localPath != null ? String.valueOf(localPath) : null),
                         Boolean.FALSE.equals(atualizado)
                                 ? "Arquivo desatualizado (lastModified remoto diferente do dia da execução)."
@@ -521,22 +562,28 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
                         null,
                         null,
                         null,
-                        lastMod,
+                        lastModRemoto,
                         lastModLocal);
 
                 execArquivoRepo.save(ra);
             }
 
-            return; // ✅ não cai no modo reflexivo
+            return;
         }
 
         // =========================
         // fallback antigo (reflexivo)
         // =========================
-        remoteOk = getBoolean(result, "isSftpOk", "getSftpOk", "isRemoteOk", "getRemoteOk");
-        downloadOk = getBoolean(result, "isDownloadOk", "getDownloadOk");
-        fsOk = getBoolean(result, "isFsOk", "getFsOk");
-        smbOk = getBoolean(result, "isSmbOk", "getSmbOk");
+        boolean remoteOk = getBoolean(result, "isSftpOk", "getSftpOk", "isRemoteOk", "getRemoteOk");
+        boolean downloadOk = getBoolean(result, "isDownloadOk", "getDownloadOk");
+        boolean fsOk = getBoolean(result, "isFsOk", "getFsOk");
+        boolean smbOk = getBoolean(result, "isSmbOk", "getSmbOk");
+
+        boolean fsUsado = cfg.getCaminhoFsDestino() != null && !cfg.getCaminhoFsDestino().isBlank();
+        boolean smbUsado =
+                cfg.getSmbServidor() != null && !cfg.getSmbServidor().isBlank() &&
+                cfg.getSmbCompartilhamento() != null && !cfg.getSmbCompartilhamento().isBlank() &&
+                cfg.getSmbUsuario() != null && !cfg.getSmbUsuario().isBlank();
 
         Object remoto = getObject(result, "getArquivoRemoto", "getNomeArquivoRemoto", "getRemoteFile");
         Object local  = getObject(result, "getArquivoLocal", "getLocalFile", "getPathLocal");
@@ -549,12 +596,11 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
             atualizado = lastModRemoto.toLocalDate().isEqual(execDate);
         }
 
-        StatusExecucaoEnum statusPrincipal = calcularStatusPrincipal(downloadOk, destinoEhFs, destinoEhSmb, fsConfigurado, smbConfigurado, fsOk, smbOk);
+        StatusExecucaoEnum statusPrincipal = calcularStatusPrincipal(downloadOk, fsUsado, smbUsado, fsOk, smbOk);
 
-        LOG.info("[MGV][RESULT] (fallback) remoteOk={} downloadOk={} tipoDestino={} fsCfg={} fsOk={} smbCfg={} smbOk={} lastModRemoto={} atualizado={} remoto={} local={} statusPrincipal={}",
+        LOG.info("[MGV][RESULT] (fallback) remoteOk={} downloadOk={} fsUsado={} fsOk={} smbUsado={} smbOk={} lastModRemoto={} atualizado={} remoto={} local={} statusPrincipal={}",
                 remoteOk, downloadOk,
-                (cfg.getTipoDestino() != null ? cfg.getTipoDestino().name() : null),
-                fsConfigurado, fsOk, smbConfigurado, smbOk,
+                fsUsado, fsOk, smbUsado, smbOk,
                 lastModRemoto, atualizado,
                 (remoto != null ? String.valueOf(remoto) : null),
                 (local != null ? String.valueOf(local) : null),
@@ -634,39 +680,45 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
                     downloadOk ? null : "Download falhou",
                     null, tamanhoLocal, lastModRemoto, lastModLocal);
 
-            if (destinoEhFs) {
-                if (!fsConfigurado) {
-                    salvarEtapa(ra, EtapaArquivoEnum.COPIA_DESTINO_MGV_FS, StatusExecucaoEnum.FALHA,
-                            (local != null ? String.valueOf(local) : null),
-                            null,
-                            "Destino FS selecionado, mas Caminho FS não está configurado.",
-                            "Caminho FS destino vazio.",
-                            tamanhoLocal, null, lastModLocal, null);
-                } else {
-                    salvarEtapa(ra, EtapaArquivoEnum.COPIA_DESTINO_MGV_FS, fsOk ? StatusExecucaoEnum.SUCESSO : StatusExecucaoEnum.FALHA,
-                            (local != null ? String.valueOf(local) : null),
-                            cfg.getCaminhoFsDestino(),
-                            fsOk ? "Cópia FS OK" : "Cópia FS falhou",
-                            fsOk ? null : "FS falhou",
-                            tamanhoLocal, null, lastModLocal, null);
-                }
-            } else if (destinoEhSmb) {
-                if (!smbConfigurado) {
-                    salvarEtapa(ra, EtapaArquivoEnum.COPIA_DESTINO_MGV_SMB, StatusExecucaoEnum.FALHA,
-                            (local != null ? String.valueOf(local) : null),
-                            null,
-                            "Destino SMB selecionado, mas configuração SMB está incompleta.",
-                            "SMB: servidor/compartilhamento/usuário obrigatórios.",
-                            tamanhoLocal, null, lastModLocal, null);
-                } else {
-                    String smbDestino = "\\\\" + cfg.getSmbServidor() + "\\" + cfg.getSmbCompartilhamento();
-                    salvarEtapa(ra, EtapaArquivoEnum.COPIA_DESTINO_MGV_SMB, smbOk ? StatusExecucaoEnum.SUCESSO : StatusExecucaoEnum.FALHA,
-                            (local != null ? String.valueOf(local) : null),
-                            smbDestino,
-                            smbOk ? "Cópia SMB OK" : "Cópia SMB falhou",
-                            smbOk ? null : "SMB falhou",
-                            tamanhoLocal, null, lastModLocal, null);
-                }
+            if (fsUsado) {
+                salvarEtapa(ra,
+                        EtapaArquivoEnum.COPIA_DESTINO_MGV_FS,
+                        fsOk ? StatusExecucaoEnum.SUCESSO : StatusExecucaoEnum.FALHA,
+                        (local != null ? String.valueOf(local) : null),
+                        cfg.getCaminhoFsDestino(),
+                        fsOk ? "Cópia FS OK" : "Cópia FS falhou",
+                        fsOk ? null : "FS falhou",
+                        tamanhoLocal, null, lastModLocal, null);
+            } else {
+                salvarEtapa(ra,
+                        EtapaArquivoEnum.COPIA_DESTINO_MGV_FS,
+                        StatusExecucaoEnum.SUCESSO,
+                        (local != null ? String.valueOf(local) : null),
+                        null,
+                        "FS não configurado (pulado).",
+                        null,
+                        null, null, null, null);
+            }
+
+            if (smbUsado) {
+                String smbDestino = "\\\\" + cfg.getSmbServidor() + "\\" + cfg.getSmbCompartilhamento();
+                salvarEtapa(ra,
+                        EtapaArquivoEnum.COPIA_DESTINO_MGV_SMB,
+                        smbOk ? StatusExecucaoEnum.SUCESSO : StatusExecucaoEnum.FALHA,
+                        (local != null ? String.valueOf(local) : null),
+                        smbDestino,
+                        smbOk ? "Cópia SMB OK" : "Cópia SMB falhou",
+                        smbOk ? null : "SMB falhou",
+                        tamanhoLocal, null, lastModLocal, null);
+            } else {
+                salvarEtapa(ra,
+                        EtapaArquivoEnum.COPIA_DESTINO_MGV_SMB,
+                        StatusExecucaoEnum.SUCESSO,
+                        (local != null ? String.valueOf(local) : null),
+                        null,
+                        "SMB não configurado (pulado).",
+                        null,
+                        null, null, null, null);
             }
 
             salvarEtapa(ra,
@@ -682,27 +734,112 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
         }
     }
 
+    // =========================
+    // Matching de ArquivoInfo por pattern
+    // =========================
+
+    private static ArquivoInfo escolherInfoParaRegistro(RotinaExecucaoArquivo ra,
+                                                       List<ArquivoInfo> infos,
+                                                       Set<Integer> usados,
+                                                       int idxFallback) {
+        if (infos == null || infos.isEmpty()) return null;
+
+        String pattern = (ra != null ? ra.getPatternEsperado() : null);
+
+        // 1) tenta casar pelo patternEsperado
+        if (pattern != null && !pattern.isBlank()) {
+            for (int i = 0; i < infos.size(); i++) {
+                if (usados.contains(i)) continue;
+                ArquivoInfo inf = infos.get(i);
+                if (inf == null || inf.getNomeArquivo() == null) continue;
+
+                if (matchesPattern(pattern, inf.getNomeArquivo())) {
+                    usados.add(i);
+                    return inf;
+                }
+            }
+        }
+
+        // 2) fallback por índice
+        if (idxFallback >= 0 && idxFallback < infos.size() && !usados.contains(idxFallback)) {
+            usados.add(idxFallback);
+            return infos.get(idxFallback);
+        }
+
+        // 3) pega o primeiro livre
+        for (int i = 0; i < infos.size(); i++) {
+            if (!usados.contains(i)) {
+                usados.add(i);
+                return infos.get(i);
+            }
+        }
+
+        return null;
+    }
+
+    private static boolean matchesPattern(String pattern, String filename) {
+        if (pattern == null || filename == null) return false;
+
+        String p = pattern.trim();
+        String f = filename.trim();
+
+        // equals simples
+        if (!p.contains("*") && !p.contains("?") && !looksLikeRegex(p)) {
+            return p.equalsIgnoreCase(f);
+        }
+
+        // glob
+        if (p.contains("*") || p.contains("?")) {
+            try {
+                return FileSystems.getDefault()
+                        .getPathMatcher("glob:" + p)
+                        .matches(Paths.get(f));
+            } catch (Exception ignore) { }
+        }
+
+        // regex
+        try {
+            return Pattern.compile(p, Pattern.CASE_INSENSITIVE).matcher(f).matches();
+        } catch (Exception ignore) { }
+
+        // fallback contains
+        return f.toLowerCase().contains(p.toLowerCase());
+    }
+
+    private static boolean looksLikeRegex(String s) {
+        if (s == null) return false;
+        return s.contains(".*") || s.contains("^") || s.contains("$") || s.contains("\\d") || s.contains("[") || s.contains("(");
+    }
+
+    private static Path localizarLocalPorNome(String nomeArquivo, List<Path> locais) {
+        if (nomeArquivo == null || locais == null || locais.isEmpty()) return null;
+
+        for (Path p : locais) {
+            try {
+                if (p != null && p.getFileName() != null
+                        && p.getFileName().toString().equalsIgnoreCase(nomeArquivo)) {
+                    return p;
+                }
+            } catch (Exception ignore) { }
+        }
+        return null;
+    }
+
+    private static boolean statusOk(String status) {
+        if (status == null) return false;
+        return "OK".equalsIgnoreCase(status) || "PULADO".equalsIgnoreCase(status);
+    }
+
     private StatusExecucaoEnum calcularStatusPrincipal(boolean downloadOk,
-                                                      boolean destinoEhFs,
-                                                      boolean destinoEhSmb,
-                                                      boolean fsConfigurado,
-                                                      boolean smbConfigurado,
-                                                      boolean fsOk,
-                                                      boolean smbOk) {
+                                                      boolean fsUsado,
+                                                      boolean smbUsado,
+                                                      boolean fsOkArquivo,
+                                                      boolean smbOkArquivo) {
 
         if (!downloadOk) return StatusExecucaoEnum.FALHA;
 
-        boolean falhaDestinoEfetivo = false;
-
-        if (destinoEhFs) {
-            if (!fsConfigurado) falhaDestinoEfetivo = true;
-            else falhaDestinoEfetivo = !fsOk;
-        } else if (destinoEhSmb) {
-            if (!smbConfigurado) falhaDestinoEfetivo = true;
-            else falhaDestinoEfetivo = !smbOk;
-        }
-
-        return falhaDestinoEfetivo ? StatusExecucaoEnum.FALHA_PARCIAL : StatusExecucaoEnum.SUCESSO;
+        boolean falhaDestino = (fsUsado && !fsOkArquivo) || (smbUsado && !smbOkArquivo);
+        return falhaDestino ? StatusExecucaoEnum.FALHA_PARCIAL : StatusExecucaoEnum.SUCESSO;
     }
 
     private void salvarEtapa(RotinaExecucaoArquivo ra,
@@ -768,20 +905,6 @@ public class RotinaMgvRunnerService implements IRotinaMgvRunnerService {
             } catch (Exception ignore) { }
         }
         return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<String> getStringList(Object target, String... getters) {
-        Object v = getObject(target, getters);
-        if (v instanceof List) {
-            List<?> list = (List<?>) v;
-            List<String> out = new ArrayList<>();
-            for (Object o : list) {
-                if (o != null) out.add(String.valueOf(o));
-            }
-            return out;
-        }
-        return new ArrayList<>();
     }
 
     private LocalDateTime extrairLastModified(Object result) {
