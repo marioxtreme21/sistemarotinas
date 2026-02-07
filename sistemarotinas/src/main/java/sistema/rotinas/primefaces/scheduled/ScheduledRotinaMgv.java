@@ -24,23 +24,23 @@ public class ScheduledRotinaMgv {
     @Autowired private IRotinaMgvRunnerService runner;
 
     // ===== 1ª tentativa do dia =====
-    @Scheduled(cron = "0 05 09 * * *")
+    //@Scheduled(cron = "0 05 09 * * *")
     public void executar0400() {
         executarJanela("AUTO-04:00", false);
     }
 
     // ===== Retries =====
-    @Scheduled(cron = "0 20 09 * * *")
+    //@Scheduled(cron = "0 20 09 * * *")
     public void executar1110() {
         executarJanela("AUTO-11:10", true);
     }
 
-    @Scheduled(cron = "0 16 10 * * *")
+    //@Scheduled(cron = "0 16 10 * * *")
     public void executar1210() {
         executarJanela("AUTO-12:10", true);
     }
 
-    @Scheduled(cron = "0 10 13 * * *")
+    //@Scheduled(cron = "0 10 13 * * *")
     public void executar1310() {
         executarJanela("AUTO-13:10", true);
     }

@@ -1,0 +1,83 @@
+<!-- FILE: src/main/webapp/pages/porteira/rotina_porteira.xhtml -->
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Rotina de Porteiras</ui:define>
+
+    <ui:define name="content">
+        <h:form id="formRotinaPorteira">
+
+            <p:growl id="growl" showDetail="true" life="6000"/>
+
+            <!-- Loading (dialog modal) -->
+            <p:dialog widgetVar="loadingDialog"
+                      modal="true"
+                      closable="false"
+                      draggable="false"
+                      resizable="false"
+                      showHeader="false"
+                      width="320">
+                <h:panelGrid columns="1" style="text-align:center;">
+                    <p:outputLabel value="Processando..." style="display:block; margin-bottom:10px;"/>
+                    <i class="pi pi-spin pi-spinner" style="font-size:2rem;"></i>
+                </h:panelGrid>
+            </p:dialog>
+
+            <p:panel id="panelExecucao" header="Execução Manual">
+                <p:panelGrid columns="2" cellpadding="10"
+                             styleClass="panelPesquisa"
+                             columnClasses="label,value">
+
+                    <p:outputLabel for="porteira" value="Selecione a Porteira:"/>
+
+                    <p:selectOneMenu id="porteira"
+                                     value="#{rotinaPorteiraBean.porteiraSelecionada}"
+                                     converter="porteiraEletronicaConverter"
+                                     required="true"
+                                     requiredMessage="Selecione uma porteira."
+                                     style="width:320px">
+                        <f:selectItem itemLabel="Selecione..." itemValue="#{null}"/>
+                        <f:selectItems value="#{rotinaPorteiraBean.porteiras}"
+                                       var="p"
+                                       itemLabel="#{p.descricao}"
+                                       itemValue="#{p}"/>
+                    </p:selectOneMenu>
+
+                </p:panelGrid>
+
+                <p:commandButton id="btnAtivar"
+                                 value="Ativar Porteira"
+                                 icon="pi pi-check"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{rotinaPorteiraBean.ativarAgora}"
+                                 process="@this :formRotinaPorteira:porteira"
+                                 update="growl panelExecucao"
+                                 global="true"
+                                 widgetVar="btnAtivarWV"
+                                 onstart="PF('loadingDialog').show(); PF('loadingDialog').jq.css('z-index', 9999); PF('btnAtivarWV').disable(); PF('btnDesativarWV').disable();"
+                                 oncomplete="PF('loadingDialog').hide(); PF('btnAtivarWV').enable(); PF('btnDesativarWV').enable();" />
+
+                <p:spacer width="10"/>
+
+                <p:commandButton id="btnDesativar"
+                                 value="Desativar Porteira"
+                                 icon="pi pi-times"
+                                 styleClass="ui-button-danger"
+                                 actionListener="#{rotinaPorteiraBean.desativarAgora}"
+                                 process="@this :formRotinaPorteira:porteira"
+                                 update="growl panelExecucao"
+                                 global="true"
+                                 widgetVar="btnDesativarWV"
+                                 onstart="PF('loadingDialog').show(); PF('loadingDialog').jq.css('z-index', 9999); PF('btnAtivarWV').disable(); PF('btnDesativarWV').disable();"
+                                 oncomplete="PF('loadingDialog').hide(); PF('btnAtivarWV').enable(); PF('btnDesativarWV').enable();" />
+
+            </p:panel>
+
+        </h:form>
+    </ui:define>
+
+</ui:composition>

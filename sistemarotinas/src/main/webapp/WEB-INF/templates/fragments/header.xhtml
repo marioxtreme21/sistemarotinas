@@ -1,3 +1,4 @@
+<!-- FILE: src/main/webapp/WEB-INF/templates/header.xhtml (ou onde seu header.xhtml estiver) -->
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
     xmlns:h="http://xmlns.jcp.org/jsf/html"
     xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
@@ -40,7 +41,10 @@
                         <i class="pi pi-balance-scale"></i><span>Cadastro de Tara</span>
                     </h:outputLink>
 
-                    <!-- REMOVIDO: Configuração Remota (Loja) do Cadastro -->
+                    <!-- ✅ NOVO: Porteira Eletrônica -->
+                    <h:outputLink value="#{request.contextPath}/pages/porteira/cadastro_porteira.xhtml">
+                        <i class="pi pi-lock"></i><span>Cadastro de Porteira Eletrônica</span>
+                    </h:outputLink>
 
                     <h:outputLink value="#{request.contextPath}/pages/cadastro/arquivos_mgv.xhtml">
                         <i class="pi pi-hdd"></i><span>Arquivos MGV</span>
@@ -156,6 +160,17 @@
                     <h:outputLink value="#{request.contextPath}/pages/rotinas/rotina_mgv_execucao.xhtml">
                         <i class="pi pi-hdd"></i><span>Rotina MGV (Execução)</span>
                     </h:outputLink>
+
+                    <!-- ✅ NOVO: Rotina Porteira (Manual) -->
+                    <h:outputLink value="#{request.contextPath}/pages/porteira/rotina_porteira.xhtml">
+                        <i class="pi pi-cog"></i><span>Rotina Porteira (Manual)</span>
+                    </h:outputLink>
+
+                    <!-- ✅ NOVO: Backup Porteira (Usuários) -->
+                    <h:outputLink value="#{request.contextPath}/pages/rotinas/porteira/backup_porteira.xhtml">
+                        <i class="pi pi-database"></i><span>Backup Porteira (Usuários)</span>
+                    </h:outputLink>
+
                 </div>
             </ui:fragment>
 

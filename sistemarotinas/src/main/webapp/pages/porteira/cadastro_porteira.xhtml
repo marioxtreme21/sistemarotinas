@@ -1,0 +1,166 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:f="http://xmlns.jcp.org/jsf/core"
+	template="/WEB-INF/templates/layout.xhtml">
+
+	<ui:define name="head">
+		<h:outputStylesheet name="estilo.css" library="css"
+			id="cssStileSistema" />
+		<h:outputStylesheet name="porteira.css" library="css" />
+	</ui:define>
+
+	<ui:define name="title">Cadastro de Porteira Eletrônica</ui:define>
+
+	<ui:define name="content">
+
+		<h:form id="formPesquisa">
+			<ui:include
+				src="/resources/componentes/porteira/pesquisaPorteira.xhtml" />
+		</h:form>
+
+		<h:form id="formCadastroPorteira">
+			<p:growl id="growl" showDetail="true" life="3000" />
+
+			<p:commandButton value="Novo Cadastro"
+				actionListener="#{porteiraEletronicaBean.prepararNovoCadastro}"
+				process="@this"
+				update=":formCadastroPorteira:cadastroWrapper :formCadastroPorteira:growl"
+				icon="pi pi-plus" styleClass="ui-button-success" />
+
+			<p:outputPanel id="cadastroWrapper">
+
+				<p:panel id="panelCadastroPorteira"
+					header="Cadastro de Porteira Eletrônica" styleClass="panelPesquisa"
+					rendered="#{porteiraEletronicaBean.mostrarFormulario}">
+
+					<p:panelGrid id="cadastroPorteira" columns="2" cellpadding="10"
+						styleClass="panelPesquisa" columnClasses="label,value">
+
+						<p:outputLabel for="descricao" value="Descrição:" />
+						<p:inputText id="descricao"
+							value="#{porteiraEletronicaBean.porteira.descricao}"
+							required="true" style="width:100%" />
+
+						<p:outputLabel for="ip" value="Endereço IP:" />
+						<p:inputText id="ip" value="#{porteiraEletronicaBean.porteira.ip}"
+							required="true" style="width:100%" />
+
+						<p:outputLabel for="usuarioIntegracao" value="Usuário Integração:" />
+						<p:inputText id="usuarioIntegracao"
+							value="#{porteiraEletronicaBean.porteira.usuarioIntegracao}"
+							style="width:100%" />
+
+						<p:outputLabel value="Senha Integração:" />
+						<p:outputPanel>
+
+							<p:outputPanel
+								rendered="#{porteiraEletronicaBean.porteiraPersistida and !porteiraEletronicaBean.editandoSenha}">
+								<h:panelGroup layout="block"
+									style="display:flex;gap:8px;align-items:center;">
+									<p:password id="senhaMask" value="********" disabled="true"
+										redisplay="true" feedback="false" style="width:100%" />
+									<p:commandButton value="Alterar" icon="pi pi-pencil"
+										process="@this"
+										actionListener="#{porteiraEletronicaBean.iniciarEdicaoSenha}"
+										update="cadastroPorteira growl"
+										styleClass="ui-button-secondary" />
+								</h:panelGroup>
+							</p:outputPanel>
+
+							<p:outputPanel
+								rendered="#{!porteiraEletronicaBean.porteiraPersistida or porteiraEletronicaBean.editandoSenha}">
+								<h:panelGroup layout="block"
+									style="display:flex;gap:8px;align-items:center;">
+									<p:password id="senhaIntegracao"
+										value="#{porteiraEletronicaBean.senhaOculta}" feedback="false"
+										style="width:100%" toggleMask="true" />
+									<p:commandButton value="Cancelar" icon="pi pi-times"
+										process="@this"
+										actionListener="#{porteiraEletronicaBean.cancelarEdicaoSenha}"
+										update="cadastroPorteira" styleClass="ui-button-secondary"
+										rendered="#{porteiraEletronicaBean.porteiraPersistida}" />
+								</h:panelGroup>
+							</p:outputPanel>
+
+						</p:outputPanel>
+
+						<p:outputLabel for="loja" value="Selecione a Loja:" />
+						<p:selectOneMenu id="loja"
+							value="#{porteiraEletronicaBean.porteira.loja}"
+							converter="lojaConverter" required="true" filter="true"
+							style="width:100%">
+							<f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
+							<f:selectItems value="#{porteiraEletronicaBean.lojas}" var="l"
+								itemValue="#{l}" itemLabel="#{l.codLojaRms} - #{l.nome}" />
+						</p:selectOneMenu>
+
+						<p:outputLabel for="executarRotina"
+							value="Ativar Rotina Automática:" />
+						<p:selectBooleanCheckbox id="executarRotina"
+							value="#{porteiraEletronicaBean.porteira.executarRotinaDesativacaoAtiva}">
+							<p:ajax update="dataInicio dataFim horaInicio horaFim"
+								process="@this" />
+						</p:selectBooleanCheckbox>
+
+						<p:outputLabel for="dataInicio" value="Data de Início:" />
+						<p:calendar id="dataInicio"
+							value="#{porteiraEletronicaBean.dataInicio}" pattern="dd/MM/yyyy"
+							locale="pt_BR" showOn="button"
+							required="#{porteiraEletronicaBean.porteira.executarRotinaDesativacaoAtiva}"
+							disabled="#{!porteiraEletronicaBean.porteira.executarRotinaDesativacaoAtiva}">
+							<p:ajax event="dateSelect" update="@this" />
+						</p:calendar>
+
+						<p:outputLabel for="dataFim" value="Data de Fim:" />
+						<p:calendar id="dataFim" value="#{porteiraEletronicaBean.dataFim}"
+							pattern="dd/MM/yyyy" locale="pt_BR" showOn="button"
+							required="#{porteiraEletronicaBean.porteira.executarRotinaDesativacaoAtiva}"
+							disabled="#{!porteiraEletronicaBean.porteira.executarRotinaDesativacaoAtiva}">
+							<p:ajax event="dateSelect" update="@this" />
+						</p:calendar>
+
+
+						<p:outputLabel for="horaInicio" value="Horário de Início:" />
+						<p:datePicker id="horaInicio"
+							value="#{porteiraEletronicaBean.horaInicio}" pattern="HH:mm"
+							timeOnly="true" showIcon="true" readonlyInput="true"
+							hideOnDateTimeSelect="false"
+							required="#{porteiraEletronicaBean.porteira.executarRotinaDesativacaoAtiva}"
+							disabled="#{!porteiraEletronicaBean.porteira.executarRotinaDesativacaoAtiva}" />
+
+						<p:outputLabel for="horaFim" value="Horário de Fim:" />
+						<p:datePicker id="horaFim"
+							value="#{porteiraEletronicaBean.horaFim}" pattern="HH:mm"
+							timeOnly="true" showIcon="true" readonlyInput="true"
+							hideOnDateTimeSelect="false"
+							required="#{porteiraEletronicaBean.porteira.executarRotinaDesativacaoAtiva}"
+							disabled="#{!porteiraEletronicaBean.porteira.executarRotinaDesativacaoAtiva}" />
+
+					</p:panelGrid>
+
+					<p:commandButton value="Salvar"
+						actionListener="#{porteiraEletronicaBean.salvar}" process="@form"
+						update=":formCadastroPorteira:cadastroWrapper :formCadastroPorteira:growl :formTable:tableResult"
+						icon="pi pi-save" styleClass="ui-button-primary" />
+
+				</p:panel>
+
+			</p:outputPanel>
+		</h:form>
+
+		<h:form id="formTable">
+			<p:dataTable id="tableResult"
+				value="#{porteiraEletronicaBean.porteirasLazy}" var="porteira"
+				styleClass="porteira-table"
+				emptyMessage="Não há registros para exibir." paginator="true"
+				rows="10" lazy="true" rowsPerPageTemplate="10,20,50"
+				paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+				<ui:include
+					src="/resources/componentes/porteira/dataTableCadastroPorteira.xhtml" />
+			</p:dataTable>
+		</h:form>
+
+	</ui:define>
+</ui:composition>

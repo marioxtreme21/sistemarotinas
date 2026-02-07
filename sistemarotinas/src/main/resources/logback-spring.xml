@@ -81,7 +81,6 @@
 
     <!-- ===================== PREÇO (existentes) ===================== -->
 
-    <!-- Orquestração de Preço -->
     <appender name="PRICE_UPDATE_ASYNC" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/price-update.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -93,7 +92,6 @@
         </encoder>
     </appender>
 
-    <!-- Cliente VTEX Pricing -->
     <appender name="VTEX_PRICING_ASYNC" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/vtex-pricing.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -105,9 +103,8 @@
         </encoder>
     </appender>
 
-    <!-- ===================== ESTOQUE (NOVOS) ===================== -->
+    <!-- ===================== ESTOQUE (novos) ===================== -->
 
-    <!-- Orquestração/Serviço de Estoque -->
     <appender name="INVENTORY_UPDATE_ASYNC" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/inventory-update.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -119,7 +116,6 @@
         </encoder>
     </appender>
 
-    <!-- Cliente VTEX de Estoque -->
     <appender name="VTEX_INVENTORY_ASYNC" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/vtex-inventory.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -131,7 +127,7 @@
         </encoder>
     </appender>
 
-    <!-- ===================== NOVO: LOG DO TESTE DE CONEXÃO REMOTA ===================== -->
+    <!-- ===================== TESTE CONEXÃO REMOTA ===================== -->
     <appender name="REMOTE_CONN_TEST_FTP" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/remote-conn-test_ftp.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -143,7 +139,8 @@
         </encoder>
     </appender>
 
-    <!-- ===================== NOVO: LOG DEDICADO ROTINA PRICE ===================== -->
+    <!-- ===================== ROTINAS DEDICADAS ===================== -->
+
     <appender name="ROTINA_PRICE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/rotina-price.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -155,11 +152,22 @@
         </encoder>
     </appender>
 
-    <!-- ===================== NOVO: LOG DEDICADO ROTINA MGV ===================== -->
     <appender name="ROTINA_MGV" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/rotina-mgv.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_DIR}/rotina-mgv.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ✅ NOVO: LOG DEDICADO ROTINA PORTEIRA -->
+    <appender name="ROTINA_PORTEIRA" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/rotina-porteira.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/rotina-porteira.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
@@ -174,17 +182,14 @@
         <appender-ref ref="FILE" />
     </root>
 
-    <!-- Hibernate SQL Logger -->
     <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
         <appender-ref ref="HIBERNATE_SQL" />
     </logger>
 
-    <!-- Hibernate Bind Logger -->
     <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" additivity="false">
         <appender-ref ref="HIBERNATE_BIND" />
     </logger>
 
-    <!-- Importação AD -->
     <logger name="sistema.helpdesk.primefaces.service.LdapImportService" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="IMPORTACAO_USUARIO_AD" />
@@ -222,22 +227,28 @@
         <appender-ref ref="VTEX_INVENTORY_ASYNC"/>
     </logger>
 
-    <!-- ✅ Logger dedicado para o teste remoto (somente o que for logado com este nome) -->
+    <!-- TESTE REMOTO -->
     <logger name="REMOTE_CONN_TEST_FTP" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="REMOTE_CONN_TEST_FTP"/>
     </logger>
 
-    <!-- ✅ Logger dedicado para a ROTINA PRICE (somente o que for logado com este nome) -->
+    <!-- ROTINA PRICE -->
     <logger name="ROTINA_PRICE" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="ROTINA_PRICE"/>
     </logger>
 
-    <!-- ✅ Logger dedicado para a ROTINA MGV (somente o que for logado com este nome) -->
+    <!-- ROTINA MGV -->
     <logger name="ROTINA_MGV" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="ROTINA_MGV"/>
+    </logger>
+
+    <!-- ✅ ROTINA PORTEIRA (DEBUG por padrão para sair bem detalhado) -->
+    <logger name="ROTINA_PORTEIRA" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ROTINA_PORTEIRA"/>
     </logger>
 
 </configuration>

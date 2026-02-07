@@ -157,10 +157,9 @@ public class ScheduledTaskConfigBean implements Serializable {
 		// ✅ controle do estado "sem rotinas"
 		this.semRotinasCadastradas = this.rotinasDisponiveis.isEmpty();
 
-		// ✅ AJUSTE CRÍTICO:
-		// NÃO coloca label "(Nenhuma...)" dentro da lista.
-		// A view decide exibir o label quando semRotinasCadastradas=true.
-		this.rotinasDisponiveis.removeIf(r -> r != null && r.equalsIgnoreCase(ROTINA_EMPTY_LABEL));
+		// ✅ IMPORTANTE:
+		// NÃO adiciona ROTINA_EMPTY_LABEL dentro da lista.
+		// O placeholder deve ser controlado SOMENTE pela view via rendered="#{semRotinasCadastradas}"
 	}
 
 	private void normalizarFiltroRotinaAposCarregar() {

@@ -24,23 +24,23 @@ public class ScheduledRotinaPrice {
     @Autowired private IRotinaPriceRunnerService runner;
 
     // ===== 1ª tentativa do dia =====
-    @Scheduled(cron = "0 45 16 * * *") // 04:00
+    //@Scheduled(cron = "0 45 16 * * *") // 04:00
     public void executar0400() {
         executarJanela("AUTO-04:00", false);
     }
 
     // ===== Retries =====
-    @Scheduled(cron = "0 10 11 * * *") // 11:10
+   // @Scheduled(cron = "0 10 11 * * *") // 11:10
     public void executar1110() {
         executarJanela("AUTO-11:10", true);
     }
 
-    @Scheduled(cron = "0 16 10 * * *") // 12:10
+   // @Scheduled(cron = "0 16 10 * * *") // 12:10
     public void executar1210() {
         executarJanela("AUTO-12:10", true);
     }
 
-    @Scheduled(cron = "0 10 13 * * *") // 13:10
+   // @Scheduled(cron = "0 10 13 * * *") // 13:10
     public void executar1310() {
         executarJanela("AUTO-13:10", true);
     }

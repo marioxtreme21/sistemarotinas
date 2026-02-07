@@ -23,7 +23,7 @@ public class ScheduledTaraSyncTask {
      * Cron: segundo, minuto, hora, diaMes, mes, diaSemana
      * 0 0/30 * * * * => no minuto 0 e 30 de toda hora.
      */
-    @Scheduled(cron = "0 0/30 * * * *", zone = "America/Sao_Paulo")
+    // @Scheduled(cron = "0 0/30 * * * *", zone = "America/Sao_Paulo")
     public void sincronizarCadPsoEmb() {
         log.info("[Scheduler][Tara] Início da sincronização automática cad_pso_emb -> servidor 144.");
         try {

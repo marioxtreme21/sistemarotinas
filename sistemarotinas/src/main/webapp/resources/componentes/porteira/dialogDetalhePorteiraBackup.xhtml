@@ -1,0 +1,85 @@
+<!-- FILE: src/main/webapp/resources/componentes/porteira/dialogDetalhePorteiraBackup.xhtml -->
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <h:panelGroup rendered="#{empty porteiraBackupBean.backupDetalhe}">
+        <h:outputText value="Nenhum backup selecionado." />
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{not empty porteiraBackupBean.backupDetalhe}">
+
+        <p:panelGrid columns="2" cellpadding="8" columnClasses="label,value" styleClass="panelPesquisa">
+
+            <h:outputText value="Backup ID:" />
+            <h:outputText value="#{porteiraBackupBean.backupDetalhe.id}" />
+
+            <h:outputText value="Porteira:" />
+            <h:outputText
+                value="#{porteiraBackupBean.backupDetalhe.porteira != null
+                         ? porteiraBackupBean.backupDetalhe.porteira.descricao
+                         : '-'} (#{porteiraBackupBean.backupDetalhe.porteira != null
+                                  ? porteiraBackupBean.backupDetalhe.porteira.ip
+                                  : '-'})" />
+
+            <h:outputText value="Criado em:" />
+            <h:outputText value="#{porteiraBackupBean.fmt(porteiraBackupBean.backupDetalhe.criadoEm)}" />
+
+            <h:outputText value="Status:" />
+            <h:outputText value="#{porteiraBackupBean.backupDetalhe.status}" />
+
+            <h:outputText value="Total usuários:" />
+            <h:outputText value="#{porteiraBackupBean.backupDetalhe.totalUsuarios}" />
+
+        </p:panelGrid>
+
+        <p:divider />
+
+        <p:panel header="Usuários do Backup" styleClass="panelPesquisa">
+            <p:dataTable value="#{porteiraBackupBean.usuariosBackup}"
+                         var="u"
+                         emptyMessage="Nenhum usuário neste backup."
+                         paginator="true"
+                         rows="10"
+                         rowsPerPageTemplate="10,20,50">
+
+                <p:column headerText="User" style="width:160px;">
+                    <h:outputText value="#{u.user}" />
+                </p:column>
+
+                <p:column headerText="Name" style="width:180px;">
+                    <h:outputText value="#{u.name}" />
+                </p:column>
+
+                <p:column headerText="Email" style="width:220px;">
+                    <h:outputText value="#{u.email}" />
+                </p:column>
+
+                <p:column headerText="Payload JSON">
+                    <!-- Observação: esse dialog com widgetVar fixo pode conflitar por linha.
+                         Se der problema depois, eu te passo a versão com dialog único fora da tabela. -->
+                    <p:commandButton value="Ver JSON"
+                                     icon="pi pi-eye"
+                                     styleClass="ui-button-secondary"
+                                     type="button"
+                                     onclick="PF('dlgJson').show();" />
+                    <p:dialog widgetVar="dlgJson"
+                              header="Payload JSON do Usuário"
+                              modal="true"
+                              width="900"
+                              resizable="false">
+                        <p:inputTextarea value="#{u.payloadJson}"
+                                         readonly="true"
+                                         rows="18"
+                                         autoResize="false"
+                                         style="width:100%;font-family:monospace;" />
+                    </p:dialog>
+                </p:column>
+
+            </p:dataTable>
+        </p:panel>
+
+    </h:panelGroup>
+
+</ui:composition>

@@ -1,0 +1,173 @@
+<!-- FILE: src/main/webapp/pages/rotinas/porteira/backup_porteira.xhtml -->
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/WEB-INF/templates/layout.xhtml">
+
+    <ui:define name="title">Backup de Usuários da Porteira</ui:define>
+
+    <ui:define name="content">
+
+        <h:form id="frmBackup">
+
+            <p:growl id="growl" showDetail="true" life="5000" />
+
+            <!-- =========================
+                 AÇÕES: BACKUP MANUAL
+                 ========================= -->
+            <p:panel header="Backup Manual" styleClass="panelPesquisa">
+                <p:panelGrid columns="2" cellpadding="8" columnClasses="label,value" styleClass="panelPesquisa">
+
+                    <p:outputLabel value="Porteira:" for="porteiraBackup" />
+                    <p:selectOneMenu id="porteiraBackup"
+                                     value="#{porteiraBackupBean.porteiraBackupId}"
+                                     style="width:100%">
+                        <f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
+                        <f:selectItems value="#{porteiraBackupBean.porteiras}"
+                                       var="p"
+                                       itemLabel="#{p.descricao} (#{p.ip})"
+                                       itemValue="#{p.id}" />
+                    </p:selectOneMenu>
+
+                </p:panelGrid>
+
+                <p:commandButton value="Executar Backup Agora"
+                                 icon="pi pi-database"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{porteiraBackupBean.executarBackupManual}"
+                                 process="@form"
+                                 update=":frmBackup:tblBackups :frmBackup:growl" />
+
+                <p:spacer width="8"/>
+
+                <p:commandButton value="Recarregar"
+                                 icon="pi pi-refresh"
+                                 styleClass="ui-button-secondary"
+                                 actionListener="#{porteiraBackupBean.recarregar}"
+                                 process="@this"
+                                 update=":frmBackup:tblBackups :frmBackup:growl :frmBackup:pnlRestore" />
+            </p:panel>
+
+
+            <!-- =========================
+                 RESTORE
+                 ========================= -->
+            <p:panel id="pnlRestore" header="Restaurar Backup para outra Porteira" styleClass="panelPesquisa">
+
+                <p:panelGrid columns="2" cellpadding="8" columnClasses="label,value" styleClass="panelPesquisa">
+
+                    <p:outputLabel value="Backup selecionado:" for="backupSel" />
+                    <p:selectOneMenu id="backupSel"
+                                     value="#{porteiraBackupBean.backupSelecionadoId}"
+                                     style="width:100%">
+                        <f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
+                        <f:selectItems value="#{porteiraBackupBean.backups}"
+                                       var="b"
+                                       itemLabel="#{b.porteira != null ? b.porteira.descricao : '-'} | #{porteiraBackupBean.fmt(b.criadoEm)} | status=#{b.status}"
+                                       itemValue="#{b.id}" />
+                    </p:selectOneMenu>
+
+                    <p:outputLabel value="Porteira destino:" for="destino" />
+                    <p:selectOneMenu id="destino"
+                                     value="#{porteiraBackupBean.porteiraDestinoId}"
+                                     style="width:100%">
+                        <f:selectItem itemLabel="Selecione..." itemValue="#{null}" />
+                        <f:selectItems value="#{porteiraBackupBean.porteiras}"
+                                       var="p"
+                                       itemLabel="#{p.descricao} (#{p.ip})"
+                                       itemValue="#{p.id}" />
+                    </p:selectOneMenu>
+
+                    <p:outputLabel value="Dry-run:" for="dry" />
+                    <p:selectBooleanCheckbox id="dry"
+                                             value="#{porteiraBackupBean.dryRunRestore}" />
+                </p:panelGrid>
+
+                <p:commandButton value="Restaurar"
+                                 icon="pi pi-upload"
+                                 styleClass="ui-button-danger"
+                                 actionListener="#{porteiraBackupBean.restaurarBackupSelecionado}"
+                                 process="@form"
+                                 update=":frmBackup:growl :frmBackup:dlgRestoreLog"
+                                 oncomplete="PF('dlgRestoreLog').show();" />
+
+                <p:spacer width="8"/>
+
+                <p:commandButton value="Limpar seleção"
+                                 icon="pi pi-times"
+                                 styleClass="ui-button-secondary"
+                                 actionListener="#{porteiraBackupBean.setBackupSelecionadoId(null)}"
+                                 process="@this"
+                                 update=":frmBackup:pnlRestore" />
+            </p:panel>
+
+
+            <!-- =========================
+                 LISTA DE BACKUPS
+                 ========================= -->
+            <p:panel header="Backups Registrados" styleClass="panelPesquisa">
+
+                <p:dataTable id="tblBackups"
+                             value="#{porteiraBackupBean.backups}"
+                             var="b"
+                             emptyMessage="Nenhum backup encontrado."
+                             paginator="true"
+                             rows="10"
+                             rowsPerPageTemplate="10,20,50"
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+
+                    <ui:include src="/resources/componentes/porteira/dataTablePorteiraBackups.xhtml"/>
+
+                </p:dataTable>
+
+            </p:panel>
+
+
+            <!-- =========================
+                 DIALOG: DETALHES DO BACKUP
+                 ========================= -->
+            <p:dialog id="dlgDetalhe"
+                      widgetVar="dlgDetalhe"
+                      header="Detalhes do Backup"
+                      modal="true"
+                      width="980"
+                      resizable="false">
+
+                <p:outputPanel id="pnlDetalhe">
+
+                    <ui:include src="/resources/componentes/porteira/dialogDetalhePorteiraBackup.xhtml"/>
+
+                </p:outputPanel>
+
+            </p:dialog>
+
+
+            <!-- =========================
+                 DIALOG: LOG DO RESTORE
+                 ========================= -->
+            <p:dialog id="dlgRestoreLog"
+                      widgetVar="dlgRestoreLog"
+                      header="Log do Restore"
+                      modal="true"
+                      width="980"
+                      resizable="false">
+
+                <h:panelGroup layout="block" style="margin-bottom:8px;">
+                    <h:outputText value="#{porteiraBackupBean.dryRunRestore ? 'DRY-RUN (sem alterações)' : 'Execução real'}"
+                                  style="font-weight:bold;" />
+                </h:panelGroup>
+
+                <p:inputTextarea value="#{porteiraBackupBean.ultimoLogRestore}"
+                                 readonly="true"
+                                 rows="20"
+                                 autoResize="false"
+                                 style="width:100%;font-family:monospace;" />
+
+            </p:dialog>
+
+        </h:form>
+
+    </ui:define>
+</ui:composition>

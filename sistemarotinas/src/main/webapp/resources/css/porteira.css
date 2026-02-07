@@ -1,0 +1,73 @@
+/* FILE: src/main/webapp/resources/css/porteira.css */
+
+/* =========================
+   PESQUISA PORTEIRA - layout compacto (label perto + campo com largura controlada)
+   ========================= */
+
+.porteira-grid-pesquisa {
+  width: 100% !important;
+}
+
+/* LABEL (coluna 1) */
+.porteira-grid-pesquisa > tbody > tr > td:first-child,
+.porteira-grid-pesquisa.ui-panelgrid .ui-panelgrid-cell:nth-child(odd) {
+  width: 90px !important;
+  white-space: nowrap !important;
+  padding-right: 10px !important;
+}
+
+/* CAMPO (coluna 2) */
+.porteira-grid-pesquisa > tbody > tr > td:nth-child(2),
+.porteira-grid-pesquisa.ui-panelgrid .ui-panelgrid-cell:nth-child(even) {
+  padding-left: 0 !important;
+}
+
+/* remove as colunas 3 e 4 "fantasmas" do columns="4" */
+.porteira-grid-pesquisa > tbody > tr > td:nth-child(3),
+.porteira-grid-pesquisa > tbody > tr > td:nth-child(4) {
+  display: none !important;
+  padding: 0 !important;
+  width: 0 !important;
+}
+
+/* limita a largura dos campos para não esticar até o final */
+.porteira-grid-pesquisa .ui-selectonemenu,
+.porteira-grid-pesquisa .ui-inputfield {
+  width: 360px !important;     /* ajuste fino: 320~420 */
+  max-width: 100% !important;
+}
+
+/* e alinha os botões na mesma largura dos campos */
+.porteira-grid-pesquisa ~ .ui-button,
+.porteira-grid-pesquisa .ui-button {
+  max-width: 360px !important;
+}
+
+/* =========================
+   DATATABLE PORTEIRA - impedir quebra na coluna Loja
+   (use junto com a coluna "Loja" com styleClass="col-loja" e outputText com class "loja-ellipsis")
+   ========================= */
+
+/*
+  IMPORTANTE:
+  - O PrimeFaces aplica a styleClass tanto no <th> quanto no <td>.
+  - Para o ellipsis funcionar, a célula também precisa não quebrar e ter largura fixa.
+  - Aqui eu "ancoro" no .ui-datatable para evitar efeito em outros lugares.
+*/
+
+.ui-datatable .col-loja {
+  width: 260px !important;         /* ajuste fino: 220~360 */
+  max-width: 260px !important;
+  white-space: nowrap !important;  /* impede quebrar dentro do td */
+  overflow: hidden !important;     /* garante corte do conteúdo na célula */
+}
+
+.ui-datatable .col-loja .loja-ellipsis {
+  display: inline-block !important;
+  max-width: 260px !important;     /* manter igual ao width acima */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  vertical-align: middle !important;
+}
+

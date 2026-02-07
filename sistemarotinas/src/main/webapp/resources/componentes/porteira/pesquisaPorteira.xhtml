@@ -1,0 +1,78 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+    
+    
+
+    <p:panel header="Pesquisa de Porteiras">
+        <p:panelGrid id="panelGridPesquisaPorteira"
+             columns="4"
+             cellpadding="5"
+             styleClass="porteira-grid-pesquisa">
+
+            <p:row>
+                <p:outputLabel for="campoPesquisaPorteira" value="Campo:" />
+                <p:selectOneMenu id="campoPesquisaPorteira"
+                                 value="#{porteiraEletronicaBean.campoSelecionado}"
+                                 style="width:100%;">
+                    <f:selectItem itemLabel="Selecione um campo" itemValue="" />
+                    <f:selectItems value="#{porteiraEletronicaBean.camposPesquisa}"
+                                   var="c"
+                                   itemLabel="#{c.label}"
+                                   itemValue="#{c.value}" />
+                </p:selectOneMenu>
+            </p:row>
+
+            <p:row>
+                <p:outputLabel for="condicaoPesquisaPorteira" value="Condição:" />
+                <p:selectOneMenu id="condicaoPesquisaPorteira"
+                                 value="#{porteiraEletronicaBean.condicaoSelecionada}"
+                                 style="width:100%;">
+                    <f:selectItem itemLabel="Selecione uma condição" itemValue="" />
+                    <f:selectItem itemLabel="Igual" itemValue="equal" />
+                    <f:selectItem itemLabel="Contém" itemValue="contains" />
+                </p:selectOneMenu>
+            </p:row>
+
+            <p:row>
+                <p:outputLabel for="valorPesquisaPorteira" value="Valor:" />
+                <p:inputText id="valorPesquisaPorteira"
+                             value="#{porteiraEletronicaBean.valorPesquisa}"
+                             style="width:100%;" />
+            </p:row>
+
+            <p:row>
+                <p:outputLabel />
+                <p:commandButton id="btnPesquisarPorteira"
+                                 value="Pesquisar"
+                                 icon="pi pi-search"
+                                 actionListener="#{porteiraEletronicaBean.pesquisar}"
+                                 update=":formTable:tableResult :formCadastroPorteira:growl"
+                                 ajax="false"
+                                 immediate="false"
+                                 process="@this,panelGridPesquisaPorteira"
+                                 styleClass="ui-button-primary"
+                                 style="width:100%;" />
+            </p:row>
+
+            <p:row>
+                <p:outputLabel />
+                <p:commandButton id="btnLimparPorteira"
+                                 value="Limpar Filtros"
+                                 icon="pi pi-times"
+                                 actionListener="#{porteiraEletronicaBean.limparFiltros}"
+                                 update=":formPesquisa :formTable:tableResult :formCadastroPorteira:growl"
+                                 ajax="false"
+                                 immediate="false"
+                                 process="@this,panelGridPesquisaPorteira"
+                                 styleClass="ui-button-secondary"
+                                 style="width:100%;" />
+            </p:row>
+
+        </p:panelGrid>
+    </p:panel>
+
+    <p:defaultCommand target="btnPesquisarPorteira" />
+</ui:composition>

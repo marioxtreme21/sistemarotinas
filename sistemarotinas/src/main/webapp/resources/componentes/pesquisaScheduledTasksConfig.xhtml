@@ -13,26 +13,20 @@
                          styleClass="panelPesquisa"
                          columnClasses="label,value">
 
-                <p:outputLabel value="Rotina:" for="rotina" />
-                <p:selectOneMenu id="rotina"
+                <p:outputLabel value="Rotina:" for="rotinaOk" />
+
+
+                <p:selectOneMenu id="rotinaOk"
                                  value="#{scheduledTaskConfigBean.filtroRotina}"
                                  style="width:100%"
-                                 disabled="#{scheduledTaskConfigBean.semRotinasCadastradas}">
+                                 rendered="#{not scheduledTaskConfigBean.semRotinasCadastradas}">
 
-                    <!-- Sempre existe o ALL -->
                     <f:selectItem itemLabel="(Todas)" itemValue="ALL"/>
 
-                    <!-- ✅ Só aparece quando realmente não há rotinas -->
-                    <f:selectItem itemLabel="(Nenhuma rotina cadastrada)"
-                                  itemValue="__NONE__"
-                                  rendered="#{scheduledTaskConfigBean.semRotinasCadastradas}" />
-
-                    <!-- ✅ Só renderiza a lista real quando há rotinas -->
                     <f:selectItems value="#{scheduledTaskConfigBean.rotinasDisponiveis}"
                                    var="r"
                                    itemLabel="#{r}"
-                                   itemValue="#{r}"
-                                   rendered="#{not scheduledTaskConfigBean.semRotinasCadastradas}" />
+                                   itemValue="#{r}" />
 
                     <p:ajax event="change"
                             listener="#{scheduledTaskConfigBean.recarregar}"
@@ -42,6 +36,18 @@
                                     :frmSched:pnlPreview
                                     :frmSched:growl"/>
                 </p:selectOneMenu>
+
+  
+                <p:selectOneMenu id="rotinaVazia"
+                                 value="#{scheduledTaskConfigBean.filtroRotina}"
+                                 style="width:100%"
+                                 disabled="true"
+                                 rendered="#{scheduledTaskConfigBean.semRotinasCadastradas}">
+
+                    <!-- mantém ALL para não “sujar” o filtro -->
+                    <f:selectItem itemLabel="(Nenhuma rotina cadastrada)" itemValue="ALL" />
+                </p:selectOneMenu>
+
 
                 <p:outputLabel value="Owner:" for="ownerFiltro" />
                 <p:selectOneMenu id="ownerFiltro"
@@ -91,7 +97,6 @@
                              icon="pi pi-search"
                              actionListener="#{scheduledTaskConfigBean.recarregar}"
                              process=":frmSched:pesquisaWrapper"
-                             resetValues="true"
                              update=":frmSched:tableResult
                                      :frmSched:cadastroWrapper
                                      :frmSched:pnlPreview
@@ -105,7 +110,6 @@
                              styleClass="ui-button-secondary"
                              actionListener="#{scheduledTaskConfigBean.limparFiltros}"
                              process="@this"
-                             resetValues="true"
                              update=":frmSched:pesquisaWrapper
                                      :frmSched:tableResult
                                      :frmSched:cadastroWrapper

@@ -22,77 +22,86 @@ import jakarta.servlet.http.HttpSession;
 @SessionScoped
 public class LoginBean implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    private String username;
-    private String password;
+	private String username;
+	private String password;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+	@Autowired
+	private AuthenticationManager authenticationManager;
 
+	// Método de login
+	public void login() {
+		FacesContext facesContext = FacesContext.getCurrentInstance();
 
+		try {
+			String u = (username != null ? username.trim() : "");
+			String p = (password != null ? password : "");
 
+			if (u.isBlank() || p.isBlank()) {
+				facesContext.addMessage(null,
+						new FacesMessage(FacesMessage.SEVERITY_WARN, "Atenção", "Informe usuário e senha."));
+				return;
+			}
 
-    // Método de login
-    public void login() {
-        try {
-            Authentication auth = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(username, password)
-            );
+			Authentication auth = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(u, p));
 
-            // Atualiza o SecurityContext para a sessão atual
-            SecurityContextHolder.getContext().setAuthentication(auth);
-            FacesContext.getCurrentInstance().getExternalContext().getSession(true); // Garante a criação da sessão
+			// Atualiza o SecurityContext para a sessão atual
+			SecurityContextHolder.getContext().setAuthentication(auth);
 
-            // Redirecionar para a página inicial após o login
-            FacesContext.getCurrentInstance().getExternalContext().redirect("/sistemarotinas/pages/index.xhtml");
-        } catch (AuthenticationException e) {
-            FacesContext.getCurrentInstance().addMessage(null,
-                new FacesMessage(FacesMessage.SEVERITY_ERROR, "Login falhou!", null));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+			// Garante a criação da sessão + persiste o SecurityContext
+			HttpSession session = (HttpSession) facesContext.getExternalContext().getSession(true);
+			session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-    public String logout() {
-        try {
-            System.out.println("Método de logout chamado!");
+			// Redirecionar para a página inicial após o login
+			facesContext.getExternalContext().redirect("/sistemarotinas/pages/index.xhtml");
 
-            FacesContext facesContext = FacesContext.getCurrentInstance();
-            HttpSession session = (HttpSession) facesContext.getExternalContext().getSession(false);
-            if (session != null) {
-                session.invalidate(); // Invalida a sessão
-            }
-            SecurityContextHolder.clearContext(); // Limpa o contexto de segurança
+		} catch (AuthenticationException e) {
+			facesContext.addMessage(null,
+					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Login falhou!", "Usuário ou senha inválidos."));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
-            // Redirecionar para a página de login
-            facesContext.getExternalContext().redirect("/sistemarotinas/pages/login.xhtml");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null; // Retorna nulo para não quebrar a navegação do JSF
-    }
+	public String logout() {
+		try {
+			System.out.println("Método de logout chamado!");
 
-    public boolean hasRole(String role) {
-        return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-            .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_" + role));
-    }
-    
+			FacesContext facesContext = FacesContext.getCurrentInstance();
+			HttpSession session = (HttpSession) facesContext.getExternalContext().getSession(false);
+			if (session != null) {
+				session.invalidate(); // Invalida a sessão
+			}
+			SecurityContextHolder.clearContext(); // Limpa o contexto de segurança
 
-    // Getters e setters
-    public String getUsername() {
-        return username;
-    }
+			// Redirecionar para a página de login
+			facesContext.getExternalContext().redirect("/sistemarotinas/pages/login.xhtml");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+	public boolean hasRole(String role) {
+		return SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+				.anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ROLE_" + role));
+	}
 
-    public String getPassword() {
-        return password;
-    }
+	// Getters e setters
+	public String getUsername() {
+		return username;
+	}
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
 }

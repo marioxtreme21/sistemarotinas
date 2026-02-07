@@ -1,0 +1,81 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:column headerText="Descrição" sortBy="#{porteira.descricao}">
+        <h:outputText value="#{porteira.descricao}" />
+    </p:column>
+
+    <p:column headerText="IP" sortBy="#{porteira.ip}">
+        <h:outputText value="#{porteira.ip}" />
+    </p:column>
+
+
+    <p:column headerText="Loja"
+              sortBy="#{porteira.loja.nome}"
+              styleClass="col-loja">
+        <h:outputText value="#{porteira.loja.nome}"
+                      styleClass="loja-ellipsis"
+                      title="#{porteira.loja.nome}" />
+    </p:column>
+
+    <p:column headerText="Rotina Ativa?">
+        <h:outputText value="#{porteira.executarRotinaDesativacaoAtiva ? 'Sim' : 'Não'}" />
+    </p:column>
+
+    <p:column headerText="Data Início">
+        <h:outputText value="#{porteiraEletronicaBean.getDataInicio(porteira)}">
+            <f:convertDateTime pattern="dd/MM/yyyy"
+                               locale="pt_BR"
+                               timeZone="America/Sao_Paulo" />
+        </h:outputText>
+    </p:column>
+
+    <p:column headerText="Data Fim">
+        <h:outputText value="#{porteiraEletronicaBean.getDataFim(porteira)}">
+            <f:convertDateTime pattern="dd/MM/yyyy"
+                               locale="pt_BR"
+                               timeZone="America/Sao_Paulo" />
+        </h:outputText>
+    </p:column>
+
+    <p:column headerText="Hora Início">
+        <h:outputText value="#{porteiraEletronicaBean.getHoraInicio(porteira)}">
+            <f:convertDateTime pattern="HH:mm"
+                               locale="pt_BR"
+                               timeZone="America/Sao_Paulo" />
+        </h:outputText>
+    </p:column>
+
+    <p:column headerText="Hora Fim">
+        <h:outputText value="#{porteiraEletronicaBean.getHoraFim(porteira)}">
+            <f:convertDateTime pattern="HH:mm"
+                               locale="pt_BR"
+                               timeZone="America/Sao_Paulo" />
+        </h:outputText>
+    </p:column>
+
+    <p:column headerText="Ações" style="width:180px;">
+        <h:panelGroup layout="block" style="display:flex;gap:8px;">
+
+            <p:commandButton value="Editar"
+                             icon="pi pi-pencil"
+                             actionListener="#{porteiraEletronicaBean.prepararEditar(porteira)}"
+                             process="@this"
+                             update=":formCadastroPorteira:cadastroWrapper :formCadastroPorteira:growl"
+                             styleClass="ui-button-secondary" />
+
+            <p:commandButton value="Excluir"
+                             icon="pi pi-trash"
+                             actionListener="#{porteiraEletronicaBean.excluir(porteira.id)}"
+                             process="@this"
+                             update=":formTable:tableResult :formCadastroPorteira:cadastroWrapper :formCadastroPorteira:growl"
+                             styleClass="ui-button-danger"
+                             onclick="if(!confirm('Confirma a exclusão da porteira: #{porteira.descricao}?')) return false;" />
+
+        </h:panelGroup>
+    </p:column>
+
+</ui:composition>

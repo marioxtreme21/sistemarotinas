@@ -1,0 +1,52 @@
+<!-- FILE: src/main/webapp/resources/componentes/porteira/dataTablePorteiraBackups.xhtml -->
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:column headerText="ID" style="width:90px;">
+        <h:outputText value="#{b.id}" />
+    </p:column>
+
+    <p:column headerText="Porteira" sortBy="#{b.porteira != null ? b.porteira.descricao : ''}">
+        <h:outputText value="#{b.porteira != null ? b.porteira.descricao : '-'}" />
+        <br/>
+        <h:outputText value="#{b.porteira != null ? b.porteira.ip : '-'}"
+                      style="color:#666;font-size:12px;"/>
+    </p:column>
+
+    <p:column headerText="Criado em" style="width:170px;" sortBy="#{b.criadoEm}">
+        <h:outputText value="#{porteiraBackupBean.fmt(b.criadoEm)}" />
+    </p:column>
+
+    <p:column headerText="Status" style="width:120px;" sortBy="#{b.status}">
+        <h:outputText value="#{b.status}" />
+    </p:column>
+
+    <p:column headerText="Usuários" style="width:110px;" sortBy="#{b.totalUsuarios}">
+        <h:outputText value="#{b.totalUsuarios}" />
+    </p:column>
+
+    <p:column headerText="Ações" style="width:260px;">
+        <h:panelGroup layout="block" style="display:flex;gap:8px;flex-wrap:wrap;">
+
+            <p:commandButton value="Detalhes"
+                             icon="pi pi-search"
+                             styleClass="ui-button-secondary"
+                             actionListener="#{porteiraBackupBean.abrirDetalheBackup(b)}"
+                             process="@this"
+                             update=":frmBackup:dlgDetalhe"
+                             oncomplete="PF('dlgDetalhe').show();" />
+
+            <p:commandButton value="Usar no Restore"
+                             icon="pi pi-arrow-right-arrow-left"
+                             styleClass="ui-button-help"
+                             actionListener="#{porteiraBackupBean.setBackupSelecionadoId(b.id)}"
+                             process="@this"
+                             update=":frmBackup:pnlRestore :frmBackup:growl" />
+
+        </h:panelGroup>
+    </p:column>
+
+</ui:composition>

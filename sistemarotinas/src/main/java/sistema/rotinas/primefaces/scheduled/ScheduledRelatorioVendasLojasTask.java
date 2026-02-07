@@ -32,7 +32,7 @@ public class ScheduledRelatorioVendasLojasTask {
      *
      * cron = "segundo minuto hora diaDoMês mês diaDaSemana"
      */
-    @Scheduled(cron = "0 30 23 * * *", zone = "America/Sao_Paulo")
+    // @Scheduled(cron = "0 30 23 * * *", zone = "America/Sao_Paulo")
     public void gerarEEnviarRelatorioDiarioVendasLojas() {
         ZonedDateTime agora = ZonedDateTime.now(ZONE_SP);
         LocalDate dataReferencia = agora.toLocalDate().minusDays(0); // D-1

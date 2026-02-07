@@ -9,25 +9,18 @@
 
     <ui:define name="content">
 
-        <!-- ATENÇÃO:
-             Deve existir APENAS UM h:form na VIEW.
-             Se o seu layout.xhtml já tiver h:form envolvendo o content,
-             remova ESTE h:form e ajuste os IDs para o form do layout. -->
+     
 
         <h:form id="frmSched">
 
             <p:growl id="growl" showDetail="true" life="4000"/>
 
-            <!-- ===================== -->
-            <!-- PESQUISA / FILTROS     -->
-            <!-- ===================== -->
+          
             <p:outputPanel id="pnlPesquisa">
                 <ui:include src="/resources/componentes/pesquisaScheduledTasksConfig.xhtml"/>
             </p:outputPanel>
 
-            <!-- ===================== -->
-            <!-- CADASTRO / EDIÇÃO      -->
-            <!-- ===================== -->
+    
 
             <p:commandButton id="btnNovo"
                              value="Novo Cadastro"
@@ -49,7 +42,7 @@
                                  styleClass="panelPesquisa"
                                  columnClasses="label,value">
 
-                        <!-- Handler disponível (SPRING) -->
+           
                         <p:outputLabel value="Handler (Task Key):" for="handlerKey"/>
                         <p:selectOneMenu id="handlerKey"
                                          value="#{scheduledTaskConfigBean.handlerSelecionado}"
@@ -67,7 +60,7 @@
                                             :frmSched:growl"/>
                         </p:selectOneMenu>
 
-                        <!-- taskKey (somente leitura) -->
+
                         <p:outputLabel value="Task Key (salva no banco):"/>
                         <h:outputText value="#{scheduledTaskConfigBean.editando.taskKey}"/>
 
@@ -177,9 +170,7 @@
 
             </p:outputPanel>
 
-            <!-- ===================== -->
-            <!-- AÇÕES EM LOTE          -->
-            <!-- ===================== -->
+
             <p:panel id="pnlAcoesLote"
                      header="Ações em lote"
                      styleClass="panelPesquisa">
@@ -219,9 +210,7 @@
                                  update=":frmSched:tableResult :frmSched:growl :frmSched:pnlPesquisa"/>
             </p:panel>
 
-            <!-- ===================== -->
-            <!-- TABELA                 -->
-            <!-- ===================== -->
+  
             <p:dataTable id="tableResult"
                          value="#{scheduledTaskConfigBean.tasks}"
                          var="t"
@@ -233,7 +222,7 @@
                          rowKey="#{t.id}"
                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
 
-                <!-- ✅ NECESSÁRIO para seleção múltipla funcionar -->
+
                 <p:column selectionMode="multiple" style="width:40px;text-align:center"/>
 
                 <ui:include src="/resources/componentes/dataTableScheduledTasksConfig.xhtml"/>
