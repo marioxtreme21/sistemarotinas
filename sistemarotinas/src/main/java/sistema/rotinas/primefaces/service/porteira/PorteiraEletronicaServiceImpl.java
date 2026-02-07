@@ -53,7 +53,10 @@ public class PorteiraEletronicaServiceImpl implements IPorteiraEletronicaService
     @Transactional
     public void deleteById(Long id) {
         if (id == null) return;
+
+        // mantém comportamento, mas força o erro de FK acontecer aqui dentro
         repo.deleteById(id);
+        repo.flush(); // ✅ importante: dispara constraint ainda dentro da transação
     }
 
     @Override
@@ -76,7 +79,6 @@ public class PorteiraEletronicaServiceImpl implements IPorteiraEletronicaService
         return repo.buscarSenhaPelaId(id);
     }
 
-    // Lazy
     @Override
     @Transactional(readOnly = true)
     public List<PorteiraEletronica> findAllPorteiras(int first, int pageSize, String sortField, boolean ascendente) {
@@ -136,8 +138,6 @@ public class PorteiraEletronicaServiceImpl implements IPorteiraEletronicaService
         Long total = em.createQuery(cq).getSingleResult();
         return total == null ? 0 : total.intValue();
     }
-
-    // Helpers
 
     private void validar(PorteiraEletronica p) {
         if (p == null) throw new IllegalArgumentException("Porteira não informada.");

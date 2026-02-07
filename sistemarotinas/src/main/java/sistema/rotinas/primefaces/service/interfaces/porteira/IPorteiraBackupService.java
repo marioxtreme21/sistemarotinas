@@ -26,6 +26,9 @@ public interface IPorteiraBackupService {
     // ✅ novo: usado pela task automática (se vocês quiserem restore automático um dia)
     RestoreResult restaurarBackupParaPorteira(Long backupId, Long porteiraDestinoId, boolean dryRun, String origemExecucao);
 
+    // ✅ NOVO: Excluir backup (remove usuários do backup + backup)
+    void excluirBackup(Long backupId);
+
     class RestoreResult {
         public int total;
         public int ok;

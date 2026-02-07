@@ -1,6 +1,8 @@
+// FILE: src/main/java/sistema/rotinas/primefaces/bean/porteira/PorteiraEletronicaBean.java
 package sistema.rotinas.primefaces.bean.porteira;
 
 import java.io.Serializable;
+import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -9,7 +11,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
@@ -45,17 +49,13 @@ public class PorteiraEletronicaBean implements Serializable {
 
     private boolean mostrarFormulario;
 
-    // =======================
-    // senha (mascarar/editar)
-    // =======================
-    private String senhaOculta;      // valor editável no input
-    private boolean editandoSenha;   // controla se mostra input ou mask
-    private String senhaOriginal;    // backup para restaurar ao cancelar
-    private boolean porteiraPersistida; // usado no XHTML (rendered)
+    // senha
+    private String senhaOculta;
+    private boolean editandoSenha;
+    private String senhaOriginal;
+    private boolean porteiraPersistida;
 
-    // =======================
     // datas/horas (PrimeFaces usa Date)
-    // =======================
     private Date dataInicio;
     private Date dataFim;
     private Date horaInicio;
@@ -96,10 +96,8 @@ public class PorteiraEletronicaBean implements Serializable {
     public void prepararNovoCadastro() {
         this.porteira = new PorteiraEletronica();
 
-        // modo cadastro novo
         this.porteiraPersistida = false;
 
-        // senha: em novo cadastro já deixa digitar
         this.editandoSenha = true;
         this.senhaOculta = "";
         this.senhaOriginal = null;
@@ -120,15 +118,12 @@ public class PorteiraEletronicaBean implements Serializable {
         this.horaInicio = convertLocalTimeToDate(p.getHoraInicio());
         this.horaFim = convertLocalTimeToDate(p.getHoraFim());
 
-        // marca como persistida (para rendered)
         this.porteiraPersistida = (p != null && p.getId() != null);
 
-        // traz a senha do banco (não confia no objeto por segurança)
         String senhaReal = porteiraService.buscarSenhaPelaId(p.getId());
         this.senhaOriginal = (senhaReal != null) ? senhaReal : "";
         this.senhaOculta = this.senhaOriginal;
 
-        // inicia mascarado (não editando) até clicar
         this.editandoSenha = false;
 
         this.mostrarFormulario = true;
@@ -139,7 +134,6 @@ public class PorteiraEletronicaBean implements Serializable {
         if (this.senhaOculta == null) {
             this.senhaOculta = "";
         }
-        // garante backup caso entre por algum caminho não esperado
         if (this.senhaOriginal == null) {
             this.senhaOriginal = this.senhaOculta;
         }
@@ -148,13 +142,11 @@ public class PorteiraEletronicaBean implements Serializable {
     public void cancelarEdicaoSenha() {
         this.editandoSenha = false;
 
-        // volta o valor anterior
         if (this.senhaOriginal == null) {
             this.senhaOriginal = "";
         }
         this.senhaOculta = this.senhaOriginal;
 
-        // também restaura na entidade em memória (para não correr risco ao salvar)
         if (this.porteira != null) {
             this.porteira.setSenhaIntegracao(this.senhaOriginal);
         }
@@ -162,27 +154,19 @@ public class PorteiraEletronicaBean implements Serializable {
 
     public void salvar() {
         try {
-            // joga Date -> LocalDate/LocalTime na entidade
             porteira.setDataInicio(convertDateToLocalDate(dataInicio));
             porteira.setDataFim(convertDateToLocalDate(dataFim));
             porteira.setHoraInicio(convertDateToLocalTime(horaInicio));
             porteira.setHoraFim(convertDateToLocalTime(horaFim));
 
-            // ==========================
-            // SENHA: regra correta
-            // ==========================
             if (porteira.getId() != null) {
-                // edição de registro existente
                 if (editandoSenha) {
-                    // usuário alterou (ou decidiu manter mas está em modo edição)
                     porteira.setSenhaIntegracao(senhaOculta);
                 } else {
-                    // não alterou -> mantém original do banco
                     String original = porteiraService.buscarSenhaPelaId(porteira.getId());
                     porteira.setSenhaIntegracao(original);
                 }
             } else {
-                // novo cadastro -> usa o que digitou
                 porteira.setSenhaIntegracao(senhaOculta);
             }
 
@@ -191,7 +175,6 @@ public class PorteiraEletronicaBean implements Serializable {
             carregarPorteirasSobDemanda();
             lojas = lojaService.getAllLojas();
 
-            // após salvar
             this.porteiraPersistida = false;
             this.editandoSenha = false;
             this.senhaOculta = "";
@@ -218,12 +201,65 @@ public class PorteiraEletronicaBean implements Serializable {
         try {
             porteiraService.deleteById(id);
             carregarPorteirasSobDemanda();
+
             FacesContext.getCurrentInstance().addMessage(null,
                     new FacesMessage(FacesMessage.SEVERITY_INFO, "Sucesso", "Porteira excluída com sucesso!"));
+
+        } catch (DataIntegrityViolationException ex) {
+            // FK / constraint (porteira_backup -> porteiraeletronica)
+            if (isFkConstraint(ex)) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                "Não é possível excluir",
+                                "Existe backup vinculado a esta porteira. Remova o backup antes de excluir."));
+            } else {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro", "Erro ao excluir a porteira."));
+            }
+
         } catch (Exception ex) {
-            FacesContext.getCurrentInstance().addMessage(null,
-                    new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro", "Erro ao excluir."));
+            // fallback
+            if (isFkConstraint(ex)) {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_WARN,
+                                "Não é possível excluir",
+                                "Existe backup vinculado a esta porteira. Remova o backup antes de excluir."));
+            } else {
+                FacesContext.getCurrentInstance().addMessage(null,
+                        new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erro", "Erro ao excluir."));
+            }
         }
+    }
+
+    private boolean isFkConstraint(Throwable ex) {
+        Throwable t = ex;
+        while (t != null) {
+            // Hibernate
+            if (t instanceof ConstraintViolationException cve) {
+                SQLException sqlEx = cve.getSQLException();
+                if (sqlEx != null) {
+                    // MySQL FK fail: errorCode=1451 / SQLState=23000
+                    if ("23000".equals(sqlEx.getSQLState()) || sqlEx.getErrorCode() == 1451) {
+                        return true;
+                    }
+                }
+                String msg = cve.getMessage();
+                if (msg != null && msg.contains("foreign key constraint fails")) return true;
+            }
+
+            // JDBC direto
+            if (t instanceof SQLException sql) {
+                if ("23000".equals(sql.getSQLState()) || sql.getErrorCode() == 1451) {
+                    return true;
+                }
+            }
+
+            String m = t.getMessage();
+            if (m != null && m.contains("foreign key constraint fails")) return true;
+
+            t = t.getCause();
+        }
+        return false;
     }
 
     public void pesquisar() {
@@ -271,35 +307,17 @@ public class PorteiraEletronicaBean implements Serializable {
                 new FacesMessage(FacesMessage.SEVERITY_INFO, "OK", "Filtros limpos."));
     }
 
-    // helpers para tabela
-    public Date getDataInicio(PorteiraEletronica p) {
-        return convertLocalDateToDate(p.getDataInicio());
-    }
+    public Date getDataInicio(PorteiraEletronica p) { return convertLocalDateToDate(p.getDataInicio()); }
+    public Date getDataFim(PorteiraEletronica p) { return convertLocalDateToDate(p.getDataFim()); }
+    public Date getHoraInicio(PorteiraEletronica p) { return convertLocalTimeToDate(p.getHoraInicio()); }
+    public Date getHoraFim(PorteiraEletronica p) { return convertLocalTimeToDate(p.getHoraFim()); }
 
-    public Date getDataFim(PorteiraEletronica p) {
-        return convertLocalDateToDate(p.getDataFim());
-    }
-
-    public Date getHoraInicio(PorteiraEletronica p) {
-        return convertLocalTimeToDate(p.getHoraInicio());
-    }
-
-    public Date getHoraFim(PorteiraEletronica p) {
-        return convertLocalTimeToDate(p.getHoraFim());
-    }
-
-    // =======================
-    // conversões
-    // =======================
     private LocalDate convertDateToLocalDate(Date date) {
         return date == null
                 ? null
                 : Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
     }
 
-    /**
-     * Ajuste: pega somente HH:mm:ss (ignora data) e "limpa" nanos.
-     */
     private LocalTime convertDateToLocalTime(Date date) {
         if (date == null) return null;
         LocalTime t = Instant.ofEpochMilli(date.getTime()).atZone(ZoneId.systemDefault()).toLocalTime();
@@ -319,126 +337,35 @@ public class PorteiraEletronicaBean implements Serializable {
                         .atZone(ZoneId.systemDefault()).toInstant());
     }
 
-    // =======================
     // Getters/Setters
-    // =======================
-    public PorteiraEletronica getPorteira() {
-        return porteira;
-    }
-
-    public void setPorteira(PorteiraEletronica porteira) {
-        this.porteira = porteira;
-    }
-
-    public CarregamentoLazyListForObject<PorteiraEletronica> getPorteirasLazy() {
-        return porteirasLazy;
-    }
-
-    public void setPorteirasLazy(CarregamentoLazyListForObject<PorteiraEletronica> porteirasLazy) {
-        this.porteirasLazy = porteirasLazy;
-    }
-
-    public List<Loja> getLojas() {
-        return lojas;
-    }
-
-    public void setLojas(List<Loja> lojas) {
-        this.lojas = lojas;
-    }
-
-    public String getCampoSelecionado() {
-        return campoSelecionado;
-    }
-
-    public void setCampoSelecionado(String campoSelecionado) {
-        this.campoSelecionado = campoSelecionado;
-    }
-
-    public String getCondicaoSelecionada() {
-        return condicaoSelecionada;
-    }
-
-    public void setCondicaoSelecionada(String condicaoSelecionada) {
-        this.condicaoSelecionada = condicaoSelecionada;
-    }
-
-    public String getValorPesquisa() {
-        return valorPesquisa;
-    }
-
-    public void setValorPesquisa(String valorPesquisa) {
-        this.valorPesquisa = valorPesquisa;
-    }
-
-    public List<SelectItem> getCamposPesquisa() {
-        return camposPesquisa;
-    }
-
-    public void setCamposPesquisa(List<SelectItem> camposPesquisa) {
-        this.camposPesquisa = camposPesquisa;
-    }
-
-    public boolean isMostrarFormulario() {
-        return mostrarFormulario;
-    }
-
-    public void setMostrarFormulario(boolean mostrarFormulario) {
-        this.mostrarFormulario = mostrarFormulario;
-    }
-
-    public String getSenhaOculta() {
-        return senhaOculta;
-    }
-
-    public void setSenhaOculta(String senhaOculta) {
-        this.senhaOculta = senhaOculta;
-    }
-
-    public boolean isEditandoSenha() {
-        return editandoSenha;
-    }
-
-    public void setEditandoSenha(boolean editandoSenha) {
-        this.editandoSenha = editandoSenha;
-    }
-
-    public boolean isPorteiraPersistida() {
-        return porteiraPersistida;
-    }
-
-    public void setPorteiraPersistida(boolean porteiraPersistida) {
-        this.porteiraPersistida = porteiraPersistida;
-    }
-
-    public Date getDataInicio() {
-        return dataInicio;
-    }
-
-    public void setDataInicio(Date dataInicio) {
-        this.dataInicio = dataInicio;
-    }
-
-    public Date getDataFim() {
-        return dataFim;
-    }
-
-    public void setDataFim(Date dataFim) {
-        this.dataFim = dataFim;
-    }
-
-    public Date getHoraInicio() {
-        return horaInicio;
-    }
-
-    public void setHoraInicio(Date horaInicio) {
-        this.horaInicio = horaInicio;
-    }
-
-    public Date getHoraFim() {
-        return horaFim;
-    }
-
-    public void setHoraFim(Date horaFim) {
-        this.horaFim = horaFim;
-    }
+    public PorteiraEletronica getPorteira() { return porteira; }
+    public void setPorteira(PorteiraEletronica porteira) { this.porteira = porteira; }
+    public CarregamentoLazyListForObject<PorteiraEletronica> getPorteirasLazy() { return porteirasLazy; }
+    public void setPorteirasLazy(CarregamentoLazyListForObject<PorteiraEletronica> porteirasLazy) { this.porteirasLazy = porteirasLazy; }
+    public List<Loja> getLojas() { return lojas; }
+    public void setLojas(List<Loja> lojas) { this.lojas = lojas; }
+    public String getCampoSelecionado() { return campoSelecionado; }
+    public void setCampoSelecionado(String campoSelecionado) { this.campoSelecionado = campoSelecionado; }
+    public String getCondicaoSelecionada() { return condicaoSelecionada; }
+    public void setCondicaoSelecionada(String condicaoSelecionada) { this.condicaoSelecionada = condicaoSelecionada; }
+    public String getValorPesquisa() { return valorPesquisa; }
+    public void setValorPesquisa(String valorPesquisa) { this.valorPesquisa = valorPesquisa; }
+    public List<SelectItem> getCamposPesquisa() { return camposPesquisa; }
+    public void setCamposPesquisa(List<SelectItem> camposPesquisa) { this.camposPesquisa = camposPesquisa; }
+    public boolean isMostrarFormulario() { return mostrarFormulario; }
+    public void setMostrarFormulario(boolean mostrarFormulario) { this.mostrarFormulario = mostrarFormulario; }
+    public String getSenhaOculta() { return senhaOculta; }
+    public void setSenhaOculta(String senhaOculta) { this.senhaOculta = senhaOculta; }
+    public boolean isEditandoSenha() { return editandoSenha; }
+    public void setEditandoSenha(boolean editandoSenha) { this.editandoSenha = editandoSenha; }
+    public boolean isPorteiraPersistida() { return porteiraPersistida; }
+    public void setPorteiraPersistida(boolean porteiraPersistida) { this.porteiraPersistida = porteiraPersistida; }
+    public Date getDataInicio() { return dataInicio; }
+    public void setDataInicio(Date dataInicio) { this.dataInicio = dataInicio; }
+    public Date getDataFim() { return dataFim; }
+    public void setDataFim(Date dataFim) { this.dataFim = dataFim; }
+    public Date getHoraInicio() { return horaInicio; }
+    public void setHoraInicio(Date horaInicio) { this.horaInicio = horaInicio; }
+    public Date getHoraFim() { return horaFim; }
+    public void setHoraFim(Date horaFim) { this.horaFim = horaFim; }
 }

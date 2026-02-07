@@ -14,6 +14,22 @@
 
             <p:growl id="growl" showDetail="true" life="5000" />
 
+            <!-- ✅ necessário para o p:confirm funcionar em qualquer botão -->
+            <p:confirmDialog global="true"
+                             showEffect="fade"
+                             hideEffect="fade"
+                             responsive="true"
+                             width="420">
+                <p:commandButton value="Sim"
+                                 type="button"
+                                 styleClass="ui-confirmdialog-yes ui-button-danger"
+                                 icon="pi pi-check" />
+                <p:commandButton value="Não"
+                                 type="button"
+                                 styleClass="ui-confirmdialog-no ui-button-secondary"
+                                 icon="pi pi-times" />
+            </p:confirmDialog>
+
             <!-- =========================
                  AÇÕES: BACKUP MANUAL
                  ========================= -->
@@ -38,7 +54,7 @@
                                  styleClass="ui-button-success"
                                  actionListener="#{porteiraBackupBean.executarBackupManual}"
                                  process="@form"
-                                 update=":frmBackup:tblBackups :frmBackup:growl" />
+                                 update=":frmBackup:tblBackups :frmBackup:growl :frmBackup:pnlRestore" />
 
                 <p:spacer width="8"/>
 
@@ -136,9 +152,7 @@
                       resizable="false">
 
                 <p:outputPanel id="pnlDetalhe">
-
                     <ui:include src="/resources/componentes/porteira/dialogDetalhePorteiraBackup.xhtml"/>
-
                 </p:outputPanel>
 
             </p:dialog>

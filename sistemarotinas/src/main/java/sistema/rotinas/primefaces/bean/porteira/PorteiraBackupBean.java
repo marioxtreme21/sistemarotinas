@@ -140,6 +140,33 @@ public class PorteiraBackupBean implements Serializable {
 		}
 	}
 
+	// ✅ NOVO: Excluir backup selecionado na tabela
+	public void excluirBackup(PorteiraBackup b) {
+		if (b == null || b.getId() == null)
+			return;
+
+		try {
+			Long backupId = b.getId();
+			backupService.excluirBackup(backupId);
+
+			// se estava selecionado no restore, limpa pra não ficar ID inválido
+			if (backupSelecionadoId != null && backupSelecionadoId.equals(backupId)) {
+				backupSelecionadoId = null;
+			}
+			// se estava no detalhe, limpa
+			if (backupDetalhe != null && backupId.equals(backupDetalhe.getId())) {
+				backupDetalhe = null;
+				usuariosBackup = new ArrayList<>();
+			}
+
+			msgInfo("Backup excluído com sucesso!");
+			recarregar();
+
+		} catch (Exception e) {
+			msgErro("Erro ao excluir backup: " + e.getMessage());
+		}
+	}
+
 	// =========================
 	// Helpers
 	// =========================

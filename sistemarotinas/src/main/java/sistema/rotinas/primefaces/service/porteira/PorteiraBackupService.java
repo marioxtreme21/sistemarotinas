@@ -68,7 +68,27 @@ public class PorteiraBackupService implements IPorteiraBackupService {
     }
 
     // =========================================================
-    // MANUAL -> notifica individual (como já está funcionando)
+    // ✅ NOVO: EXCLUIR BACKUP (evita FK: apaga usuários antes)
+    // =========================================================
+    @Override
+    @Transactional
+    public void excluirBackup(Long backupId) {
+        if (backupId == null) return;
+
+        try {
+            long qtd = usuarioRepo.deleteByBackup_Id(backupId);
+            LOG.info("[MANUAL][BACKUP] Excluir backupId={} -> usuários removidos={}", backupId, qtd);
+        } catch (Exception e) {
+            LOG.warn("[MANUAL][BACKUP] Falha ao remover usuários do backupId={} msg={}", backupId, e.getMessage(), e);
+            // mesmo com falha, tenta continuar (mas pode estourar FK ao deletar backup)
+        }
+
+        backupRepo.deleteById(backupId);
+        LOG.info("[MANUAL][BACKUP] Backup removido backupId={}", backupId);
+    }
+
+    // =========================================================
+    // MANUAL -> notifica individual
     // =========================================================
     @Override
     @Transactional
@@ -76,20 +96,14 @@ public class PorteiraBackupService implements IPorteiraBackupService {
         return executarBackupInterno(porteiraId, "MANUAL", true);
     }
 
-    // =========================================================
-    // Se seu IPorteiraBackupService agora exige essa assinatura:
-    // =========================================================
     @Override
     @Transactional
     public PorteiraBackup executarBackup(Long porteiraId, String origemExecucao) {
         String origem = normOrigem(origemExecucao);
-        boolean notificarPorPorteira = !"AUTO".equals(origem); // padrão: AUTO não notifica por porteira
+        boolean notificarPorPorteira = !"AUTO".equals(origem);
         return executarBackupInterno(porteiraId, origem, notificarPorPorteira);
     }
 
-    // =========================================================
-    // AUTO -> NÃO notifica por porteira (handler manda 1 resumo)
-    // =========================================================
     @Transactional
     public PorteiraBackup executarBackupAutoSemNotificar(Long porteiraId) {
         return executarBackupInterno(porteiraId, "AUTO", false);
@@ -115,7 +129,6 @@ public class PorteiraBackupService implements IPorteiraBackupService {
         LOG.info("[{}][BACKUP] Start porteiraId={} desc={} ip={} notificarPorPorteira={}",
                 origem, pid, desc, ip, notificarPorPorteira);
 
-        // ✅ UNIQUE(porteira_id): reutiliza o registro
         PorteiraBackup backup = backupRepo.findByPorteira_Id(porteiraId).orElse(null);
 
         boolean reutilizou = false;
@@ -124,7 +137,6 @@ public class PorteiraBackupService implements IPorteiraBackupService {
             backup.setPorteira(porteira);
         } else {
             reutilizou = true;
-            // limpa usuários do backup anterior
             try {
                 usuarioRepo.deleteByBackup_Id(backup.getId());
             } catch (Exception e) {
@@ -149,7 +161,6 @@ public class PorteiraBackupService implements IPorteiraBackupService {
            .append(" em ").append(LocalDateTime.now()).append("\n\n");
 
         try {
-            // chama runtime
             PorteiraBackupRuntimeClient.RuntimeGetResult gr = runtimeClient.baixarUsuariosJson(porteira);
 
             if (gr == null) {
@@ -228,7 +239,6 @@ public class PorteiraBackupService implements IPorteiraBackupService {
             for (JsonNode u : root) {
                 totalLido++;
 
-                // payload completo (vai pro DB; NÃO logar em arquivo)
                 String payload = mapper.writeValueAsString(u);
 
                 PorteiraBackupUsuario bu = new PorteiraBackupUsuario();
@@ -302,14 +312,13 @@ public class PorteiraBackupService implements IPorteiraBackupService {
     }
 
     // =========================================================
-    // RESTORE (com logs e notificação ao final)
+    // RESTORE
     // =========================================================
     @Override
     public RestoreResult restaurarBackupParaPorteira(Long backupId, Long porteiraDestinoId, boolean dryRun) {
         return restaurarBackupParaPorteira(backupId, porteiraDestinoId, dryRun, "MANUAL");
     }
 
-    // Se seu IPorteiraBackupService agora exige essa assinatura:
     @Override
     public RestoreResult restaurarBackupParaPorteira(Long backupId, Long porteiraDestinoId, boolean dryRun,
                                                     String origemExecucao) {
@@ -470,12 +479,6 @@ public class PorteiraBackupService implements IPorteiraBackupService {
 
     private static String nz(String s) {
         return (s == null || s.isBlank()) ? "-" : s.trim();
-    }
-
-    @SuppressWarnings("unused")
-    private static String safeCut(String s, int max) {
-        if (s == null) return null;
-        return s.length() <= max ? s : s.substring(0, max) + "...";
     }
 
     private static String normOrigem(String origemExecucao) {
