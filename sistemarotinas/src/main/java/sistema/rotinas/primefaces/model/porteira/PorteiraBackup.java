@@ -1,4 +1,3 @@
-// FILE: src/main/java/sistema/rotinas/primefaces/model/porteira/PorteiraBackup.java
 package sistema.rotinas.primefaces.model.porteira;
 
 import java.io.Serializable;
@@ -7,10 +6,10 @@ import java.time.LocalDateTime;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "porteira_backup", indexes = { @Index(name = "idx_pb_porteira", columnList = "porteira_id"),
-		@Index(name = "idx_pb_criado_em", columnList = "criado_em") }, uniqueConstraints = {
-				// ✅ garante "último backup" por porteira (1 linha por porteira)
-				@UniqueConstraint(name = "uk_pb_porteira", columnNames = { "porteira_id" }) })
+@Table(name = "porteira_backup", indexes = {
+		@Index(name = "idx_pb_porteira", columnList = "porteira_id"),
+		@Index(name = "idx_pb_criado_em", columnList = "criado_em")
+})
 public class PorteiraBackup implements Serializable {
 
 	private static final long serialVersionUID = 1L;
@@ -32,7 +31,7 @@ public class PorteiraBackup implements Serializable {
 
 	// (Opcional) status simples
 	@Column(name = "status", length = 30)
-	private String status; // "OK" | "FALHA" | "PARCIAL"
+	private String status; // "OK" | "FALHA" | "PARCIAL" | "INICIADO"
 
 	// Log da execução (resumo)
 	@Lob
