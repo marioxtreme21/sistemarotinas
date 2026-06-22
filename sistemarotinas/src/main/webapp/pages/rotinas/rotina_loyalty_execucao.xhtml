@@ -1,0 +1,66 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    template="/WEB-INF/templates/layout.xhtml">
+
+    <h:head>
+        <h:outputStylesheet name="estilo.css" library="css" id="cssStileSistema" />
+    </h:head>
+
+    <ui:define name="title">Rotina LOYALTY - Execução</ui:define>
+
+    <ui:define name="content">
+
+        <h:form id="formPesquisa">
+            <p:growl id="growl" showDetail="true" life="6000" />
+            <ui:include src="/resources/componentes/pesquisaLoyaltyExecucao.xhtml" />
+        </h:form>
+
+        <h:form id="formTable">
+            <p:outputPanel id="wrapperHistorico">
+
+                <p:panel header="Histórico - Rotina LOYALTY"
+                         styleClass="panelPesquisa">
+
+                    <p:dataTable id="tableExecucoes"
+                                 value="#{loyaltyExecucaoBean.historico}"
+                                 var="e"
+                                 emptyMessage="Não há execuções para exibir."
+                                 paginator="true"
+                                 rows="10"
+                                 rowsPerPageTemplate="10,20,50"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+
+                        <ui:include src="/resources/componentes/dataTableRotinaLoyaltyExecucao.xhtml" />
+
+                    </p:dataTable>
+
+                </p:panel>
+
+                <p:spacer height="12" />
+
+                <p:panel header="Pendências de Reprocessamento - LOYALTY"
+                         styleClass="panelPesquisa">
+
+                    <p:dataTable id="tablePendencias"
+                                 value="#{loyaltyExecucaoBean.pendencias}"
+                                 var="p"
+                                 emptyMessage="Não há pendências para exibir."
+                                 paginator="true"
+                                 rows="10"
+                                 rowsPerPageTemplate="10,20,50"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+
+                        <ui:include src="/resources/componentes/dataTableRotinaLoyaltyPendencias.xhtml" />
+
+                    </p:dataTable>
+
+                </p:panel>
+
+            </p:outputPanel>
+        </h:form>
+
+    </ui:define>
+</ui:composition>

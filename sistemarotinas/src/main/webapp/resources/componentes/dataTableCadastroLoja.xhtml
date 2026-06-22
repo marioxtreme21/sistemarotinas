@@ -44,6 +44,10 @@
         <h:outputText value="#{loja.pickAndPackAtivo ? 'Sim' : 'Não'}" />
     </p:column>
 
+    <p:column headerText="Loyalty Ativo" sortBy="#{loja.loyaltyAtivo}">
+        <h:outputText value="#{loja.loyaltyAtivo ? 'Sim' : 'Não'}" />
+    </p:column>
+
     <p:column headerText="Ações">
         <p:commandButton value="Editar"
                          icon="pi pi-pencil"

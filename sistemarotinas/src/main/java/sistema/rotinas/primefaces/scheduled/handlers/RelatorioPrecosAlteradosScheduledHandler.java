@@ -26,17 +26,17 @@ import sistema.rotinas.primefaces.service.RelatorioPrecosAlteradosService;
  * Params JSON opcionais (exemplos):
  * {
  *   "zoneId": "America/Sao_Paulo",
- *   "startHour": 0,
+ *   "startHour": 20,
  *   "startMinute": 0,
  *   "endHour": 7,
  *   "endMinute": 0,
- *   "dtIni": "12/01/2026 00:00:00",
+ *   "dtIni": "11/01/2026 20:00:00",
  *   "dtFim": "12/01/2026 07:00:00"
  * }
  *
  * Regras:
  * - Se dtIni/dtFim vierem no JSON, usa exatamente eles.
- * - Senão, calcula HOJE 00:00:00 -> HOJE 07:00:00 no zoneId (default SP).
+ * - Senão, calcula ONTEM 20:00:00 -> HOJE 07:00:00 no zoneId (default SP).
  */
 @Component
 public class RelatorioPrecosAlteradosScheduledHandler implements ScheduledTaskHandler {
@@ -73,9 +73,9 @@ public class RelatorioPrecosAlteradosScheduledHandler implements ScheduledTaskHa
         String dtIni = safeTrim(ctx != null ? ctx.paramString("dtIni", null) : null);
         String dtFim = safeTrim(ctx != null ? ctx.paramString("dtFim", null) : null);
 
-        // Senão, calcula janela padrão (HOJE 00:00:00 -> HOJE 07:00:00) com horas configuráveis
+        // Senão, calcula janela padrão (ONTEM 20:00:00 -> HOJE 07:00:00) com horas configuráveis
         if (dtIni == null || dtFim == null) {
-            int startHour = ctx != null ? ctx.paramInt("startHour", 0) : 0;
+            int startHour = ctx != null ? ctx.paramInt("startHour", 20) : 20;
             int startMinute = ctx != null ? ctx.paramInt("startMinute", 0) : 0;
 
             int endHour = ctx != null ? ctx.paramInt("endHour", 7) : 7;
@@ -83,8 +83,9 @@ public class RelatorioPrecosAlteradosScheduledHandler implements ScheduledTaskHa
 
             ZonedDateTime agora = ZonedDateTime.now(zone);
             LocalDate hoje = agora.toLocalDate();
+            LocalDate ontem = hoje.minusDays(1);
 
-            dtIni = FMT.format(hoje.atTime(startHour, startMinute, 0).atZone(zone));
+            dtIni = FMT.format(ontem.atTime(startHour, startMinute, 0).atZone(zone));
             dtFim = FMT.format(hoje.atTime(endHour, endMinute, 0).atZone(zone));
         }
 

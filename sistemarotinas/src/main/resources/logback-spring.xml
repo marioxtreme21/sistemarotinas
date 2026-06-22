@@ -175,6 +175,30 @@
         </encoder>
     </appender>
 
+    <!-- ✅ NOVO: LOG DEDICADO ROTINA LOYALTY -->
+    <appender name="ROTINA_LOYALTY" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/rotina-loyalty.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/rotina-loyalty.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ✅ NOVO: LOG DEDICADO API LOYALTY -->
+    <appender name="LOYALTY_API" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/loyalty-api.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/loyalty-api.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
     <!-- ===================== ROOT & LOGGERS ===================== -->
 
     <root level="INFO">
@@ -249,6 +273,18 @@
     <logger name="ROTINA_PORTEIRA" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="ROTINA_PORTEIRA"/>
+    </logger>
+
+    <!-- ✅ ROTINA LOYALTY -->
+    <logger name="ROTINA_LOYALTY" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ROTINA_LOYALTY"/>
+    </logger>
+
+    <!-- ✅ API LOYALTY -->
+    <logger name="LOYALTY_API" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOYALTY_API"/>
     </logger>
 
 </configuration>

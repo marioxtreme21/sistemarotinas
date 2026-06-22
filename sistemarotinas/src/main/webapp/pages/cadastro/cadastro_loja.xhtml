@@ -13,7 +13,6 @@
 
     <ui:define name="content">
 
-        <!-- Filtros de pesquisa -->
         <h:form id="formPesquisa">
             <ui:include src="/resources/componentes/pesquisaLoja.xhtml" />
         </h:form>
@@ -66,6 +65,9 @@
                     <p:outputLabel for="pickAndPackAtivo" value="Pick and Pack Ativo:" />
                     <p:selectBooleanCheckbox id="pickAndPackAtivo" value="#{lojaBean.loja.pickAndPackAtivo}" />
 
+                    <p:outputLabel for="loyaltyAtivo" value="Loyalty Ativo:" />
+                    <p:selectBooleanCheckbox id="loyaltyAtivo" value="#{lojaBean.loja.loyaltyAtivo}" />
+
                     <p:outputLabel for="horarioPriceUpdate" value="Horário Price Update:" />
                     <p:inputText id="horarioPriceUpdate"
                                  value="#{lojaBean.loja.horarioPriceUpdate}"
@@ -76,7 +78,6 @@
                                  value="#{lojaBean.loja.warehouse}"
                                  placeholder="ex.: 1_1, 5_5, etc." />
 
-                    <!-- ✅ NOVOS CAMPOS DE PRIORIDADE -->
                     <p:outputLabel for="prioridadeAtiva" value="Prioridade de Envio Ativa:" />
                     <p:selectBooleanCheckbox id="prioridadeAtiva"
                                              value="#{lojaBean.loja.prioridadeEnvioAtivo}" />
@@ -97,7 +98,6 @@
             </p:panel>
         </h:form>
 
-        <!-- Tabela -->
         <h:form id="formTable">
             <p:dataTable id="tableResult"
                          value="#{lojaBean.lojasLazy}"

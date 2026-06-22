@@ -1,0 +1,150 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:panel header="Execução Manual - Rotina LOYALTY" styleClass="panelPesquisa">
+
+        <p:panelGrid id="gridExecucao"
+                     columns="4"
+                     cellpadding="6"
+                     styleClass="panelPesquisa"
+                     columnClasses="label,value,label,value"
+                     style="width:100%; table-layout:fixed;">
+
+            <p:row>
+                <p:column style="width:170px; white-space:nowrap;">
+                    <p:outputLabel for="todas" value="Selecionar todas:" />
+                </p:column>
+
+                <p:column style="width:70px; white-space:nowrap;">
+                    <p:selectBooleanCheckbox id="todas"
+                                             value="#{loyaltyExecucaoBean.selecionarTodas}">
+                        <p:ajax process="@this" update="gridExecucao btnExecutar btnExecutarLote btnReprocessar" />
+                    </p:selectBooleanCheckbox>
+                </p:column>
+
+                <p:column style="width:120px; white-space:nowrap;">
+                    <p:outputLabel for="lojasSel" value="Lojas:" />
+                </p:column>
+
+                <p:column style="width:auto;">
+                    <p:selectCheckboxMenu id="lojasSel"
+                                          value="#{loyaltyExecucaoBean.lojaIdsSelecionadas}"
+                                          label="Selecione..."
+                                          filter="true"
+                                          filterMatchMode="contains"
+                                          style="width:100%;"
+                                          disabled="#{loyaltyExecucaoBean.selecionarTodas}">
+
+                        <f:selectItems value="#{loyaltyExecucaoBean.lojas}"
+                                       var="l"
+                                       itemValue="#{l.lojaId}"
+                                       itemLabel="#{l.codLojaRms} - #{l.nome}" />
+
+                        <f:converter converterId="jakarta.faces.Long" />
+
+                        <p:ajax event="change" process="@this" update="btnExecutar btnExecutarLote btnReprocessar" />
+                        <p:ajax event="toggleSelect" process="@this" update="btnExecutar btnExecutarLote btnReprocessar" />
+                    </p:selectCheckboxMenu>
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column>
+                    <p:outputLabel for="dataInicial" value="Data Inicial:" />
+                </p:column>
+
+                <p:column>
+                    <p:datePicker id="dataInicial"
+                                  value="#{loyaltyExecucaoBean.dataInicial}"
+                                  pattern="dd/MM/yyyy"
+                                  showIcon="true" />
+                </p:column>
+
+                <p:column>
+                    <p:outputLabel for="dataFinal" value="Data Final:" />
+                </p:column>
+
+                <p:column>
+                    <p:datePicker id="dataFinal"
+                                  value="#{loyaltyExecucaoBean.dataFinal}"
+                                  pattern="dd/MM/yyyy"
+                                  showIcon="true" />
+                </p:column>
+            </p:row>
+
+            <p:row>
+                <p:column colspan="4" style="padding-top:8px;">
+
+                    <p:commandButton id="btnExecutar"
+                                     value="Executar"
+                                     icon="pi pi-play"
+                                     styleClass="ui-button-primary"
+                                     actionListener="#{loyaltyExecucaoBean.executar}"
+                                     process="@form"
+                                     update=":formPesquisa:growl :formTable:wrapperHistorico"
+                                     disabled="#{!loyaltyExecucaoBean.selecionarTodas and empty loyaltyExecucaoBean.lojaIdsSelecionadas}"
+                                     onclick="if(!confirm('Deseja executar a Rotina LOYALTY agora?')) return false;" />
+
+                    <p:spacer width="8" />
+
+                    <p:commandButton id="btnExecutarLote"
+                                     value="Executar em Lotes"
+                                     icon="pi pi-send"
+                                     styleClass="ui-button-success"
+                                     actionListener="#{loyaltyExecucaoBean.executarEmLotes}"
+                                     process="@form"
+                                     update=":formPesquisa:growl :formTable:wrapperHistorico"
+                                     disabled="#{!loyaltyExecucaoBean.selecionarTodas and empty loyaltyExecucaoBean.lojaIdsSelecionadas}"
+                                     onclick="if(!confirm('Deseja executar a Rotina LOYALTY em lotes agora?')) return false;" />
+
+                    <p:spacer width="8" />
+
+                    <p:commandButton id="btnReprocessar"
+                                     value="Reprocessar Falhas"
+                                     icon="pi pi-refresh"
+                                     styleClass="ui-button-warning"
+                                     actionListener="#{loyaltyExecucaoBean.reprocessarFalhas}"
+                                     process="@form"
+                                     update=":formPesquisa:growl :formTable:wrapperHistorico"
+                                     onclick="if(!confirm('Deseja reprocessar as falhas do período/lojas selecionados?')) return false;" />
+
+                    <p:spacer width="8" />
+
+                    <p:commandButton value="Recarregar"
+                                     icon="pi pi-sync"
+                                     styleClass="ui-button-secondary"
+                                     actionListener="#{loyaltyExecucaoBean.recarregarTudo}"
+                                     process="@this"
+                                     update=":formTable:wrapperHistorico :formPesquisa:growl" />
+
+                    <p:spacer width="8" />
+
+                    <p:commandButton value="Limpar seleção"
+                                     icon="pi pi-times"
+                                     styleClass="ui-button-secondary"
+                                     actionListener="#{loyaltyExecucaoBean.limparSelecao}"
+                                     process="@this"
+                                     update="gridExecucao :formPesquisa:growl" />
+
+                    <p:spacer width="12" />
+
+                    <h:outputText value="Tamanho do lote configurado: #{loyaltyExecucaoBean.batchMaxCupons} cupons"
+                                  style="font-weight:bold;color:#0b5ed7;" />
+
+                    <p:spacer width="12" />
+
+                    <h:panelGroup rendered="#{not empty loyaltyExecucaoBean.ultimaExecucaoId}">
+                        <h:outputText value="Última execução registrada (ID): #{loyaltyExecucaoBean.ultimaExecucaoId}"
+                                      style="font-weight:bold;color:#2f6f2f;" />
+                    </h:panelGroup>
+
+                </p:column>
+            </p:row>
+
+        </p:panelGrid>
+
+    </p:panel>
+</ui:composition>

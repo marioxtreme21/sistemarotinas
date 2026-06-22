@@ -30,9 +30,8 @@ public class LojaBean implements Serializable {
 	private Loja loja;
 	private CarregamentoLazyListForObject<Loja> lojasLazy;
 
-	// Campos para pesquisa
 	private String campoSelecionado;
-	private String condicaoSelecionada; // "equal" | "contains"
+	private String condicaoSelecionada;
 	private String valorPesquisa;
 	private List<SelectItem> camposPesquisa;
 	private boolean mostrarFormulario;
@@ -47,14 +46,13 @@ public class LojaBean implements Serializable {
 		loja = new Loja();
 		carregarLojasSobDemanda();
 
-		// ⚠️ Use exatamente os nomes das colunas da tabela "loja"
 		camposPesquisa = new ArrayList<>();
 		camposPesquisa.add(new SelectItem("nome", "Nome"));
 		camposPesquisa.add(new SelectItem("cnpj", "CNPJ"));
 		camposPesquisa.add(new SelectItem("politica_comercial", "Política Comercial"));
 		camposPesquisa.add(new SelectItem("ecommerce_ativo", "E-commerce Ativo"));
 		camposPesquisa.add(new SelectItem("pick_and_pack_ativo", "Pick and Pack Ativo"));
-		// ✅ Novos no filtro:
+		camposPesquisa.add(new SelectItem("loyalty_ativo", "Loyalty Ativo"));
 		camposPesquisa.add(new SelectItem("horario_price_update", "Horário Price Update"));
 		camposPesquisa.add(new SelectItem("warehouse", "Warehouse"));
 		camposPesquisa.add(new SelectItem("prioridade_envio_ativo", "Prioridade Ativa"));
@@ -176,7 +174,6 @@ public class LojaBean implements Serializable {
 				new FacesMessage(FacesMessage.SEVERITY_INFO, "Filtros limpos", "Todos os filtros foram removidos."));
 	}
 
-	// Getters e Setters
 	public Loja getLoja() {
 		return loja;
 	}

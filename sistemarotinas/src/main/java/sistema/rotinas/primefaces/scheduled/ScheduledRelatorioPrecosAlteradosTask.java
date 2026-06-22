@@ -34,7 +34,7 @@ public class ScheduledRelatorioPrecosAlteradosTask {
 
     /**
      * Executa diariamente às 01:00 (America/Sao_Paulo).
-     * Período considerado: HOJE 00:00:00 → HOJE 07:00:00.
+     * Período considerado: ONTEM 20:00:00 → HOJE 07:00:00.
      *
      * cron = "segundo minuto hora diaDoMês mês diaDaSemana"
      */
@@ -42,8 +42,9 @@ public class ScheduledRelatorioPrecosAlteradosTask {
     public void gerarEEnviarRelatorioDiario() {
         ZonedDateTime agora = ZonedDateTime.now(ZONE_SP);
         LocalDate hoje = agora.toLocalDate();
+        LocalDate ontem = hoje.minusDays(1);
 
-        String dtIni = FMT.format(hoje.atTime(0, 0, 0).atZone(ZONE_SP));
+        String dtIni = FMT.format(ontem.atTime(20, 0, 0).atZone(ZONE_SP));
         String dtFim = FMT.format(hoje.atTime(7, 0, 0).atZone(ZONE_SP));
 
         log.info("[Scheduler][RelatorioPrecosAlterados] Início: período {} -> {}", dtIni, dtFim);

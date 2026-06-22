@@ -53,7 +53,9 @@ public class RelatorioPrecosAlteradosBean implements Serializable {
         arquivosGerados = new ArrayList<>();
 
         LocalDate hoje = LocalDate.now(ZoneId.systemDefault());
-        this.dataInicialDate = Date.from(hoje.atTime(0, 0, 0).atZone(ZoneId.systemDefault()).toInstant());
+        LocalDate ontem = hoje.minusDays(1);
+
+        this.dataInicialDate = Date.from(ontem.atTime(20, 0, 0).atZone(ZoneId.systemDefault()).toInstant());
         this.dataFinalDate   = Date.from(hoje.atTime(7, 0, 0).atZone(ZoneId.systemDefault()).toInstant());
     }
 
@@ -148,8 +150,8 @@ public class RelatorioPrecosAlteradosBean implements Serializable {
             }
 
             streamFileToResponse(arquivoParaBaixar, contentType, downloadName);
-            FacesContext.getCurrentInstance().responseComplete(); // muito importante!
-            return null; // permanece na mesma view
+            FacesContext.getCurrentInstance().responseComplete();
+            return null;
         } catch (Exception e) {
             addMsg(FacesMessage.SEVERITY_ERROR, "Erro", e.getMessage());
             return null;
@@ -181,7 +183,6 @@ public class RelatorioPrecosAlteradosBean implements Serializable {
         FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(sev, sum, det));
     }
 
-    // Getters/Setters
     public List<Loja> getLojas() { return lojas; }
     public List<Long> getLojasSelecionadas() { return lojasSelecionadas; }
     public void setLojasSelecionadas(List<Long> lojasSelecionadas) { this.lojasSelecionadas = lojasSelecionadas; }
@@ -191,7 +192,6 @@ public class RelatorioPrecosAlteradosBean implements Serializable {
     public void setDataFinalDate(Date dataFinalDate) { this.dataFinalDate = dataFinalDate; }
     public List<String> getArquivosGerados() { return arquivosGerados; }
 
-    // ZIP util
     private static void zipFiles(List<String> paths, File outZip) throws Exception {
         try (java.util.zip.ZipOutputStream zos =
                      new java.util.zip.ZipOutputStream(new java.io.FileOutputStream(outZip))) {

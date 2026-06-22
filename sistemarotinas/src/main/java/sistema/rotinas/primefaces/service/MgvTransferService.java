@@ -39,6 +39,8 @@ public class MgvTransferService {
     private static final Logger LOG = LoggerFactory.getLogger("ROTINA_MGV");
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+    private static final String PRECOPRO_FILE = "precopro.txt";
+    private static final String PRECOPRO_ORIGEM = "ORACLE: PRODUTOS_ETIQUETAS_ZKONG";
 
     @Value("${mgv.retention-days:7}")
     private int retentionDays;
@@ -46,6 +48,7 @@ public class MgvTransferService {
     @Autowired private SftpDownloadService sftpDownloadService;
     @Autowired private FsCopyService fsCopyService;
     @Autowired private SmbCopyService smbCopyService;
+    @Autowired private MgvPrecoproClubeService mgvPrecoproClubeService;
 
     @Autowired private IArquivosMgvPatternService patternService;
     @Autowired private IArquivosMgvService arquivosMgvService;
@@ -139,11 +142,11 @@ public class MgvTransferService {
         LOG.debug("Patterns detalhe | mgvId={} codLojaRms={} patterns={}", cfg.getMgvId(), cod, patterns);
 
         // =========================
-        // 1) DOWNLOAD SFTP (batch com fallback)
+        // 1) DOWNLOAD SFTP / GERAÇÃO ESPECIAL
         // =========================
         List<SftpDownloadInfo> infosDownload;
         try {
-            DownloadBatch batch = baixarBatchSftp(rc, remoteDir, patterns, pastaDia);
+            DownloadBatch batch = baixarBatchMgv(cfg, rc, remoteDir, patterns, pastaDia);
 
             List<String> arquivosRemotos = (batch != null && batch.arquivosRemotos != null) ? batch.arquivosRemotos : new ArrayList<>();
             List<Path> arquivosLocais  = (batch != null && batch.arquivosLocais  != null) ? batch.arquivosLocais  : new ArrayList<>();
@@ -190,7 +193,11 @@ public class MgvTransferService {
 
                 MgvTestResult.ArquivoInfo ai = r.getOrCreateArquivoInfo(nome);
                 if (ai != null) {
-                    ai.setOrigemRemota(remoteDir + (remoteDir.endsWith("/") ? "" : "/") + nome);
+                    if (isPrecoproFileName(nome)) {
+                        ai.setOrigemRemota(PRECOPRO_ORIGEM);
+                    } else {
+                        ai.setOrigemRemota(remoteDir + (remoteDir.endsWith("/") ? "" : "/") + nome);
+                    }
                     ai.setDestinoLocal(local != null ? String.valueOf(local) : null);
                 }
             }
@@ -202,10 +209,10 @@ public class MgvTransferService {
             r.setSftpOk(false);
             r.setDownloadOk(false);
             r.setStatusGeral("FALHOU");
-            r.setDetalheGeral("Falha no download SFTP.");
-            r.addMsg("FALHA no download SFTP: " + e.getMessage());
+            r.setDetalheGeral("Falha no download/geração dos arquivos MGV.");
+            r.addMsg("FALHA no download/geração dos arquivos MGV: " + e.getMessage());
 
-            LOG.error("Falha no download SFTP | mgvId={} codLojaRms={} remoteHost={} remoteDir={} msg={}",
+            LOG.error("Falha no download/geração dos arquivos MGV | mgvId={} codLojaRms={} remoteHost={} remoteDir={} msg={}",
                     cfg.getMgvId(), cod, safeHost(rc), remoteDir, e.getMessage(), e);
 
             return r;
@@ -327,7 +334,7 @@ public class MgvTransferService {
 
         } else {
             r.addMsg("FS: não configurado (pulado).");
-            r.setFsOk(false); // mantém semântico: não usado
+            r.setFsOk(false);
             if (r.getArquivosRemotos() != null) {
                 for (String nome : r.getArquivosRemotos()) {
                     MgvTestResult.ArquivoInfo ai = r.getOrCreateArquivoInfo(nome);
@@ -483,6 +490,57 @@ public class MgvTransferService {
     }
 
     /**
+     * Regra MGV:
+     * - Patterns normais continuam sendo baixados do SFTP.
+     * - O pattern precopro.txt é tratado de forma especial: o arquivo é gerado
+     *   localmente a partir da view PRODUTOS_ETIQUETAS_ZKONG no Oracle externo.
+     */
+    private DownloadBatch baixarBatchMgv(ArquivosMgv cfg, LojaRemoteConfig rc, String remoteDir, List<String> patterns, Path pastaDia) throws Exception {
+        List<String> patternsSftp = new ArrayList<>();
+        boolean gerarPrecopro = false;
+
+        if (patterns != null) {
+            for (String pattern : patterns) {
+                if (isPrecoproPattern(pattern)) {
+                    gerarPrecopro = true;
+                } else if (pattern != null && !pattern.isBlank()) {
+                    patternsSftp.add(pattern);
+                }
+            }
+        }
+
+        DownloadBatch out = new DownloadBatch(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+
+        if (!patternsSftp.isEmpty()) {
+            DownloadBatch sftpBatch = baixarBatchSftp(rc, remoteDir, patternsSftp, pastaDia);
+            if (sftpBatch != null) {
+                if (sftpBatch.arquivosRemotos != null) out.arquivosRemotos.addAll(sftpBatch.arquivosRemotos);
+                if (sftpBatch.arquivosLocais != null) out.arquivosLocais.addAll(sftpBatch.arquivosLocais);
+                if (sftpBatch.infos != null) out.infos.addAll(sftpBatch.infos);
+            }
+        } else {
+            LOG.info("Nenhum pattern SFTP para baixar nesta configuração; apenas geração especial local será executada, se houver.");
+        }
+
+        if (gerarPrecopro) {
+            Loja loja = cfg != null ? cfg.getLoja() : null;
+            Path arquivoPrecopro = mgvPrecoproClubeService.gerarArquivoPrecopro(loja, pastaDia);
+            String nome = arquivoPrecopro.getFileName().toString();
+
+            out.arquivosRemotos.add(nome);
+            out.arquivosLocais.add(arquivoPrecopro);
+            out.infos.add(new SftpDownloadInfo(nome, Instant.now().getEpochSecond()));
+
+            LOG.info("precopro.txt gerado via Oracle externo | lojaId={} codLojaRms={} arquivo={}",
+                    safeLojaId(loja),
+                    loja != null ? loja.getCodLojaRms() : null,
+                    arquivoPrecopro);
+        }
+
+        return out;
+    }
+
+    /**
      * ✅ AJUSTE:
      * - Tenta o batch novo (1 conexão por loja):
      *   sftpDownloadService.baixarArquivosMaisRecentesPorPattern(...)
@@ -538,6 +596,22 @@ public class MgvTransferService {
         }
 
         return new DownloadBatch(remotos, locais, infosOut);
+    }
+
+    private static boolean isPrecoproPattern(String pattern) {
+        if (pattern == null) return false;
+        String p = pattern.trim();
+        if (p.isEmpty()) return false;
+
+        int slash = Math.max(p.lastIndexOf('/'), p.lastIndexOf('\\'));
+        String nome = slash >= 0 ? p.substring(slash + 1) : p;
+
+        return PRECOPRO_FILE.equalsIgnoreCase(nome);
+    }
+
+    private static boolean isPrecoproFileName(String nomeArquivo) {
+        if (nomeArquivo == null) return false;
+        return PRECOPRO_FILE.equalsIgnoreCase(nomeArquivo.trim());
     }
 
     private ZoneId resolveZone(ArquivosMgv cfg) {

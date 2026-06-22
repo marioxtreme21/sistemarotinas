@@ -1,0 +1,59 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:column headerText="ID" sortBy="#{e.execucaoLoyaltyId}" style="width:90px;">
+        <h:outputText value="#{e.execucaoLoyaltyId}" />
+    </p:column>
+
+    <p:column headerText="Origem" sortBy="#{e.origemExecucao}" style="width:120px;">
+        <h:outputText value="#{e.origemExecucao}" />
+    </p:column>
+
+    <p:column headerText="Status" sortBy="#{e.status}" style="width:130px;">
+        <h:outputText value="#{e.status}" />
+    </p:column>
+
+    <p:column headerText="Dt. Inicial" sortBy="#{e.dataInicial}" style="width:110px;">
+        <h:outputText value="#{loyaltyExecucaoBean.formatarData(e.dataInicial)}" />
+    </p:column>
+
+    <p:column headerText="Dt. Final" sortBy="#{e.dataFinal}" style="width:110px;">
+        <h:outputText value="#{loyaltyExecucaoBean.formatarData(e.dataFinal)}" />
+    </p:column>
+
+    <p:column headerText="Início" sortBy="#{e.inicioEm}" style="width:165px;">
+        <h:outputText value="#{loyaltyExecucaoBean.formatarDataHora(e.inicioEm)}" />
+    </p:column>
+
+    <p:column headerText="Fim" sortBy="#{e.fimEm}" style="width:165px;">
+        <h:outputText value="#{loyaltyExecucaoBean.formatarDataHora(e.fimEm)}" />
+    </p:column>
+
+    <p:column headerText="Lojas" sortBy="#{e.totalLojas}" style="width:80px;">
+        <h:outputText value="#{e.totalLojas}" />
+    </p:column>
+
+    <p:column headerText="Lotes" sortBy="#{e.totalLotes}" style="width:80px;">
+        <h:outputText value="#{e.totalLotes}" />
+    </p:column>
+
+    <p:column headerText="Consultados" sortBy="#{e.totalCuponsConsultados}" style="width:110px;">
+        <h:outputText value="#{e.totalCuponsConsultados}" />
+    </p:column>
+
+    <p:column headerText="Enviados" sortBy="#{e.totalCuponsEnviados}" style="width:100px;">
+        <h:outputText value="#{e.totalCuponsEnviados}" />
+    </p:column>
+
+    <p:column headerText="Falhas" sortBy="#{e.totalCuponsFalha}" style="width:90px;">
+        <h:outputText value="#{e.totalCuponsFalha}" />
+    </p:column>
+
+    <p:column headerText="Resumo">
+        <h:outputText value="#{e.mensagemResumo}" />
+    </p:column>
+
+</ui:composition>

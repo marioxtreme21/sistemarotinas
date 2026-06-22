@@ -48,21 +48,21 @@ public class Loja implements Serializable {
 	@Column(name = "pick_and_pack_ativo")
 	private Boolean pickAndPackAtivo;
 
-	// ✅ Campos existentes
+	@Column(name = "loyalty_ativo")
+	private Boolean loyaltyAtivo = false;
+
 	@Column(name = "horario_price_update", length = 20)
 	private String horarioPriceUpdate;
 
 	@Column(name = "warehouse", length = 100)
 	private String warehouse;
 
-	// ✅ NOVOS CAMPOS (prioridade)
 	@Column(name = "prioridade_envio_ativo")
-	private Boolean prioridadeEnvioAtivo; // se true, participa da fila prioritária
+	private Boolean prioridadeEnvioAtivo;
 
 	@Column(name = "prioridade_envio_ranking")
-	private Integer prioridadeEnvioRanking; // menor número = mais prioritária (ex.: 1..8)
+	private Integer prioridadeEnvioRanking;
 
-	// Getters e Setters
 	public Long getLojaId() {
 		return lojaId;
 	}
@@ -143,6 +143,14 @@ public class Loja implements Serializable {
 		this.pickAndPackAtivo = pickAndPackAtivo;
 	}
 
+	public Boolean getLoyaltyAtivo() {
+		return loyaltyAtivo;
+	}
+
+	public void setLoyaltyAtivo(Boolean loyaltyAtivo) {
+		this.loyaltyAtivo = loyaltyAtivo;
+	}
+
 	public String getHorarioPriceUpdate() {
 		return horarioPriceUpdate;
 	}
@@ -195,8 +203,9 @@ public class Loja implements Serializable {
 		return "Loja [lojaId=" + lojaId + ", nome=" + nome + ", cnpj=" + cnpj + ", politicaComercial="
 				+ politicaComercial + ", codLojaEconect=" + codLojaEconect + ", codLojaRms=" + codLojaRms
 				+ ", codLojaRmsDg=" + codLojaRmsDg + ", codigoEmpresaSitef=" + codigoEmpresaSitef + ", ecommerceAtivo="
-				+ ecommerceAtivo + ", pickAndPackAtivo=" + pickAndPackAtivo + ", horarioPriceUpdate="
-				+ horarioPriceUpdate + ", warehouse=" + warehouse + ", prioridadeEnvioAtivo=" + prioridadeEnvioAtivo
-				+ ", prioridadeEnvioRanking=" + prioridadeEnvioRanking + "]";
+				+ ecommerceAtivo + ", pickAndPackAtivo=" + pickAndPackAtivo + ", loyaltyAtivo=" + loyaltyAtivo
+				+ ", horarioPriceUpdate=" + horarioPriceUpdate + ", warehouse=" + warehouse
+				+ ", prioridadeEnvioAtivo=" + prioridadeEnvioAtivo + ", prioridadeEnvioRanking="
+				+ prioridadeEnvioRanking + "]";
 	}
 }

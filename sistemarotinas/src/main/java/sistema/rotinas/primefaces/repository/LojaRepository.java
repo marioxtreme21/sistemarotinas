@@ -15,9 +15,11 @@ public interface LojaRepository extends JpaRepository<Loja, Long> {
 
     Optional<Loja> findByCnpj(String cnpj);
 
-    // ✅ já existia para o Price Update
     List<Loja> findByEcommerceAtivoTrueAndHorarioPriceUpdate(String horarioPriceUpdate);
 
-    // ✅ NOVO: usa o campo cod_loja_econect da sua entidade Loja
     Optional<Loja> findByCodLojaEconect(String codLojaEconect);
+
+    List<Loja> findByLoyaltyAtivoTrueAndCodLojaEconectIsNotNullOrderByNomeAsc();
+
+    List<Loja> findByLojaIdInAndLoyaltyAtivoTrueAndCodLojaEconectIsNotNullOrderByNomeAsc(List<Long> lojaIds);
 }

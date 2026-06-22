@@ -1,4 +1,4 @@
-<!-- FILE: src/main/webapp/WEB-INF/templates/header.xhtml (ou onde seu header.xhtml estiver) -->
+<!-- FILE: src/main/webapp/WEB-INF/templates/header.xhtml -->
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
     xmlns:h="http://xmlns.jcp.org/jsf/html"
     xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
@@ -16,7 +16,7 @@
 
         <div class="custom-menu">
 
-     
+            <!-- Home -->
             <div class="menu-item">
                 <h:outputLink value="#{request.contextPath}/pages/index.xhtml"
                               style="display:flex; align-items:center; color:white;">
@@ -25,23 +25,20 @@
                 </h:outputLink>
             </div>
 
-     
+            <!-- Cadastro -->
             <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
                 <div class="menu-item expandable" onclick="toggleSubMenu(this)">
                     <i class="pi pi-briefcase"></i> <span class="text">Cadastro</span>
                 </div>
                 <div class="submenu">
-             
                     <h:outputLink value="#{request.contextPath}/pages/cadastro/cadastro_loja.xhtml">
                         <i class="pi pi-building"></i><span>Cadastro de Loja</span>
                     </h:outputLink>
 
-                
                     <h:outputLink value="#{request.contextPath}/pages/cadastro/cadastro_tara.xhtml">
                         <i class="pi pi-balance-scale"></i><span>Cadastro de Tara</span>
                     </h:outputLink>
 
-                
                     <h:outputLink value="#{request.contextPath}/pages/porteira/cadastro_porteira.xhtml">
                         <i class="pi pi-lock"></i><span>Cadastro de Porteira Eletrônica</span>
                     </h:outputLink>
@@ -54,7 +51,6 @@
                         <i class="pi pi-dollar"></i><span>Arquivos PRICE</span>
                     </h:outputLink>
 
-            
                     <h:outputLink value="#{request.contextPath}/pages/cadastro/comparativo_produtos.xhtml">
                         <i class="pi pi-refresh"></i><span>Comparativo de Produtos (144 × 50)</span>
                     </h:outputLink>
@@ -85,13 +81,13 @@
                 </div>
             </ui:fragment>
 
- 
+            <!-- Chamados -->
             <div class="menu-item expandable" onclick="toggleSubMenu(this)">
                 <i class="pi pi-envelope"></i> <span class="text">Chamados</span>
             </div>
             <div class="submenu"></div>
 
-   
+            <!-- Configurações -->
             <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
                 <div class="menu-item expandable" onclick="toggleSubMenu(this)">
                     <i class="pi pi-cog"></i> <span class="text">Configurações</span>
@@ -101,19 +97,17 @@
                         <i class="pi pi-envelope"></i><span>Configuração de E-mail</span>
                     </h:outputLink>
 
-             
                     <h:outputLink value="#{request.contextPath}/pages/configuracao/loja_remote_config.xhtml">
                         <i class="pi pi-share-alt"></i><span>Configuração Remota (Loja)</span>
                     </h:outputLink>
 
-              
                     <h:outputLink value="#{request.contextPath}/pages/configuracao/scheduled_tasks_config.xhtml">
                         <i class="pi pi-calendar"></i><span>Tasks Agendadas</span>
                     </h:outputLink>
                 </div>
             </ui:fragment>
 
-
+            <!-- Relatórios -->
             <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
                 <div class="menu-item expandable" onclick="toggleSubMenu(this)">
                     <i class="pi pi-chart-line"></i> <span class="text">Relatórios</span>
@@ -129,6 +123,7 @@
                 </div>
             </ui:fragment>
 
+            <!-- Rotinas -->
             <ui:fragment rendered="#{loginBean.hasRole('ADMIN')}">
                 <div class="menu-item expandable" onclick="toggleSubMenu(this)">
                     <i class="pi pi-clock"></i> <span class="text">Rotinas</span>
@@ -150,33 +145,27 @@
                         <i class="pi pi-tags"></i><span>Divergência Preço CRM × Normal</span>
                     </h:outputLink>
 
-       
                     <h:outputLink value="#{request.contextPath}/pages/rotinas/rotina_price_execucao.xhtml">
                         <i class="pi pi-dollar"></i><span>Rotina PRICE (Execução)</span>
                     </h:outputLink>
 
-         
                     <h:outputLink value="#{request.contextPath}/pages/rotinas/rotina_mgv_execucao.xhtml">
                         <i class="pi pi-hdd"></i><span>Rotina MGV (Execução)</span>
                     </h:outputLink>
 
-               
+                    <h:outputLink value="#{request.contextPath}/pages/rotinas/rotina_loyalty_execucao.xhtml">
+                        <i class="pi pi-send"></i><span>Rotina LOYALTY (Execução)</span>
+                    </h:outputLink>
+
                     <h:outputLink value="#{request.contextPath}/pages/porteira/rotina_porteira.xhtml">
                         <i class="pi pi-cog"></i><span>Rotina Porteira (Manual)</span>
                     </h:outputLink>
 
-                   
                     <h:outputLink value="#{request.contextPath}/pages/rotinas/porteira/backup_porteira.xhtml">
                         <i class="pi pi-database"></i><span>Backup Porteira (Usuários)</span>
                     </h:outputLink>
 
-					<h:outputLink
-						value="#{request.contextPath}/pages/rotinas/rotina_loyalty_execucao.xhtml">
-						<i class="pi pi-send"></i>
-						<span>Rotina LOYALTY (Execução)</span>
-					</h:outputLink>
-
-				</div>
+                </div>
             </ui:fragment>
 
             <!-- Usuários -->
